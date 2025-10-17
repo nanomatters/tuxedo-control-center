@@ -69,9 +69,9 @@ export class TccTray {
         const chassisVendor = dmi.chassisVendor.readValueNT();
         const sysVendor = dmi.sysVendor.readValueNT();
         let showAquarisMenu;
-        const isTuxedo = (boardVendor !== undefined && boardVendor.toLowerCase().includes('tuxedo')) ||
-                         (chassisVendor !== undefined && chassisVendor.toLowerCase().includes('tuxedo')) ||
-                         (sysVendor !== undefined && sysVendor.toLowerCase().includes('tuxedo'));
+        const isTuxedo = (boardVendor !== undefined && boardVendor.includes('NB02')) ||
+                         (chassisVendor !== undefined && chassisVendor.includes('SchenkerTechnologiesGmbH')) ||
+                         (sysVendor !== undefined && sysVendor.includes('SchenkerTechnologiesGmbH'));
 
         if (isTuxedo) {
             if (deviceName !== undefined &&
@@ -81,6 +81,8 @@ export class TccTray {
                  deviceName === 'STELLARIS16I06' ||
                  deviceName === 'STELLARIS17I06' ||
                  deviceName === 'STELLARIS16A07' ||
+                 deviceName === 'XNE16A25' ||
+                 deviceName === 'XNE16E25' ||
                  deviceName === 'STELLARIS16I07')) {
                 showAquarisMenu = true;
             } else {
