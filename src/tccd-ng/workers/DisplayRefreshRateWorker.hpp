@@ -1,0 +1,481 @@
+/*
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+#include "DaemonWorker.hpp"
+#include <string>
+#include <vector>
+#include <optional>
+#include <functional>
+#include <cstdio>
+#include <memory>
+#include <regex>
+#include <syslog.h>
+
+/**
+ * @brief Display mode structure
+ */
+struct DisplayMode
+{
+  std::vector< double > refreshRates;
+  int xResolution;
+  int yResolution;
+
+  DisplayMode() : xResolution( 0 ), yResolution( 0 ) {}
+};
+
+/**
+ * @brief Display information structure
+ */
+struct DisplayInfo
+{
+  std::string displayName;
+  DisplayMode activeMode;
+  std::vector< DisplayMode > displayModes;
+
+  DisplayInfo() : displayName( "" ) {}
+};
+
+/**
+ * @brief DisplayRefreshRateWorker - Monitor refresh rate control
+ *
+ * Manages display refresh rates using xrandr (X11 only).
+ * - Detects available display modes and refresh rates
+ * - Applies refresh rate from active profile
+ * - Only works on X11 (disabled on Wayland)
+ * - Monitors user login/logout to reset state
+ *
+ * Requirements:
+ * - X11 session (Wayland not supported)
+ * - xrandr utility available
+ * - DISPLAY and XAUTHORITY environment variables
+ */
+class DisplayRefreshRateWorker : public DaemonWorker
+{
+public:
+  DisplayRefreshRateWorker(
+    std::function< bool() > getIsX11Callback,
+    std::function< void( const std::string & ) > setDisplayModesCallback,
+    std::function< void( bool ) > setIsX11Callback,
+    std::function< TccProfile() > getActiveProfileCallback )
+    : DaemonWorker( std::chrono::milliseconds( 5000 ), false ),
+      m_getIsX11( getIsX11Callback ),
+      m_setDisplayModes( setDisplayModesCallback ),
+      m_setIsX11( setIsX11Callback ),
+      m_getActiveProfile( getActiveProfileCallback ),
+      m_displayInfoFound( false ),
+      m_previousUsers( "" ),
+      m_isX11( false ),
+      m_isWayland( false ),
+      m_displayEnvVariable( "" ),
+      m_xAuthorityFile( "" )
+  {
+  }
+
+  void onStart() override
+  {
+    // Environment variables will be set on first onWork() call
+  }
+
+  void onWork() override
+  {
+    const auto [usersAvailable, usersChanged] = checkUsers();
+
+    if ( usersChanged )
+      resetToDefault();
+
+    if ( usersAvailable and not m_isWayland )
+    {
+      if ( not m_displayInfoFound )
+        updateDisplayData();
+
+      setActiveDisplayMode();
+    }
+  }
+
+  void onExit() override
+  {
+  }
+
+  std::optional< DisplayMode > getActiveDisplayMode() noexcept
+  {
+    if ( not m_displayInfoFound )
+      updateDisplayData();
+
+    if ( m_displayInfo.displayName.empty() )
+      return std::nullopt;
+
+    return m_displayInfo.activeMode;
+  }
+
+private:
+  std::function< bool() > m_getIsX11;
+  std::function< void( const std::string & ) > m_setDisplayModes;
+  std::function< void( bool ) > m_setIsX11;
+  std::function< TccProfile() > m_getActiveProfile;
+
+  DisplayInfo m_displayInfo;
+  bool m_displayInfoFound;
+  std::string m_previousUsers;
+  bool m_isX11;
+  bool m_isWayland;
+  std::string m_displayEnvVariable;
+  std::string m_xAuthorityFile;
+  std::string m_displayName;
+
+  std::pair< bool, bool > checkUsers() noexcept
+  {
+    std::string loggedInUsers;
+
+    try
+    {
+      auto pipe = popen( "users 2>/dev/null", "r" );
+      if ( pipe )
+      {
+        char buffer[256];
+        if ( fgets( buffer, sizeof( buffer ), pipe ) )
+          loggedInUsers = buffer;
+        pclose( pipe );
+      }
+    }
+    catch ( ... )
+    {
+      // Ignore errors
+    }
+
+    // Trim whitespace
+    while ( not loggedInUsers.empty() and ( loggedInUsers.back() == '\n' or loggedInUsers.back() == ' ' ) )
+      loggedInUsers.pop_back();
+
+    const bool usersAvailable = not loggedInUsers.empty();
+    const bool usersChanged = loggedInUsers != m_previousUsers;
+
+    m_previousUsers = loggedInUsers;
+
+    return { usersAvailable, usersChanged };
+  }
+
+  void resetToDefault() noexcept
+  {
+    m_displayInfo = DisplayInfo();
+    m_displayInfoFound = false;
+    m_isX11 = false;
+    m_isWayland = false;
+    m_displayEnvVariable = "";
+    m_xAuthorityFile = "";
+    m_displayName = "";
+  }
+
+  void setEnvVariables() noexcept
+  {
+    try
+    {
+      const char *cmd = R"(cat $(printf "/proc/%s/environ " $(pgrep -vu root | tail -n 20)) 2>/dev/null | tr '\0' '\n' | awk ' /DISPLAY=/ && !countDisplay {print; countDisplay++} /XAUTHORITY=/ && !countXAuthority {print; countXAuthority++} /XDG_SESSION_TYPE=/ && !countSessionType {print; countSessionType++} /USER=/ && !countUser {print; countUser++} {if (countDisplay && countXAuthority && countSessionType && countUser) exit} ')";
+
+      auto pipe = popen( cmd, "r" );
+      if ( not pipe )
+        return;
+
+      std::string envVariables;
+      char buffer[1024];
+      while ( fgets( buffer, sizeof( buffer ), pipe ) )
+        envVariables += buffer;
+      
+      pclose( pipe );
+
+      // Parse environment variables
+      std::regex displayRegex( R"(DISPLAY=(.*))" );
+      std::regex xauthorityRegex( R"(XAUTHORITY=(.*))" );
+      std::regex sessionTypeRegex( R"(XDG_SESSION_TYPE=(.*))" );
+
+      std::smatch match;
+      std::string display, xauthority, sessionType;
+
+      std::istringstream iss( envVariables );
+      std::string line;
+      while ( std::getline( iss, line ) )
+      {
+        if ( std::regex_search( line, match, displayRegex ) and display.empty() )
+          display = match[1].str();
+        else if ( std::regex_search( line, match, xauthorityRegex ) and xauthority.empty() )
+          xauthority = match[1].str();
+        else if ( std::regex_search( line, match, sessionTypeRegex ) and sessionType.empty() )
+          sessionType = match[1].str();
+      }
+
+      // Skip login screen sessions
+      if ( xauthority.find( "/var/run/sddm/{" ) != std::string::npos or
+           xauthority.find( "/var/lib/lightdm" ) != std::string::npos )
+        return;
+
+      // Trim whitespace from session type
+      while ( not sessionType.empty() and ( sessionType.back() == '\n' or sessionType.back() == '\r' or sessionType.back() == ' ' ) )
+        sessionType.pop_back();
+
+      // Convert to lowercase
+      for ( char &c : sessionType )
+        c = static_cast< char >( std::tolower( static_cast< unsigned char >( c ) ) );
+
+      m_displayEnvVariable = display;
+      m_xAuthorityFile = xauthority;
+      m_isX11 = ( sessionType == "x11" );
+      m_isWayland = ( sessionType == "wayland" );
+    }
+    catch ( ... )
+    {
+      // Reset on error
+      resetToDefault();
+    }
+  }
+
+  std::optional< DisplayInfo > getDisplayModes() noexcept
+  {
+    if ( m_displayEnvVariable.empty() or m_xAuthorityFile.empty() )
+      setEnvVariables();
+
+    if ( m_displayEnvVariable.empty() or m_xAuthorityFile.empty() or m_isWayland )
+      return std::nullopt;
+
+    try
+    {
+      std::string cmd = "export XAUTHORITY=" + m_xAuthorityFile + 
+                       " && xrandr -q -display " + m_displayEnvVariable + " --current 2>/dev/null";
+
+      auto pipe = popen( cmd.c_str(), "r" );
+      if ( not pipe )
+        return std::nullopt;
+
+      std::string result;
+      char buffer[1024];
+      while ( fgets( buffer, sizeof( buffer ), pipe ) )
+        result += buffer;
+      
+      pclose( pipe );
+
+      return parseXrandrOutput( result );
+    }
+    catch ( ... )
+    {
+      return std::nullopt;
+    }
+  }
+
+  std::optional< DisplayInfo > parseXrandrOutput( const std::string &output ) noexcept
+  {
+    try
+    {
+      DisplayInfo info;
+
+      // Find display name (eDP* or LVDS*)
+      std::regex displayNameRegex( R"((eDP\S*|LVDS\S*))" );
+      std::smatch displayMatch;
+      if ( std::regex_search( output, displayMatch, displayNameRegex ) )
+      {
+        info.displayName = m_displayName = displayMatch[1].str();
+      }
+      else
+      {
+        return std::nullopt;
+      }
+
+      // Parse resolution and refresh rate lines
+      // Example: "   1920x1080     60.00*+  59.94    50.00"
+      std::regex lineRegex( R"(\s+([0-9]{3,4})x([0-9]{3,4})[a-z]?(\s+[0-9]{1,3}\.[0-9]{2}[\*]?[\+]?)+)" );
+      std::regex rateRegex( R"([0-9]{1,3}\.[0-9]{2}[\*]?[\+]?)" );
+
+      std::istringstream iss( output );
+      std::string line;
+      bool foundDisplayName = false;
+
+      while ( std::getline( iss, line ) )
+      {
+        if ( not foundDisplayName and line.find( info.displayName ) != std::string::npos )
+        {
+          foundDisplayName = true;
+          continue;
+        }
+
+        if ( foundDisplayName )
+        {
+          std::smatch lineMatch;
+          if ( std::regex_search( line, lineMatch, lineRegex ) )
+          {
+            DisplayMode mode;
+            mode.xResolution = std::stoi( lineMatch[1].str() );
+            mode.yResolution = std::stoi( lineMatch[2].str() );
+
+            // Find all refresh rates
+            std::string ratesPart = lineMatch[0].str();
+            std::sregex_iterator rateIter( ratesPart.begin(), ratesPart.end(), rateRegex );
+            std::sregex_iterator rateEnd;
+
+            int activeRateIndex = -1;
+            int idx = 0;
+            
+            for ( ; rateIter != rateEnd; ++rateIter, ++idx )
+            {
+              std::string rateStr = ( *rateIter )[0].str();
+              
+              // Check if this is the active rate (marked with *)
+              if ( rateStr.find( '*' ) != std::string::npos )
+                activeRateIndex = idx;
+
+              // Remove * and + markers
+              rateStr.erase( std::remove_if( rateStr.begin(), rateStr.end(),
+                []( char c ) { return c == '*' or c == '+'; } ), rateStr.end() );
+
+              double rate = std::stod( rateStr );
+              
+              // Avoid duplicates
+              if ( std::find( mode.refreshRates.begin(), mode.refreshRates.end(), rate ) == mode.refreshRates.end() )
+                mode.refreshRates.push_back( rate );
+            }
+
+            info.displayModes.push_back( mode );
+
+            // Set active mode
+            if ( activeRateIndex >= 0 and static_cast< size_t >( activeRateIndex ) < mode.refreshRates.size() )
+            {
+              info.activeMode.xResolution = mode.xResolution;
+              info.activeMode.yResolution = mode.yResolution;
+              info.activeMode.refreshRates = { mode.refreshRates[activeRateIndex] };
+            }
+          }
+        }
+      }
+
+      return info;
+    }
+    catch ( ... )
+    {
+      return std::nullopt;
+    }
+  }
+
+  void updateDisplayData() noexcept
+  {
+    auto modes = getDisplayModes();
+
+    m_setIsX11( m_isX11 );
+
+    if ( not modes )
+    {
+      m_setDisplayModes( "" );
+      m_displayInfoFound = false;
+    }
+    else
+    {
+      m_displayInfo = *modes;
+      m_displayInfoFound = true;
+      m_setDisplayModes( serializeDisplayInfo( *modes ) );
+    }
+  }
+
+  std::string serializeDisplayInfo( const DisplayInfo &info ) const noexcept
+  {
+    std::ostringstream oss;
+    
+    oss << "{";
+    oss << "\"displayName\":\"" << info.displayName << "\",";
+    
+    // Active mode
+    oss << "\"activeMode\":{";
+    oss << "\"xResolution\":" << info.activeMode.xResolution << ",";
+    oss << "\"yResolution\":" << info.activeMode.yResolution << ",";
+    oss << "\"refreshRates\":[";
+    for ( size_t i = 0; i < info.activeMode.refreshRates.size(); ++i )
+    {
+      if ( i > 0 ) oss << ",";
+      oss << info.activeMode.refreshRates[i];
+    }
+    oss << "]},";
+    
+    // Display modes
+    oss << "\"displayModes\":[";
+    for ( size_t i = 0; i < info.displayModes.size(); ++i )
+    {
+      if ( i > 0 ) oss << ",";
+      const auto &mode = info.displayModes[i];
+      oss << "{";
+      oss << "\"xResolution\":" << mode.xResolution << ",";
+      oss << "\"yResolution\":" << mode.yResolution << ",";
+      oss << "\"refreshRates\":[";
+      for ( size_t j = 0; j < mode.refreshRates.size(); ++j )
+      {
+        if ( j > 0 ) oss << ",";
+        oss << mode.refreshRates[j];
+      }
+      oss << "]}";
+    }
+    oss << "]}";
+    
+    return oss.str();
+  }
+
+  void setActiveDisplayMode() noexcept
+  {
+    const TccProfile activeProfile = m_getActiveProfile();
+
+    if ( not activeProfile.display.useRefRate )
+      return;
+
+    if ( m_displayInfo.activeMode.refreshRates.empty() )
+      return;
+
+    const double currentRefreshRate = m_displayInfo.activeMode.refreshRates[0];
+    const int32_t desiredRefreshRate = activeProfile.display.refreshRate;
+
+    if ( desiredRefreshRate <= 0 )
+      return;
+
+    if ( std::abs( currentRefreshRate - static_cast< double >( desiredRefreshRate ) ) < 0.1 )
+      return; // Already at desired refresh rate
+
+    setDisplayMode( m_displayInfo.activeMode.xResolution,
+                    m_displayInfo.activeMode.yResolution,
+                    desiredRefreshRate );
+
+    // Update cached value
+    m_displayInfo.activeMode.refreshRates[0] = static_cast< double >( desiredRefreshRate );
+  }
+
+  void setDisplayMode( int xRes, int yRes, int refRate ) noexcept
+  {
+    if ( not m_isX11 or m_displayEnvVariable.empty() or m_xAuthorityFile.empty() or m_displayName.empty() )
+      return;
+
+    try
+    {
+      std::string cmd = "export XAUTHORITY=" + m_xAuthorityFile +
+                       " && xrandr -display " + m_displayEnvVariable +
+                       " --output " + m_displayName +
+                       " --mode " + std::to_string( xRes ) + "x" + std::to_string( yRes ) +
+                       " -r " + std::to_string( refRate ) +
+                       " 2>/dev/null";
+
+      auto pipe = popen( cmd.c_str(), "r" );
+      if ( pipe )
+      {
+        pclose( pipe );
+        syslog( LOG_INFO, "Set display mode to %dx%d @ %dHz", xRes, yRes, refRate );
+      }
+    }
+    catch ( ... )
+    {
+      syslog( LOG_WARNING, "Failed to set display mode" );
+    }
+  }
+};

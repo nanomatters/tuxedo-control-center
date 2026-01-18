@@ -94,7 +94,7 @@ public:
 
   virtual bool setFanSpeedPercent( const int fanNr, const int fanSpeedPercent )
   {
-    int fanSpeedRaw = ( int ) std::round( MAX_FAN_SPEED * fanSpeedPercent / 100.0 );
+    int fanSpeedRaw = static_cast< int >( std::round( static_cast< double >( MAX_FAN_SPEED ) * fanSpeedPercent / 100.0 ) );
     bool result;
 
     switch ( fanNr )
@@ -131,7 +131,16 @@ public:
         break;
     }
 
-    fanSpeedPercent = ( int ) std::round( fanSpeedRaw * 100.0 / MAX_FAN_SPEED );
+    // Calculate percentage - use ceiling for non-zero values to avoid showing 0% for low speeds
+    if ( fanSpeedRaw > 0 )
+    {
+      double percentExact = static_cast< double >( fanSpeedRaw ) * 100.0 / static_cast< double >( MAX_FAN_SPEED );
+      fanSpeedPercent = static_cast< int >( std::ceil( percentExact ) );
+    }
+    else
+    {
+      fanSpeedPercent = 0;
+    }
 
     return result;
   }
@@ -165,12 +174,12 @@ public:
     return result;
   }
 
-  virtual bool setWebcam( const bool status )
+  virtual bool setWebcam( [[maybe_unused]] const bool status )
   {
     return false;
   }
 
-  virtual bool getWebcam( bool &status )
+  virtual bool getWebcam( [[maybe_unused]] bool &status )
   {
     return false;
   }

@@ -44,10 +44,10 @@ public:
   virtual bool deviceInterfaceIdStr( std::string &interfaceIdStr )
   { return m_io.ioctlCall( R_CL_HW_IF_STR, interfaceIdStr, 50 ); }
 
-  virtual bool deviceModelIdStr( std::string &modelIdStr )
+  virtual bool deviceModelIdStr( [[maybe_unused]] std::string &modelIdStr )
   { return false; }
 
-  virtual bool setEnableModeSet( bool enabled )
+  virtual bool setEnableModeSet( [[maybe_unused]] bool enabled )
   { return true; }
 
   virtual bool getFansMinSpeed( int &minSpeed )
@@ -85,7 +85,7 @@ public:
     {
       if ( i == fanNr )
       {
-        fanSpeedRaw[ i ] = ( int ) std::round( fanSpeedPercent * 0xff / 100.0 );
+        fanSpeedRaw[ i ] = static_cast< int >( std::round( fanSpeedPercent * 0xff / 100.0 ) );
       }
       else
       {
@@ -107,7 +107,7 @@ public:
     if ( not ret )
       return false;
 
-    fanSpeedPercent = std::round( ( fanSpeedRaw / ( float ) MAX_FAN_SPEED ) * 100 );
+    fanSpeedPercent = static_cast< int >( std::round( ( static_cast< float >( fanSpeedRaw ) / static_cast< float >( MAX_FAN_SPEED ) ) * 100.0f ) );
     return ret;
   }
 
@@ -119,7 +119,7 @@ public:
       return false;
 
     // Explicitly use temp2 since more consistently implemented
-    int fanTemp2 = ( int8_t ) ( ( fanInfo >> 0x10 ) & 0xff );
+    int fanTemp2 = static_cast< int8_t >( ( fanInfo >> 0x10 ) & 0xff );
     temperatureCelcius = fanTemp2;
 
     // If a fan is not available a low value is read out
@@ -168,22 +168,22 @@ public:
   virtual bool getDefaultODMPerformanceProfile( std::string &profileName )
   { profileName = "performance"; return true; }
 
-  virtual bool getNumberTDPs( int &nrTDPs )
+  virtual bool getNumberTDPs( [[maybe_unused]] int &nrTDPs )
   { return false; }
 
-  virtual bool getTDPDescriptors( std::vector< std::string > &tdpDescriptors )
+  virtual bool getTDPDescriptors( [[maybe_unused]] std::vector< std::string > &tdpDescriptors )
   { return false; }
 
-  virtual bool getTDPMin( const int tdpIndex, int &minValue )
+  virtual bool getTDPMin( [[maybe_unused]] const int tdpIndex, [[maybe_unused]] int &minValue )
   { return false; }
 
-  virtual bool getTDPMax( const int tdpIndex, int &maxValue )
+  virtual bool getTDPMax( [[maybe_unused]] const int tdpIndex, [[maybe_unused]] int &maxValue )
   { return false; }
 
-  virtual bool setTDP( const int tdpIndex, int tdpValue )
+  virtual bool setTDP( [[maybe_unused]] const int tdpIndex, [[maybe_unused]] int tdpValue )
   { return false; }
 
-  virtual bool getTDP( const int tdpIndex, int &tdpValue )
+  virtual bool getTDP( [[maybe_unused]] const int tdpIndex, [[maybe_unused]] int &tdpValue )
   { return false; }
 
 private:

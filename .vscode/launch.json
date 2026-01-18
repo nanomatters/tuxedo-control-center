@@ -36,6 +36,27 @@
                 "webpack:///./*": "${workspaceRoot}/*"
             },
             "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "name": "tccd-ng (C++)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/tccd-ng",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}/build",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build-tccd-ng",
+            "sourceLanguages": ["cpp"]
         }
     ]
 }

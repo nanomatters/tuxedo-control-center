@@ -8,5 +8,15 @@
     "xliffSync.baseFile": "lang.xlf",
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
-    "editor.detectIndentation": false
+    "editor.detectIndentation": false,
+    "cmake.sourceDirectory": "/opt/devel/git/tuxedo/tuxedo-control-center/src/tccd-ng",
+    "chat.tools.terminal.autoApprove": {
+        "./tccd-ng": true,
+        "gdb": true,
+        "timeout": true,
+        "dbus-send": true,
+        "g++": true,
+        "./test_powersupply": true,
+        "dpkg": true
+    }
 }
