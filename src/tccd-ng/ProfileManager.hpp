@@ -302,6 +302,16 @@ public:
   }
 
   /**
+   * @brief Public wrapper to parse a fan table JSON array into entries
+   * @param json JSON array string containing fan table entries
+   * @return Vector of FanTableEntry parsed from JSON
+   */
+  [[nodiscard]] static std::vector< FanTableEntry > parseFanTableFromJSON( const std::string &json )
+  {
+    return parseFanTable( json );
+  }
+
+  /**
    * @brief Add a new custom profile
    * @param profile Profile to add
    * @return true on success, false on error

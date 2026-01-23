@@ -253,6 +253,11 @@ public:
   bool SetTempProfileById( const std::string &id );
   std::string GetProfilesJSON();
   std::string GetCustomProfilesJSON();
+  // Fan profile get/set for editable (custom) profiles only
+  std::string GetFanProfileCPU();
+  bool SetFanProfileCPU( const std::string &pointsJSON );
+  std::string GetFanProfileDGPU();
+  bool SetFanProfileDGPU( const std::string &pointsJSON );
   std::string GetDefaultProfilesJSON();
   std::string GetDefaultValuesProfileJSON();
   bool AddCustomProfile( const std::string &profileJSON );

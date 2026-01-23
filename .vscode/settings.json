@@ -17,6 +17,11 @@
         "dbus-send": true,
         "g++": true,
         "./test_powersupply": true,
-        "dpkg": true
+        "dpkg": true,
+        "cmake": true,
+        "true": true,
+        "journalctl": true,
+        "busctl": true,
+        "/home/erhan/tmp/src/ucc/bin/ucc-gui": true
     }
 }

@@ -284,6 +284,10 @@ void TccDBusInterfaceAdaptor::registerAdaptor()
     registerMethod("GetPrimeState").implementedAs([this](){ return this->GetPrimeState(); }),
     registerMethod("ConsumeModeReapplyPending").implementedAs([this](){ return this->ConsumeModeReapplyPending(); }),
     registerMethod("GetActiveProfileJSON").implementedAs([this](){ return this->GetActiveProfileJSON(); }),
+    registerMethod("GetFanProfileCPU").implementedAs([this](){ return this->GetFanProfileCPU(); }),
+    registerMethod("SetFanProfileCPU").implementedAs([this](const std::string &json){ return this->SetFanProfileCPU(json); }),
+    registerMethod("GetFanProfileDGPU").implementedAs([this](){ return this->GetFanProfileDGPU(); }),
+    registerMethod("SetFanProfileDGPU").implementedAs([this](const std::string &json){ return this->SetFanProfileDGPU(json); }),
     registerMethod("SetTempProfile").implementedAs([this](const std::string &profileName){ return this->SetTempProfile(profileName); }),
     registerMethod("SetTempProfileById").implementedAs([this](const std::string &id){ return this->SetTempProfileById(id); }),
     registerMethod("GetProfilesJSON").implementedAs([this](){ return this->GetProfilesJSON(); }),
@@ -492,6 +496,123 @@ std::string TccDBusInterfaceAdaptor::GetActiveProfileJSON()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.activeProfileJSON;
+}
+
+std::string TccDBusInterfaceAdaptor::GetFanProfileCPU()
+{
+  std::lock_guard< std::mutex > lock( m_data.dataMutex );
+  if ( !m_service )
+    return "[]";
+
+  TccProfile active = m_service->getCurrentProfile();
+  auto custom = m_service->getCustomProfiles();
+  bool editable = false;
+  for ( const auto &p : custom )
+  {
+    if ( p.id == active.id ) { editable = true; break; }
+  }
+  if ( !editable )
+    return "[]";
+
+  // Serialize up to 10 points (return exactly what's present, trimmed to 10)
+  std::ostringstream oss;
+  oss << "[";
+  const auto &table = active.fan.customFanCurve.tableCPU;
+  for ( size_t i = 0; i < table.size() && i < 10; ++i )
+  {
+    if ( i > 0 ) oss << ",";
+    oss << "{\"temp\":" << table[ i ].temp << ",\"speed\":" << table[ i ].speed << "}";
+  }
+  oss << "]";
+  return oss.str();
+}
+
+bool TccDBusInterfaceAdaptor::SetFanProfileCPU( const std::string &pointsJSON )
+{
+  if ( !m_service )
+    return false;
+
+  try
+  {
+    auto table = ProfileManager::parseFanTableFromJSON( pointsJSON );
+    if ( table.size() != 10 )
+      return false;
+
+    TccProfile profile = m_service->getCurrentProfile();
+    auto custom = m_service->getCustomProfiles();
+    bool editable = false;
+    for ( const auto &p : custom )
+    {
+      if ( p.id == profile.id ) { editable = true; break; }
+    }
+    if ( !editable )
+      return false;
+
+    profile.fan.customFanCurve.tableCPU = table;
+    return m_service->updateCustomProfile( profile );
+  }
+  catch ( ... )
+  {
+    return false;
+  }
+}
+
+std::string TccDBusInterfaceAdaptor::GetFanProfileDGPU()
+{
+  std::lock_guard< std::mutex > lock( m_data.dataMutex );
+  if ( !m_service )
+    return "[]";
+
+  TccProfile active = m_service->getCurrentProfile();
+  auto custom = m_service->getCustomProfiles();
+  bool editable = false;
+  for ( const auto &p : custom )
+  {
+    if ( p.id == active.id ) { editable = true; break; }
+  }
+  if ( !editable )
+    return "[]";
+
+  std::ostringstream oss;
+  oss << "[";
+  const auto &table = active.fan.customFanCurve.tableGPU;
+  for ( size_t i = 0; i < table.size() && i < 10; ++i )
+  {
+    if ( i > 0 ) oss << ",";
+    oss << "{\"temp\":" << table[ i ].temp << ",\"speed\":" << table[ i ].speed << "}";
+  }
+  oss << "]";
+  return oss.str();
+}
+
+bool TccDBusInterfaceAdaptor::SetFanProfileDGPU( const std::string &pointsJSON )
+{
+  if ( !m_service )
+    return false;
+
+  try
+  {
+    auto table = ProfileManager::parseFanTableFromJSON( pointsJSON );
+    if ( table.size() != 10 )
+      return false;
+
+    TccProfile profile = m_service->getCurrentProfile();
+    auto custom = m_service->getCustomProfiles();
+    bool editable = false;
+    for ( const auto &p : custom )
+    {
+      if ( p.id == profile.id ) { editable = true; break; }
+    }
+    if ( !editable )
+      return false;
+
+    profile.fan.customFanCurve.tableGPU = table;
+    return m_service->updateCustomProfile( profile );
+  }
+  catch ( ... )
+  {
+    return false;
+  }
 }
 
 bool TccDBusInterfaceAdaptor::SetTempProfile( const std::string &profileName )

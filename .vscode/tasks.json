@@ -20,6 +20,67 @@
             "problemMatcher": [
                 "$gcc"
             ]
+        },
+        {
+            "label": "UCC: Build",
+            "type": "shell",
+            "command": "./build-local.sh",
+            "args": [],
+            "options": {
+                "cwd": "${workspaceFolder}/ucc"
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "UCC: Install",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--install",
+                "."
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/src/ucc/build"
+            },
+            "dependsOn": "UCC: Build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "UCC: Run GUI",
+            "type": "shell",
+            "command": "./run-ucc-gui.sh",
+            "args": [],
+            "options": {
+                "cwd": "${workspaceFolder}/ucc"
+            },
+            "isBackground": true,
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "UCC: Build, Install & Run",
+            "dependsOn": [
+                "UCC: Install",
+                "UCC: Run GUI"
+            ],
+            "dependsOrder": "sequence",
+            "presentation": {
+                "reveal": "always"
+            }
         }
     ]
 }

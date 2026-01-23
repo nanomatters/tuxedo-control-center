@@ -48,3 +48,6 @@ testem.log
 Thumbs.db
 
 src/ng-app/assets/CHANGELOG.md
+
+# UCC build directory
+/src/ucc/build

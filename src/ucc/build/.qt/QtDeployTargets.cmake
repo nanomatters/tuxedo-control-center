@@ -1,0 +1,6 @@
+set(__QT_DEPLOY_TARGET_ucc-dbus_FILE /opt/devel/git/tuxedo/tuxedo-control-center/src/ucc/build/libucc-dbus/libucc-dbus.so.0.1.0)
+set(__QT_DEPLOY_TARGET_ucc-dbus_TYPE SHARED_LIBRARY)
+set(__QT_DEPLOY_TARGET_ucc-gui_FILE /opt/devel/git/tuxedo/tuxedo-control-center/src/ucc/build/ucc-gui/ucc-gui)
+set(__QT_DEPLOY_TARGET_ucc-gui_TYPE EXECUTABLE)
+set(__QT_DEPLOY_TARGET_ucc-tray_FILE /opt/devel/git/tuxedo/tuxedo-control-center/src/ucc/build/ucc-tray/ucc-tray)
+set(__QT_DEPLOY_TARGET_ucc-tray_TYPE EXECUTABLE)
