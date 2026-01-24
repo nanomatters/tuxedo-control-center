@@ -134,9 +134,9 @@ public:
     return m_latestSpeedPercent;
   }
 
-  int getFilteredTemp() const
+  const FanProfile &getFanProfile() const
   {
-    return m_tempBuffer.getFilteredValue();
+    return m_fanProfile;
   }
 
 private:
@@ -289,16 +289,66 @@ public:
     , m_updateFanTemp( updateFanTemp )
     , m_modeSameSpeed( true )
     , m_controlAvailableMessageShown( false )
+    , m_hasTemporaryCurves( false )
   {
   }
 
   ~FanControlWorker() override = default;
 
+  /**
+   * @brief Clear temporary fan curves and revert to profile curves
+   */
+  void clearTemporaryCurves()
+  {
+    m_hasTemporaryCurves = false;
+    m_tempCpuTable.clear();
+    m_tempGpuTable.clear();
+  }
+  void applyTemporaryFanCurves( const std::vector< FanTableEntry > &cpuTable,
+                                const std::vector< FanTableEntry > &gpuTable )
+  {
+    // Store the temporary curves
+    m_tempCpuTable = cpuTable;
+    m_tempGpuTable = gpuTable;
+    m_hasTemporaryCurves = true;
+    
+    for ( size_t i = 0; i < m_fanLogics.size(); ++i )
+    {
+      FanProfile tempProfile = m_fanLogics[i].getFanProfile(); // Copy current profile
+      
+      if ( i == 0 && !cpuTable.empty() ) // CPU fan (index 0)
+      {
+        tempProfile.tableCPU = cpuTable;
+      }
+      else if ( i > 0 && !gpuTable.empty() ) // GPU fans (index > 0)
+      {
+        tempProfile.tableGPU = gpuTable;
+      }
+      
+      m_fanLogics[i].updateFanProfile( tempProfile );
+    }
+  }
+
 protected:
   void onStart() override
   {
     int numberFans = 0;
-    if ( m_io->getNumberFans( numberFans ) && numberFans > 0 )
+    bool fansDetected = m_io->getNumberFans( numberFans ) && numberFans > 0;
+    
+    // If getNumberFans fails, try to detect fans by reading temperature from fan 0
+    if ( !fansDetected )
+    {
+      int temp = -1;
+      if ( m_io->getFanTemperature( 0, temp ) && temp >= 0 )
+      {
+        // We can read from at least fan 0, assume we have CPU and GPU fans
+        numberFans = 2;
+        fansDetected = true;
+        syslog( LOG_INFO, "FanControlWorker: Detected fans by temperature reading (getNumberFans failed)" );
+      }
+    }
+    
+    if ( fansDetected && numberFans > 0 )
     {
       // Initialize fan logic for each fan
       for ( int i = 0; i < numberFans; ++i )
@@ -456,7 +506,22 @@ private:
   {
     for ( size_t i = 0; i < m_fanLogics.size(); ++i )
     {
-      m_fanLogics[i].updateFanProfile( profile.fan.customFanCurve );
+      FanProfile fanProfile = profile.fan.customFanCurve;
+      
+      // If temporary curves are active, use them instead of profile curves
+      if ( m_hasTemporaryCurves )
+      {
+        if ( i == 0 && !m_tempCpuTable.empty() ) // CPU fan (index 0)
+        {
+          fanProfile.tableCPU = m_tempCpuTable;
+        }
+        else if ( i > 0 && !m_tempGpuTable.empty() ) // GPU fans (index > 0)
+        {
+          fanProfile.tableGPU = m_tempGpuTable;
+        }
+      }
+      
+      m_fanLogics[i].updateFanProfile( fanProfile );
       m_fanLogics[i].setMinimumFanspeed( profile.fan.minimumFanspeed );
       m_fanLogics[i].setMaximumFanspeed( profile.fan.maximumFanspeed );
       m_fanLogics[i].setOffsetFanspeed( profile.fan.offsetFanspeed );
@@ -474,4 +539,9 @@ private:
   bool m_controlAvailableMessageShown;
   int m_fansMinSpeedHWLimit;
   bool m_fansOffAvailable;
+  
+  // Temporary fan curve tracking
+  bool m_hasTemporaryCurves;
+  std::vector< FanTableEntry > m_tempCpuTable;
+  std::vector< FanTableEntry > m_tempGpuTable;
 };

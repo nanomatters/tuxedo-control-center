@@ -3,7 +3,7 @@
 cmake_minimum_required( VERSION 3.20 )
 
 # Set default install prefix early (before any find_package that might set it)
-set( CMAKE_INSTALL_PREFIX "$ENV{HOME}/tmp/ucc" CACHE PATH "Installation prefix" FORCE )
+set( CMAKE_INSTALL_PREFIX "/home/erhan/tmp/ucc" CACHE PATH "Installation prefix" FORCE )
 
 project( ucc
   VERSION 0.1.0

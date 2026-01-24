@@ -16,6 +16,7 @@
 #pragma once
 
 #include <QMainWindow>
+#include <QStatusBar>
 #include <QComboBox>
 #include <QLabel>
 #include <QSlider>
@@ -60,6 +61,9 @@ namespace ucc
     void onGpuPowerChanged( int value );
     void onApplyClicked();
     void onSaveClicked();
+    void onApplyFanProfilesClicked();
+    void onSaveFanProfilesClicked();
+    void onRevertFanProfilesClicked();
 
     // Dashboard page slots
     void onCpuTempChanged();
@@ -79,13 +83,13 @@ namespace ucc
     void setupUI();
     void setupDashboardPage();
     void setupProfilesPage();
-    void setupPerformancePage();
     void setupHardwarePage();
     void connectSignals();
     void loadProfileDetails( const QString &profileName );
     void markChanged();
     void updateButtonStates();
     void setupFanControlTab();
+    void updateFanTabVisibility();
 
     std::unique_ptr< ProfileManager > m_profileManager;
     std::unique_ptr< SystemMonitor > m_systemMonitor;
@@ -108,7 +112,6 @@ namespace ucc
     QLabel *m_displayBrightnessValueLabel = nullptr;
     QCheckBox *m_webcamCheckBox = nullptr;
     QCheckBox *m_fnLockCheckBox = nullptr;
-    QLabel *m_statusLabel = nullptr;
 
     // Profiles widgets
     QComboBox *m_profileCombo = nullptr;
@@ -134,6 +137,13 @@ namespace ucc
     // Fan curve editor widgets
     FanCurveEditorWidget *m_cpuFanCurveEditor = nullptr;
     FanCurveEditorWidget *m_gpuFanCurveEditor = nullptr;
+    QPushButton *m_applyFanProfilesButton = nullptr;
+    QPushButton *m_saveFanProfilesButton = nullptr;
+    QPushButton *m_revertFanProfilesButton = nullptr;
+    
+    // Fan tab
+    QWidget *m_fanTab = nullptr;
+    int m_fanTabIndex = 2; // Position after profiles tab
     
     // CPU frequency control widgets
     QSlider *m_cpuCoresSlider = nullptr;
@@ -159,5 +169,6 @@ namespace ucc
     // Change tracking
     bool m_profileChanged = false;
     QString m_currentLoadedProfile;
+    bool m_saveInProgress = false;
   };
 }

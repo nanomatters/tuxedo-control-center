@@ -72,10 +72,10 @@ public:
 
   // Fan Control
   bool setFanProfile( const std::string &profileJSON );
-  std::optional< std::string > getFanProfileCPU();
   bool setFanProfileCPU( const std::string &pointsJSON );
-  std::optional< std::string > getFanProfileDGPU();
   bool setFanProfileDGPU( const std::string &pointsJSON );
+  bool applyFanProfiles( const std::string &fanProfilesJSON );
+  bool revertFanProfiles();
   std::optional< std::string > getCurrentFanSpeed();
   std::optional< std::string > getFanTemperatures();
 

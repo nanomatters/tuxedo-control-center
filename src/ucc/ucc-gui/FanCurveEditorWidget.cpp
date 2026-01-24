@@ -8,8 +8,8 @@ FanCurveEditorWidget::FanCurveEditorWidget(QWidget *parent)
     : QWidget(parent)
 {
     m_points.clear();
-    // initialize 10 evenly spaced points from 20..100 with linear duty 0..100
-    const int count = 10;
+    // initialize 9 evenly spaced points from 20..100 with linear duty 0..100
+    const int count = 9;
     for (int i = 0; i < count; ++i) {
         double t = 20.0 + (80.0 * i) / (count - 1); // 20..100
         double d = (100.0 * i) / (count - 1); // 0..100
@@ -173,19 +173,21 @@ void FanCurveEditorWidget::mouseReleaseEvent(QMouseEvent*) {
 
 void FanCurveEditorWidget::contextMenuEvent(QContextMenuEvent* e) {
     QMenu menu(this);
-    QAction* add = menu.addAction("Add Point");
+    QAction* add = nullptr;
+    if (m_points.size() < 9)
+        add = menu.addAction("Add Point");
     QAction* rem = nullptr;
     int idx = -1;
     for (int i = 0; i < m_points.size(); ++i) {
         if (pointRect(m_points[i]).contains(e->pos())) {
             idx = i;
-            if (m_points.size() > 2 && i != 0 && i != m_points.size()-1)
+            if (m_points.size() > 9 && i != 0 && i != m_points.size()-1)
                 rem = menu.addAction("Remove Point");
             break;
         }
     }
     QAction* chosen = menu.exec(e->globalPos());
-    if (chosen == add) {
+    if (add && chosen == add) {
         Point pt = fromWidget(e->pos());
         addPoint(pt);
     } else if (rem && chosen == rem) {
@@ -201,7 +203,7 @@ void FanCurveEditorWidget::addPoint(const Point& pt) {
 }
 
 void FanCurveEditorWidget::removePoint(int idx) {
-    if (idx > 0 && idx < m_points.size()-1 && m_points.size() > 2) {
+    if (idx > 0 && idx < m_points.size()-1 && m_points.size() > 9) {
         m_points.remove(idx);
         update();
         emit pointsChanged(m_points);

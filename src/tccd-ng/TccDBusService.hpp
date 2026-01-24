@@ -251,16 +251,18 @@ public:
   std::string GetActiveProfileJSON();
   bool SetTempProfile( const std::string &profileName );
   bool SetTempProfileById( const std::string &id );
+  bool SetActiveProfile( const std::string &id );
   std::string GetProfilesJSON();
   std::string GetCustomProfilesJSON();
   // Fan profile get/set for editable (custom) profiles only
-  std::string GetFanProfileCPU();
   bool SetFanProfileCPU( const std::string &pointsJSON );
-  std::string GetFanProfileDGPU();
   bool SetFanProfileDGPU( const std::string &pointsJSON );
+  bool ApplyFanProfiles( const std::string &fanProfilesJSON );
+  bool RevertFanProfiles();
   std::string GetDefaultProfilesJSON();
   std::string GetDefaultValuesProfileJSON();
   bool AddCustomProfile( const std::string &profileJSON );
+  bool SaveCustomProfile( const std::string &profileJSON );
   bool DeleteCustomProfile( const std::string &profileId );
   bool UpdateCustomProfile( const std::string &profileJSON );
   std::string CopyProfile( const std::string &sourceId, const std::string &newName );
@@ -314,6 +316,7 @@ public:
 
   // signal emitters
   void emitModeReapplyPendingChanged( bool pending );
+  void emitProfileChanged( const std::string &profileId );
 
   // allow TccDBusService to access timeout handling
   friend class TccDBusService;

@@ -27,7 +27,7 @@
             "command": "./build-local.sh",
             "args": [],
             "options": {
-                "cwd": "${workspaceFolder}/ucc"
+                "cwd": "${workspaceFolder}/src/ucc"
             },
             "group": "build",
             "presentation": {
@@ -61,7 +61,7 @@
             "command": "./run-ucc-gui.sh",
             "args": [],
             "options": {
-                "cwd": "${workspaceFolder}/ucc"
+                "cwd": "${workspaceFolder}/src/ucc"
             },
             "isBackground": true,
             "presentation": {

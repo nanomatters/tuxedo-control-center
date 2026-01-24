@@ -404,15 +404,6 @@ bool TccdClient::setFanProfile( [[maybe_unused]] [[maybe_unused]] const std::str
   return false;
 }
 
-std::optional< std::string > TccdClient::getFanProfileCPU()
-{
-  if ( auto result = callMethod< QString >( "GetFanProfileCPU" ) )
-  {
-    return result->toStdString();
-  }
-  return std::nullopt;
-}
-
 bool TccdClient::setFanProfileCPU( const std::string &pointsJSON )
 {
   const QString js = QString::fromStdString( pointsJSON );
@@ -423,21 +414,31 @@ bool TccdClient::setFanProfileCPU( const std::string &pointsJSON )
   return false;
 }
 
-std::optional< std::string > TccdClient::getFanProfileDGPU()
-{
-  if ( auto result = callMethod< QString >( "GetFanProfileDGPU" ) )
-  {
-    return result->toStdString();
-  }
-  return std::nullopt;
-}
-
 bool TccdClient::setFanProfileDGPU( const std::string &pointsJSON )
 {
   const QString js = QString::fromStdString( pointsJSON );
   if ( hasMethod( m_interface.get(), "SetFanProfileDGPU" ) )
   {
     return callMethod< bool, QString >( "SetFanProfileDGPU", js ).value_or( false );
+  }
+  return false;
+}
+
+bool TccdClient::applyFanProfiles( const std::string &fanProfilesJSON )
+{
+  const QString js = QString::fromStdString( fanProfilesJSON );
+  if ( hasMethod( m_interface.get(), "ApplyFanProfiles" ) )
+  {
+    return callMethod< bool, QString >( "ApplyFanProfiles", js ).value_or( false );
+  }
+  return false;
+}
+
+bool TccdClient::revertFanProfiles()
+{
+  if ( hasMethod( m_interface.get(), "RevertFanProfiles" ) )
+  {
+    return callMethod< bool >( "RevertFanProfiles" ).value_or( false );
   }
   return false;
 }

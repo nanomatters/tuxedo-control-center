@@ -22,6 +22,8 @@
         "true": true,
         "journalctl": true,
         "busctl": true,
-        "/home/erhan/tmp/src/ucc/bin/ucc-gui": true
+        "/home/erhan/tmp/src/ucc/bin/ucc-gui": true,
+        "make": true,
+        "./build-local.sh": true
     }
 }
