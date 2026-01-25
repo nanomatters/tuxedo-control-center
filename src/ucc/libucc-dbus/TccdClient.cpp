@@ -227,6 +227,15 @@ std::optional< std::string > TccdClient::getDefaultProfilesJSON()
   return std::nullopt;
 }
 
+std::optional< std::string > TccdClient::getDefaultValuesProfileJSON()
+{
+  if ( auto result = callMethod< QString >( "GetDefaultValuesProfileJSON" ) )
+  {
+    return result->toStdString();
+  }
+  return std::nullopt;
+}
+
 std::optional< std::string > TccdClient::getCustomProfilesJSON()
 {
   if ( auto result = callMethod< QString >( "GetCustomProfilesJSON" ) )
@@ -245,6 +254,22 @@ std::optional< std::string > TccdClient::getActiveProfileJSON()
   return std::nullopt;
 }
 
+std::optional< std::string > TccdClient::getSettingsJSON()
+{
+  if ( auto result = callMethod< QString >( "GetSettingsJSON" ) )
+  {
+    return result->toStdString();
+  }
+  return std::nullopt;
+}
+
+bool TccdClient::setStateMap( const std::string &state, const std::string &profileId )
+{
+  const QString qState = QString::fromStdString( state );
+  const QString qProfileId = QString::fromStdString( profileId );
+  return callVoidMethod( "SetStateMap", qState, qProfileId );
+}
+
 bool TccdClient::setActiveProfile( const std::string &profileId )
 {
   const QString id = QString::fromStdString( profileId );
@@ -260,6 +285,11 @@ bool TccdClient::setActiveProfile( const std::string &profileId )
   return false;
 }
 
+bool TccdClient::applyProfile( const std::string &profileJSON )
+{
+  return callVoidMethod( "ApplyProfile", QString::fromStdString( profileJSON ) );
+}
+
 bool TccdClient::saveCustomProfile( [[maybe_unused]] [[maybe_unused]] const std::string &profileJSON )
 {
   return callVoidMethod( "SaveCustomProfile", QString::fromStdString( profileJSON ) );
@@ -268,6 +298,24 @@ bool TccdClient::saveCustomProfile( [[maybe_unused]] [[maybe_unused]] const std:
 bool TccdClient::deleteCustomProfile( [[maybe_unused]] const std::string &profileId )
 {
   return callVoidMethod( "DeleteCustomProfile", QString::fromStdString( profileId ) );
+}
+
+std::optional< std::string > TccdClient::getFanProfile( const std::string &name )
+{
+  if ( auto result = callMethod< QString >( "GetFanProfile", QString::fromStdString( name ) ) )
+  {
+    return result->toStdString();
+  }
+  return std::nullopt;
+}
+
+std::optional< bool > TccdClient::setFanProfile( const std::string &name, const std::string &json )
+{
+  if ( auto result = callMethod< bool >( "SetFanProfile", QString::fromStdString( name ), QString::fromStdString( json ) ) )
+  {
+    return result.value();
+  }
+  return std::nullopt;
 }
 
 // Display Control

@@ -62,18 +62,21 @@ private slots:
   void updateTrayStatus()
   {
     // Update webcam action
+
     if ( auto enabled = m_client->getWebcamEnabled() )
     {
       m_webcamAction->setChecked( *enabled );
     }
 
     // Update Fn Lock action
+
     if ( auto enabled = m_client->getFnLock() )
     {
       m_fnLockAction->setChecked( *enabled );
     }
 
     // Update active profile in menu
+
     if ( auto json = m_client->getActiveProfileJSON() )
     {
       // TODO: Parse JSON and update profile submenu

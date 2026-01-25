@@ -48,13 +48,19 @@ public:
 
   // Profile Management
   std::optional< std::string > getDefaultProfilesJSON();
+  std::optional< std::string > getDefaultValuesProfileJSON();
   std::optional< std::string > getCustomProfilesJSON();
   std::optional< std::string > getActiveProfileJSON();
+  std::optional< std::string > getSettingsJSON();
+  bool setStateMap( const std::string &state, const std::string &profileId );
   bool setActiveProfile( const std::string &profileId );
   bool setActiveProfileByName( const std::string &profileName );
+  bool applyProfile( const std::string &profileJSON );
   std::optional< std::string > getProfileIdByName( const std::string &profileName );
   bool saveCustomProfile( const std::string &profileJSON );
   bool deleteCustomProfile( const std::string &profileId );
+  std::optional< std::string > getFanProfile( const std::string &name );
+  std::optional< bool > setFanProfile( const std::string &name, const std::string &json );
 
   // Display Control
   bool setDisplayBrightness( int brightness );

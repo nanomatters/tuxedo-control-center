@@ -408,7 +408,10 @@ protected:
 
     // Get current profile and update fan logics if profile changed
     auto profile = m_getActiveProfile();
-    updateFanLogicsFromProfile( profile );
+    if ( !profile.id.empty() )
+    {
+      updateFanLogicsFromProfile( profile );
+    }
 
     const bool useFanControl = m_getFanControlEnabled();
     const int64_t timestamp = std::chrono::duration_cast< std::chrono::milliseconds >(

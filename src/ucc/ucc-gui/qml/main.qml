@@ -36,7 +36,11 @@ ApplicationWindow {
             title: qsTr("&Profiles")
             Action {
                 text: qsTr("&New Profile")
-                onTriggered: console.log("Create new profile")
+                onTriggered: {
+                    // Switch to profiles tab and focus on the text field
+                    stackView.currentIndex = 1;
+                    newProfileName.forceActiveFocus();
+                }
             }
             Action {
                 text: qsTr("&Refresh")
@@ -313,6 +317,90 @@ ApplicationWindow {
                                 }
                             }
 
+                    GroupBox {
+                        title: qsTr("Select Profile")
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 100
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            spacing: 10
+
+                            Label {
+                                text: qsTr("Active Profile:")
+                                font.bold: true
+                            }
+
+                            ComboBox {
+                                id: profileCombo
+                                Layout.fillWidth: true
+                                
+                                model: profileManager.allProfiles
+                                currentIndex: profileManager.activeProfileIndex
+
+                                onCurrentIndexChanged: {
+                                    if (currentIndex >= 0) {
+                                        profileManager.setActiveProfileByIndex(currentIndex);
+                                    }
+                                }
+
+                                delegate: ItemDelegate {
+                                    width: profileCombo.width
+                                    text: modelData
+                                    highlighted: profileCombo.highlightedIndex === index
+                                    padding: 8
+                                }
+
+                                contentItem: Text {
+                                    text: profileCombo.displayText
+                                    font: profileCombo.font
+                                    color: profileCombo.enabled ? "#000000" : "#999999"
+                                    verticalAlignment: Text.AlignVCenter
+                                    elide: Text.ElideRight
+                                    padding: 8
+                                }
+
+                                background: Rectangle {
+                                    implicitWidth: 200
+                                    implicitHeight: 40
+                                    border.color: profileCombo.activeFocus ? "#1976d2" : "#cccccc"
+                                    border.width: profileCombo.activeFocus ? 2 : 1
+                                    radius: 3
+                                    color: profileCombo.enabled ? "#ffffff" : "#f5f5f5"
+                                }
+
+                                popup: Popup {
+                                    y: profileCombo.height + 3
+                                    width: profileCombo.width
+                                    implicitHeight: contentItem.implicitHeight
+
+                                    contentItem: ListView {
+                                        clip: true
+                                        model: profileCombo.model
+                                        currentIndex: profileCombo.highlightedIndex
+
+                                        delegate: ItemDelegate {
+                                            width: parent ? parent.width : 200
+                                            text: modelData
+                                            highlighted: ListView.isCurrentItem
+                                            onClicked: {
+                                                profileCombo.currentIndex = index;
+                                                profileCombo.popup.close();
+                                            }
+                                            padding: 8
+                                        }
+
+                                        ScrollIndicator.vertical: ScrollIndicator { }
+                                    }
+
+                                    background: Rectangle {
+                                        border.color: "#cccccc"
+                                        border.width: 1
+                                        radius: 3
+                                    }
+                                }
+                            }
+
                             Label {
                                 text: qsTr("Select a profile to activate it")
                                 font.pixelSize: 12
@@ -321,8 +409,84 @@ ApplicationWindow {
                         }
                     }
 
-                    Item {
-                        Layout.fillHeight: true
+                    GroupBox {
+                        title: qsTr("Custom Profiles")
+                        Layout.fillWidth: true
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            spacing: 10
+
+                            RowLayout {
+                                spacing: 10
+
+                                TextField {
+                                    id: newProfileName
+                                    placeholderText: qsTr("Enter profile name")
+                                    Layout.fillWidth: true
+                                }
+
+                                Button {
+                                    text: qsTr("Create from Default")
+                                    onClicked: {
+                                        if (newProfileName.text.trim() !== "") {
+                                            var profileJson = profileManager.createProfileFromDefault(newProfileName.text.trim());
+                                            if (profileJson !== "") {
+                                                newProfileName.text = "";
+                                                console.log("Profile created successfully");
+                                            } else {
+                                                console.log("Failed to create profile");
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Label {
+                                text: qsTr("Custom Profiles:")
+                                font.bold: true
+                            }
+
+                            ListView {
+                                id: customProfilesList
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 200
+                                model: profileManager.customProfiles
+                                clip: true
+
+                                delegate: ItemDelegate {
+                                    width: parent.width
+                                    height: 40
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 5
+                                        spacing: 10
+
+                                        Label {
+                                            text: modelData
+                                            Layout.fillWidth: true
+                                            verticalAlignment: Text.AlignVCenter
+                                        }
+
+                                        Button {
+                                            text: qsTr("Delete")
+                                            onClicked: {
+                                                profileManager.deleteProfile(profileManager.getProfileIdByName(modelData));
+                                            }
+                                        }
+                                    }
+                                }
+
+                                ScrollIndicator.vertical: ScrollIndicator { }
+                            }
+
+                            Label {
+                                text: customProfilesList.count === 0 ? qsTr("No custom profiles") : ""
+                                font.pixelSize: 12
+                                color: "#666666"
+                            }
+                        }
                     }
                 }
             }

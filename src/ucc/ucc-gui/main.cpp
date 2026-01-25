@@ -26,6 +26,7 @@ int main( int argc, char *argv[] )
   int displayCount = 0;
   for ( int i = 1; i < argc; ++i )
   {
+
     if ( std::string( argv[i] ) == "--display" && i + 1 < argc )
     {
       displayCount = static_cast< int >( std::strtol( argv[i + 1], nullptr, 10 ) );
@@ -58,6 +59,7 @@ int main( int argc, char *argv[] )
           << Qt::endl;
 
       QCoreApplication::processEvents();
+
       if ( i < displayCount - 1 )
       {
         QThread::sleep( 1 );

@@ -18,6 +18,8 @@ public:
 
     const QVector<Point>& points() const { return m_points; }
     void setPoints(const QVector<Point>& pts);
+    void setEditable(bool editable) { m_editable = editable; }
+    bool isEditable() const { return m_editable; }
 
 signals:
     void pointsChanged(const QVector<Point>&);
@@ -32,7 +34,7 @@ protected:
 private:
     QVector<Point> m_points;
     int m_draggedIndex = -1;
-    QPoint m_dragOffset;
+    bool m_editable = true;
     QRectF pointRect(const Point &pt) const;
     QPointF toWidget(const Point &pt) const;
     Point fromWidget(const QPointF &pos) const;

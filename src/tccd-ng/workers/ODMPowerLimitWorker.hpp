@@ -61,7 +61,10 @@ public:
   void onStart() override
   {
     logLine( "ODMPowerLimitWorker: onStart() called" );
-    applyODMPowerLimits();
+    if ( !m_getActiveProfile().id.empty() )
+    {
+      applyODMPowerLimits();
+    }
   }
 
   void onWork() override

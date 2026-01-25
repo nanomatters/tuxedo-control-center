@@ -252,6 +252,7 @@ public:
   bool SetTempProfile( const std::string &profileName );
   bool SetTempProfileById( const std::string &id );
   bool SetActiveProfile( const std::string &id );
+  bool ApplyProfile( const std::string &profileJSON );
   std::string GetProfilesJSON();
   std::string GetCustomProfilesJSON();
   // Fan profile get/set for editable (custom) profiles only
@@ -266,9 +267,12 @@ public:
   bool DeleteCustomProfile( const std::string &profileId );
   bool UpdateCustomProfile( const std::string &profileJSON );
   std::string CopyProfile( const std::string &sourceId, const std::string &newName );
+  std::string GetFanProfile( const std::string &name );
+  bool SetFanProfile( const std::string &name, const std::string &json );
 
   // settings methods
   std::string GetSettingsJSON();
+  bool SetStateMap( const std::string &state, const std::string &profileId );
 
   // odm methods
   std::vector< std::string > ODMProfilesAvailable();
@@ -377,6 +381,7 @@ public:
   TccProfile getCurrentProfile() const;
   bool setCurrentProfileByName( const std::string &profileName );
   bool setCurrentProfileById( const std::string &id );
+  bool applyProfileJSON( const std::string &profileJSON );
   std::vector< TccProfile > getAllProfiles() const;
   std::vector< TccProfile > getDefaultProfiles() const;
   std::vector< TccProfile > getCustomProfiles() const;
@@ -399,6 +404,7 @@ protected:
   void onExit() override;
 
 private:
+  static constexpr const char* INTERFACE_NAME = "com.tuxedocomputers.tccd";
   TccDBusData m_dbusData;
   TuxedoIOAPI m_io;
   std::unique_ptr< sdbus::IConnection > m_connection;

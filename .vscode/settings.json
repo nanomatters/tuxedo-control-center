@@ -24,6 +24,13 @@
         "busctl": true,
         "/home/erhan/tmp/src/ucc/bin/ucc-gui": true,
         "make": true,
-        "./build-local.sh": true
+        "./build-local.sh": true,
+        "nm": true,
+        "nproc": true,
+        "run": true,
+        "ldd": true,
+        "quit": true,
+        "n": true,
+        "y": true
     }
 }

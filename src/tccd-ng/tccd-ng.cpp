@@ -146,22 +146,26 @@ int run_daemon()
     {
       syslog( LOG_WARNING, "No compatible hardware device detected" );
     }
+
+    // Initialize DBus service
+    TccDBusService dbusService;
+    syslog( LOG_INFO, "DBus service initialized" );
+
+    // Main event loop
+    while ( not g_shutdown_requested )
+    {
+      // TODO: Implement main daemon functionality
+      // - Monitor hardware state
+      // - Apply settings
+      // - Respond to DBus requests
+      // - Manage fan control, power profiles, etc.
+
+      sleep( 1 );
+    }
   }
   catch ( const std::exception& e )
   {
-    syslog( LOG_ERR, "Failed to initialize hardware interface: %s", e.what() );
-  }
-
-  // Main event loop
-  while ( not g_shutdown_requested )
-  {
-    // TODO: Implement main daemon functionality
-    // - Monitor hardware state
-    // - Apply settings
-    // - Respond to DBus requests
-    // - Manage fan control, power profiles, etc.
-
-    sleep( 1 );
+    syslog( LOG_ERR, "Failed to initialize daemon: %s", e.what() );
   }
 
   cleanup_syslog();
@@ -198,6 +202,7 @@ int main( int argc, char* argv[] )
   bool debug_mode = false;
   bool start_daemon = false;
   std::string new_settings_path;
+  std::string new_profiles_path;
 
   // parse command-line arguments
   for ( size_t i = 0; i < arguments.size(); ++i )
@@ -232,6 +237,19 @@ int main( int argc, char* argv[] )
       else
       {
         std::cerr << "Error: --new_settings requires a file path argument" << std::endl;
+        return 1;
+      }
+    }
+    else if ( arg == "--new_profiles" )
+    {
+      if ( i + 1 < arguments.size() )
+      {
+        new_profiles_path = arguments[i + 1];
+        ++i; // skip next argument
+      }
+      else
+      {
+        std::cerr << "Error: --new_profiles requires a file path argument" << std::endl;
         return 1;
       }
     }
@@ -281,26 +299,61 @@ int main( int argc, char* argv[] )
     }
   }
 
+  // handle --new_profiles: read profiles from file and update /etc/tcc/profiles
+  if ( not new_profiles_path.empty() )
+  {
+    try
+    {
+      std::ifstream file( new_profiles_path );
+
+      if ( not file )
+      {
+        std::cerr << "[Profiles] Failed to open new profiles file: " << new_profiles_path << std::endl;
+        return 1;
+      }
+
+      std::string content( ( std::istreambuf_iterator< char >( file ) ),
+                           std::istreambuf_iterator< char >() );
+      file.close();
+
+      ProfileManager profileManager;
+      auto parsedProfiles = ProfileManager::parseProfilesJSON( content );
+
+      if ( parsedProfiles.empty() )
+      {
+        std::cerr << "[Profiles] Failed to parse new profiles file" << std::endl;
+        return 1;
+      }
+
+      if ( profileManager.writeProfiles( parsedProfiles ) )
+      {
+        std::cout << "[Profiles] Successfully updated profiles from " << new_profiles_path << std::endl;
+        return 0;
+      }
+      else
+      {
+        std::cerr << "[Profiles] Failed to write updated profiles" << std::endl;
+        return 1;
+      }
+    }
+    catch ( const std::exception &e )
+    {
+      std::cerr << "[Profiles] Exception handling new_profiles: " << e.what() << std::endl;
+      return 1;
+    }
+  }
+
   // default action is to start
   if ( not debug_mode and not start_daemon and arguments.empty() )
   {
     start_daemon = true;
   }
 
-  TccDBusService dbusService;
-
-  while ( true )
-  {
-
-    sleep( 1 );
-  }
-#if 0
   if ( debug_mode )
   {
     // Debug mode: run in foreground with logging to console
     std::cout << DAEMON_NAME << " version " << VERSION << " - Debug mode" << std::endl;
     std::cout << "Running in foreground with console logging..." << std::endl;
-    // TODO: Implement debug logging
     return run_daemon();
   }
   else if ( start_daemon )
@@ -309,6 +362,6 @@ int main( int argc, char* argv[] )
     daemonize();
     return run_daemon();
   }
-#endif
+
   return 0;
 }

@@ -15,6 +15,7 @@
 
 #include "TccDBusService.hpp"
 #include "profiles/DefaultProfiles.hpp"
+#include "profiles/FanProfile.hpp"
 #include "StateUtils.hpp"
 #include "Utils.hpp"
 #include "SysfsNode.hpp"
@@ -292,16 +293,15 @@ void TccDBusInterfaceAdaptor::registerAdaptor()
     registerMethod("SetTempProfile").implementedAs([this](const std::string &profileName){ return this->SetTempProfile(profileName); }),
     registerMethod("SetTempProfileById").implementedAs([this](const std::string &id){ return this->SetTempProfileById(id); }),
     registerMethod("SetActiveProfile").implementedAs([this](const std::string &id){ return this->SetActiveProfile(id); }),
+    registerMethod("ApplyProfile").implementedAs([this](const std::string &profileJSON){ return this->ApplyProfile(profileJSON); }),
     registerMethod("GetProfilesJSON").implementedAs([this](){ return this->GetProfilesJSON(); }),
-    registerMethod("GetCustomProfilesJSON").implementedAs([this](){ return this->GetCustomProfilesJSON(); }),
     registerMethod("GetDefaultProfilesJSON").implementedAs([this](){ return this->GetDefaultProfilesJSON(); }),
     registerMethod("GetDefaultValuesProfileJSON").implementedAs([this](){ return this->GetDefaultValuesProfileJSON(); }),
-    registerMethod("AddCustomProfile").implementedAs([this](const std::string &profileJSON){ return this->AddCustomProfile(profileJSON); }),
-    registerMethod("DeleteCustomProfile").implementedAs([this](const std::string &profileId){ return this->DeleteCustomProfile(profileId); }),
-    registerMethod("UpdateCustomProfile").implementedAs([this](const std::string &profileJSON){ return this->UpdateCustomProfile(profileJSON); }),
-    registerMethod("SaveCustomProfile").implementedAs(std::function<bool(const std::string&)>([this](const std::string &profileJSON){ return this->SaveCustomProfile(profileJSON); })),
     registerMethod("CopyProfile").implementedAs([this](const std::string &sourceId, const std::string &newName){ return this->CopyProfile(sourceId, newName); }),
+    registerMethod("GetFanProfile").implementedAs([this](const std::string &name){ return this->GetFanProfile(name); }),
+    registerMethod("SetFanProfile").implementedAs([this](const std::string &name, const std::string &json){ return this->SetFanProfile(name, json); }),
     registerMethod("GetSettingsJSON").implementedAs([this](){ return this->GetSettingsJSON(); }),
+    registerMethod("SetStateMap").implementedAs([this](const std::string &state, const std::string &profileId){ return this->SetStateMap(state, profileId); }),
     registerMethod("ODMProfilesAvailable").implementedAs([this](){ return this->ODMProfilesAvailable(); }),
     registerMethod("ODMPowerLimitsJSON").implementedAs([this](){ return this->ODMPowerLimitsJSON(); }),
     registerMethod("GetKeyboardBacklightCapabilitiesJSON").implementedAs([this](){ return this->GetKeyboardBacklightCapabilitiesJSON(); }),
@@ -333,8 +333,9 @@ void TccDBusInterfaceAdaptor::registerAdaptor()
     registerMethod("GetNVIDIAPowerCTRLMaxPowerLimit").implementedAs([this](){ return this->GetNVIDIAPowerCTRLMaxPowerLimit(); }),
     registerMethod("GetNVIDIAPowerCTRLAvailable").implementedAs([this](){ return this->GetNVIDIAPowerCTRLAvailable(); }),
     registerSignal("ProfileChanged").withParameters<std::string>(),
-    registerSignal("ModeReapplyPendingChanged").withParameters<bool>()
-  ).forInterface(INTERFACE_NAME);
+    registerSignal("ModeReapplyPendingChanged").withParameters<bool>(),
+    registerSignal("PowerStateChanged").withParameters<std::string>()
+  ).forInterface("com.tuxedocomputers.tccd");
 }
 
 void TccDBusInterfaceAdaptor::resetDataCollectionTimeout()
@@ -513,7 +514,7 @@ bool TccDBusInterfaceAdaptor::SetFanProfileCPU( const std::string &pointsJSON )
   {
     auto table = ProfileManager::parseFanTableFromJSON( pointsJSON );
     std::cerr << "[DBus] Parsed table size: " << table.size() << std::endl;
-    if ( table.size() != 9 )
+    if ( table.size() != 17 )
       return false;
 
     TccProfile profile = m_service->getCurrentProfile();
@@ -548,7 +549,7 @@ bool TccDBusInterfaceAdaptor::SetFanProfileDGPU( const std::string &pointsJSON )
   {
     auto table = ProfileManager::parseFanTableFromJSON( pointsJSON );
     std::cerr << "[DBus] Parsed table size: " << table.size() << std::endl;
-    if ( table.size() != 9 )
+    if ( table.size() != 17 )
       return false;
 
     TccProfile profile = m_service->getCurrentProfile();
@@ -715,6 +716,12 @@ bool TccDBusInterfaceAdaptor::SetActiveProfile( const std::string &id )
 {
   // Immediately set the active profile
   return m_service->setCurrentProfileById( id );
+}
+
+bool TccDBusInterfaceAdaptor::ApplyProfile( const std::string &profileJSON )
+{
+  // Apply the profile configuration sent by the GUI
+  return m_service->applyProfileJSON( profileJSON );
 }
 
 std::string TccDBusInterfaceAdaptor::GetProfilesJSON()
@@ -944,12 +951,42 @@ std::string TccDBusInterfaceAdaptor::CopyProfile( const std::string &sourceId, c
   return "";
 }
 
+std::string TccDBusInterfaceAdaptor::GetFanProfile( const std::string &name )
+{
+  return getFanProfileJson(name);
+}
+
+bool TccDBusInterfaceAdaptor::SetFanProfile( const std::string &name, const std::string &json )
+{
+  return setFanProfileJson(name, json);
+}
+
 // settings methods
 
 std::string TccDBusInterfaceAdaptor::GetSettingsJSON()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.settingsJSON;
+}
+
+bool TccDBusInterfaceAdaptor::SetStateMap( const std::string &state, const std::string &profileId )
+{
+  if ( !m_service )
+  {
+    return false;
+  }
+  
+  std::cout << "[DBus] SetStateMap: " << state << " -> " << profileId << std::endl;
+  
+  // Update the settings
+  if ( state == "power_ac" || state == "power_bat" )
+  {
+    m_service->m_settings.stateMap[state] = profileId;
+    m_service->updateDBusSettingsData();
+    return true;
+  }
+  
+  return false;
 }
 
 // odm methods
@@ -1190,7 +1227,7 @@ void TccDBusInterfaceAdaptor::emitModeReapplyPendingChanged( bool pending )
 void TccDBusInterfaceAdaptor::emitProfileChanged( const std::string &profileId )
 {
   // Emit ProfileChanged signal
-  m_object.emitSignal("ProfileChanged").onInterface(INTERFACE_NAME).withArguments(profileId);
+  m_object.emitSignal("ProfileChanged").onInterface("com.tuxedocomputers.tccd").withArguments(profileId);
 }
 
 // TccDBusService implementation
@@ -1342,13 +1379,8 @@ TccDBusService::TccDBusService()
     m_dbusData.forceYUV420OutputSwitchAvailable = m_ycbcr420Worker->isAvailable();
   }
   
-  // Initialize NVIDIA Power Control listener
-  m_nvidiaPowerListener = std::make_unique< NVIDIAPowerCTRLListener >(
-    [this]() { return m_activeProfile; },
-    m_dbusData.nvidiaPowerCTRLDefaultPowerLimit,
-    m_dbusData.nvidiaPowerCTRLMaxPowerLimit,
-    m_dbusData.nvidiaPowerCTRLAvailable
-  );
+  // Initialize NVIDIA Power Control listener on first profile set
+  // Removed from constructor to prevent automatic initialization
 
   // Initialize Keyboard Backlight listener
   m_keyboardBacklightListener = std::make_unique< KeyboardBacklightListener >(
@@ -1446,7 +1478,10 @@ TccDBusService::TccDBusService()
   m_cpuPowerWorker->start();
   m_fanControlWorker->start();
   m_ycbcr420Worker->start();
-  m_nvidiaPowerListener->start();
+  if ( m_nvidiaPowerListener )
+  {
+    m_nvidiaPowerListener->start();
+  }
   m_keyboardBacklightListener->start();
   m_chargingWorker->start();
   m_displayRefreshRateWorker->start();
@@ -1601,118 +1636,105 @@ void TccDBusService::onWork()
   }
 
   // STATE-BASED PROFILE SWITCHING (like TypeScript StateSwitcherWorker)
-  // Check if settings file changed (GUI may have updated it)
+  // Disabled: tccd-ng no longer saves or monitors settings file
+  // UCC handles all profile decisions
+  
+  // Monitor power state and emit signals for UCC to handle
   {
-    auto currentSettings = m_settingsManager.readSettings();
-    if ( currentSettings.has_value() && currentSettings->stateMap != m_settings.stateMap )
+    const ProfileState newState = determineState();
+    const std::string stateKey = profileStateToString( newState );
+
+    if ( newState != m_currentState )
     {
-      std::cout << "[Settings] Settings file changed, reloading" << std::endl;
-      m_settings = *currentSettings;
-      updateDBusSettingsData();
-      // Also re-serialize profiles with updated active profile
-      serializeProfilesJSON();
+      m_currentState = newState;
+      m_currentStateProfileId = m_settings.stateMap[stateKey];
+      
+      std::cout << "[State] Power state changed to " << stateKey << std::endl;
+      
+      // Emit signal for UCC to handle profile switching
+      m_object->emitSignal("PowerStateChanged").onInterface("com.tuxedocomputers.tccd").withArguments(stateKey);
     }
   }
   
-  // Check power state and switch profiles based on stateMap
+  // Monitor power state and emit signals for UCC to handle
   {
     const ProfileState newState = determineState();
-    const std::string oldActiveProfileId = m_activeProfile.id;
-    const std::string oldActiveProfileName = m_activeProfile.name;
     const std::string stateKey = profileStateToString( newState );
-    const std::string newStateProfileId = m_settings.stateMap[stateKey];
 
-    if ( newState != m_currentState || newStateProfileId != m_currentStateProfileId )
+    if ( newState != m_currentState )
     {
-      // State changed or assigned profile for this state changed
-      // Deactivate temp profile choices on real state change
-      {
-        std::lock_guard< std::mutex > lock( m_dbusData.dataMutex );
-        m_dbusData.tempProfileName.clear();
-        m_dbusData.tempProfileId.clear();
-      }
-
-      // Set active profile according to state map
       m_currentState = newState;
-      m_currentStateProfileId = newStateProfileId;
+      m_currentStateProfileId = m_settings.stateMap[stateKey];
       
-      std::cout << "[State] Power state changed to " << stateKey 
-                << ", switching to profile: " << newStateProfileId << std::endl;
+      std::cout << "[State] Power state changed to " << stateKey << std::endl;
       
-      if ( newStateProfileId.empty() )
-      {
-        std::cerr << "[State] Undefined state mapping for " << stateKey << std::endl;
-      }
-      else
-      {
-        setCurrentProfileById( newStateProfileId );
-      }
+      // Emit signal for UCC to handle profile switching
+      m_object->emitSignal("PowerStateChanged").onInterface("com.tuxedocomputers.tccd").withArguments(stateKey);
+    }
+  }
+  
+  // Check for temp profile requests
+  const std::string oldActiveProfileId = m_activeProfile.id;
+  const std::string oldActiveProfileName = m_activeProfile.name;
+  
+  // Check if a temp profile by ID was requested
+  std::string profileId;
+  {
+    std::lock_guard< std::mutex > lock( m_dbusData.dataMutex );
+    if ( m_dbusData.tempProfileId.empty() || m_dbusData.tempProfileId == oldActiveProfileId )
+    {
+      profileId.clear();
     }
     else
     {
-      // State didn't change, check for temp profile requests
-      
-      // Check if a temp profile by ID was requested
-      std::string profileId;
-      {
-        std::lock_guard< std::mutex > lock( m_dbusData.dataMutex );
-        if ( m_dbusData.tempProfileId.empty() || m_dbusData.tempProfileId == oldActiveProfileId )
-        {
-          profileId.clear();
-        }
-        else
-        {
-          profileId = m_dbusData.tempProfileId;
-          m_dbusData.tempProfileId.clear(); // Clear before applying
-        }
-      }
-
-      if ( !profileId.empty() )
-      {
-        std::cout << "[Profile] Applying temp profile by ID: " << profileId << std::endl;
-        if ( setCurrentProfileById( profileId ) )
-        {
-          std::cout << "[Profile] Successfully switched to profile ID: " << profileId << std::endl;
-        }
-        else
-        {
-          std::cerr << "[Profile] Failed to switch to profile ID: " << profileId << std::endl;
-        }
-        
-        return; // Process one change per cycle
-      }
-      
-      // Check if a temp profile by name was requested
-      std::string profileName;
-      {
-        std::lock_guard< std::mutex > lock( m_dbusData.dataMutex );
-        if ( m_dbusData.tempProfileName.empty() || m_dbusData.tempProfileName == oldActiveProfileName )
-        {
-          profileName.clear();
-        }
-        else
-        {
-          profileName = m_dbusData.tempProfileName;
-          m_dbusData.tempProfileName.clear(); // Clear before applying
-        }
-      }
-
-      if ( !profileName.empty() )
-      {
-        
-        std::cout << "[Profile] Applying temp profile by name: " << profileName << std::endl;
-        if ( setCurrentProfileByName( profileName ) )
-        {
-          std::cout << "[Profile] Successfully switched to profile: " << profileName << std::endl;
-        }
-        else
-        {
-          std::cerr << "[Profile] Failed to switch to profile: " << profileName << std::endl;
-        }
-        
-        return; // Process one change per cycle
-      }
+      profileId = m_dbusData.tempProfileId;
+      m_dbusData.tempProfileId.clear(); // Clear before applying
     }
+  }
+
+  if ( !profileId.empty() )
+  {
+    std::cout << "[Profile] Applying temp profile by ID: " << profileId << std::endl;
+    if ( setCurrentProfileById( profileId ) )
+    {
+      std::cout << "[Profile] Successfully switched to profile ID: " << profileId << std::endl;
+    }
+    else
+    {
+      std::cerr << "[Profile] Failed to switch to profile ID: " << profileId << std::endl;
+    }
+    
+    return; // Process one change per cycle
+  }
+  
+  // Check if a temp profile by name was requested
+  std::string profileName;
+  {
+    std::lock_guard< std::mutex > lock( m_dbusData.dataMutex );
+    if ( m_dbusData.tempProfileName.empty() || m_dbusData.tempProfileName == oldActiveProfileName )
+    {
+      profileName.clear();
+    }
+    else
+    {
+      profileName = m_dbusData.tempProfileName;
+      m_dbusData.tempProfileName.clear(); // Clear before applying
+    }
+  }
+
+  if ( !profileName.empty() )
+  {
+    std::cout << "[Profile] Applying temp profile by name: " << profileName << std::endl;
+    if ( setCurrentProfileByName( profileName ) )
+    {
+      std::cout << "[Profile] Successfully switched to profile: " << profileName << std::endl;
+    }
+    else
+    {
+      std::cerr << "[Profile] Failed to switch to profile: " << profileName << std::endl;
+    }
+    
+    return; // Process one change per cycle
   }
 
   // emit signal if mode reapply is pending
@@ -1816,21 +1838,17 @@ void TccDBusService::initializeProfiles()
 {
   loadProfiles();
 
-  // Only set initial active profile if we don't have one yet
-  // Don't reset the active profile when reloading!
-  if ( m_activeProfile.id.empty() )
-  {
-    m_activeProfile = getDefaultProfile();
-  }
-  else
+  // Don't set any active profile on startup - let UCC handle this
+  // Only refresh if we already have an active profile (from autosave)
+  if ( !m_activeProfile.id.empty() )
   {
     // Refresh the active profile from the reloaded profiles
     // in case it was modified
     std::string currentId = m_activeProfile.id;
     if ( !setCurrentProfileById( currentId ) )
     {
-      // Profile no longer exists, fall back to default
-      m_activeProfile = getDefaultProfile();
+      // Profile no longer exists, clear it
+      m_activeProfile = TccProfile();
     }
   }
 
@@ -1841,7 +1859,7 @@ void TccDBusService::initializeProfiles()
   const int32_t defaultScalingMin = getCpuMinFrequency();
   const int32_t defaultScalingMax = getCpuMaxFrequency();
   
-  TccProfile baseCustomProfile = m_profileManager.getDefaultCustomProfile();
+  TccProfile baseCustomProfile = m_profileManager.getDefaultCustomProfiles()[0];
   
   // serialize all profiles to JSON
   std::ostringstream allProfilesJSON;
@@ -1889,9 +1907,9 @@ void TccDBusService::initializeProfiles()
   customProfilesJSON << "]";
 
   std::lock_guard< std::mutex > lock( m_dbusData.dataMutex );
-  m_dbusData.profilesJSON = allProfilesJSON.str();
+  m_dbusData.profilesJSON = defaultProfilesJSON.str();  // Only default profiles now
   m_dbusData.defaultProfilesJSON = defaultProfilesJSON.str();
-  m_dbusData.customProfilesJSON = customProfilesJSON.str();
+  m_dbusData.customProfilesJSON = "[]";  // Empty array since custom profiles are local
   m_dbusData.defaultValuesProfileJSON = profileToJSON( baseCustomProfile,
                                                        defaultOnlineCores,
                                                        defaultScalingMin,
@@ -1958,6 +1976,21 @@ bool TccDBusService::setCurrentProfileById( const std::string &id )
         std::cout << "[Profile] Notifying NVIDIA power control listener" << std::endl;
         m_nvidiaPowerListener->onActiveProfileChanged();
       }
+      else if ( !m_nvidiaPowerListener )
+      {
+        // Initialize NVIDIA Power Control listener on first profile set
+        m_nvidiaPowerListener = std::make_unique< NVIDIAPowerCTRLListener >(
+          [this]() { return m_activeProfile; },
+          m_dbusData.nvidiaPowerCTRLDefaultPowerLimit,
+          m_dbusData.nvidiaPowerCTRLMaxPowerLimit,
+          m_dbusData.nvidiaPowerCTRLAvailable
+        );
+        if ( m_nvidiaPowerListener && m_nvidiaPowerListener->isAvailable() )
+        {
+          std::cout << "[Profile] Notifying NVIDIA power control listener" << std::endl;
+          m_nvidiaPowerListener->onActiveProfileChanged();
+        }
+      }
       
       // Emit ProfileChanged signal for DBus clients
       if ( m_adaptor )
@@ -1981,6 +2014,46 @@ bool TccDBusService::setCurrentProfileById( const std::string &id )
   }
   
   return false;
+}
+
+bool TccDBusService::applyProfileJSON( const std::string &profileJSON )
+{
+  try
+  {
+    // Parse the profile JSON
+    auto profile = m_profileManager.parseProfileJSON( profileJSON );
+    
+    std::cout << "[Profile] Applying profile from GUI: " << profile.name << std::endl;
+    
+    // Set as active profile
+    m_activeProfile = profile;
+    updateDBusActiveProfileData();
+    
+    // Apply to workers
+    if ( m_cpuWorker )
+    {
+      std::cout << "[Profile] Applying CPU settings from profile" << std::endl;
+      m_cpuWorker->reapplyProfile();
+    }
+    if ( m_odmPowerLimitWorker )
+    {
+      std::cout << "[Profile] Applying TDP settings from profile" << std::endl;
+      m_odmPowerLimitWorker->reapplyProfile();
+    }
+    
+    // Emit ProfileChanged signal for DBus clients
+    if ( m_adaptor )
+    {
+      m_adaptor->emitProfileChanged( profile.id );
+    }
+    
+    return true;
+  }
+  catch ( const std::exception &e )
+  {
+    std::cerr << "[Profile] Failed to apply profile JSON: " << e.what() << std::endl;
+    return false;
+  }
 }
 
 std::vector< TccProfile > TccDBusService::getAllProfiles() const
@@ -2040,40 +2113,44 @@ void TccDBusService::updateDBusSettingsData()
 
 bool TccDBusService::addCustomProfile( const TccProfile &profile )
 {
-  std::cout << "[ProfileManager] Writing profile '" << profile.name << "' to disk" << std::endl;
+  std::cout << "[ProfileManager] Adding profile '" << profile.name << "' to memory" << std::endl;
   
-  if ( m_profileManager.addProfile( profile ) )
-  {
-    std::cout << "[ProfileManager] Profile written successfully, reloading all profiles" << std::endl;
-    // Reload profiles and update DBus data
-    initializeProfiles();
-    return true;
-  }
+  // Add to in-memory profiles
+  m_customProfiles.push_back( profile );
   
-  std::cerr << "[ProfileManager] Failed to write profile to disk" << std::endl;
-  return false;
+  // Update DBus data
+  updateDBusActiveProfileData();
+  
+  std::cout << "[ProfileManager] Profile added successfully" << std::endl;
+  return true;
 }
 
 bool TccDBusService::deleteCustomProfile( const std::string &profileId )
 {
-  std::cout << "[ProfileManager] Deleting profile '" << profileId << "' from disk" << std::endl;
+  std::cout << "[ProfileManager] Deleting profile '" << profileId << "' from memory" << std::endl;
   
-  if ( m_profileManager.deleteProfile( profileId ) )
+  // Remove from in-memory profiles
+  auto it = std::remove_if( m_customProfiles.begin(), m_customProfiles.end(),
+                           [&profileId]( const TccProfile &p ) { return p.id == profileId; } );
+  
+  if ( it != m_customProfiles.end() )
   {
-    std::cout << "[ProfileManager] Profile deleted successfully, reloading all profiles" << std::endl;
-    // Reload profiles and update DBus data
-    initializeProfiles();
+    m_customProfiles.erase( it, m_customProfiles.end() );
+    
+    // Update DBus data
+    updateDBusActiveProfileData();
+    
+    std::cout << "[ProfileManager] Profile deleted successfully" << std::endl;
     return true;
   }
   
-  std::cerr << "[ProfileManager] Failed to delete profile from disk" << std::endl;
+  std::cerr << "[ProfileManager] Profile not found" << std::endl;
   return false;
 }
 
 bool TccDBusService::updateCustomProfile( const TccProfile &profile )
 {
-  std::cout << "[ProfileManager] Updating profile '" << profile.name << "' on disk" << std::endl;
-  std::cout << "[ProfileManager]   Fan offset before save: " << profile.fan.offsetFanspeed << std::endl;
+  std::cout << "[ProfileManager] Updating profile '" << profile.name << "' in memory" << std::endl;
   
   // Check if this is a default (hardcoded) profile
   bool isDefaultProfile = false;
@@ -2094,32 +2171,26 @@ bool TccDBusService::updateCustomProfile( const TccProfile &profile )
     return false;
   }
   
-  if ( m_profileManager.updateProfile( profile ) )
+  // Update in-memory profile
+  auto it = std::find_if( m_customProfiles.begin(), m_customProfiles.end(),
+                         [&profile]( const TccProfile &p ) { return p.id == profile.id; } );
+  
+  if ( it != m_customProfiles.end() )
   {
-    std::cout << "[ProfileManager] Profile updated successfully, reloading all profiles" << std::endl;
-    // Reload profiles and update DBus data
-    initializeProfiles();
+    *it = profile;
     
-    // Verify the profile was reloaded correctly
-    auto allProfiles = getAllProfiles();
-    for ( const auto &p : allProfiles )
-    {
-      if ( p.id == profile.id )
-      {
-        std::cout << "[ProfileManager]   Fan offset after reload: " << p.fan.offsetFanspeed << std::endl;
-        break;
-      }
-    }
+    // Update DBus data
+    updateDBusActiveProfileData();
     
     // Update active profile if it was the one modified
     if ( m_activeProfile.id == profile.id )
     {
       std::cout << "[ProfileManager] Updated profile is active, reapplying to system" << std::endl;
+      m_activeProfile = profile;
       // Reapply the profile to actually update the hardware/system settings
       if ( setCurrentProfileById( profile.id ) )
       {
         std::cout << "[ProfileManager] Successfully reapplied updated profile to system" << std::endl;
-        std::cout << "[ProfileManager]   Active profile fan offset: " << m_activeProfile.fan.offsetFanspeed << std::endl;
       }
       else
       {
@@ -2127,10 +2198,11 @@ bool TccDBusService::updateCustomProfile( const TccProfile &profile )
       }
     }
     
+    std::cout << "[ProfileManager] Profile updated successfully" << std::endl;
     return true;
   }
   
-  std::cerr << "[ProfileManager] Failed to update profile on disk" << std::endl;
+  std::cerr << "[ProfileManager] Profile not found for update" << std::endl;
   return false;
 }
 
@@ -2393,7 +2465,7 @@ void TccDBusService::serializeProfilesJSON()
   const int32_t defaultScalingMin = getCpuMinFrequency();
   const int32_t defaultScalingMax = getCpuMaxFrequency();
   
-  TccProfile defaultProfile = m_profileManager.getDefaultCustomProfile();
+  TccProfile defaultProfile = m_profileManager.getDefaultCustomProfiles()[0];
   
   // serialize all profiles to JSON
   std::ostringstream allProfilesJSON;
@@ -2441,9 +2513,9 @@ void TccDBusService::serializeProfilesJSON()
   customProfilesJSON << "]";
 
   std::lock_guard< std::mutex > lock( m_dbusData.dataMutex );
-  m_dbusData.profilesJSON = allProfilesJSON.str();
+  m_dbusData.profilesJSON = defaultProfilesJSON.str();  // Only default profiles now
   m_dbusData.defaultProfilesJSON = defaultProfilesJSON.str();
-  m_dbusData.customProfilesJSON = customProfilesJSON.str();
+  m_dbusData.customProfilesJSON = "[]";  // Empty array since custom profiles are local
   m_dbusData.defaultValuesProfileJSON = profileToJSON( defaultProfile,
                                                        defaultOnlineCores,
                                                        defaultScalingMin,
@@ -2498,10 +2570,10 @@ void TccDBusService::fillDeviceSpecificDefaults( std::vector< TccProfile > &prof
       profile.cpu.scalingMaxFrequency = cpuMaxFreq;
     }
     
-    // Fill TDP values if missing
-    const size_t nrMissingValues = tdpInfo.size() - profile.odmPowerLimits.tdpValues.size();
-    if ( nrMissingValues > 0 )
+    // Fill TDP values if missing and hardware TDP info is available
+    if ( !tdpInfo.empty() && tdpInfo.size() > profile.odmPowerLimits.tdpValues.size() )
     {
+      const size_t nrMissingValues = tdpInfo.size() - profile.odmPowerLimits.tdpValues.size();
       std::cout << "[fillDeviceSpecificDefaults]   Adding " << nrMissingValues << " TDP values" << std::endl;
       // Add missing TDP values with max values from hardware
       for ( size_t i = profile.odmPowerLimits.tdpValues.size(); i < tdpInfo.size(); ++i )

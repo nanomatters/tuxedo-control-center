@@ -115,3 +115,6 @@ public:
 // default fan profile presets
 extern const std::vector< FanProfile > defaultFanProfiles;
 extern const FanProfile customFanPreset;
+
+std::string getFanProfileJson(const std::string &name);
+bool setFanProfileJson(const std::string &name, const std::string &json);

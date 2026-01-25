@@ -21,6 +21,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QSettings>
 #include <memory>
 #include "TccdClient.hpp"
 
@@ -61,8 +62,13 @@ public slots:
   void deleteProfile( const QString &profileId );
   QString getProfileDetails( const QString &profileId );
   QString getProfileIdByName( const QString &profileName );
+  QString createProfileFromDefault( const QString &name );
   std::vector< int > getHardwarePowerLimits();
   bool isCustomProfile( const QString &profileName ) const;
+  QString getFanProfile( const QString &name );
+  bool setFanProfile( const QString &name, const QString &json );
+  QString getSettingsJSON();
+  bool setStateMap( const QString &state, const QString &profileId );
 
 signals:
   void defaultProfilesChanged();
@@ -76,10 +82,14 @@ signals:
 private:
   void updateProfiles();
   void onProfileChanged( const std::string &profileId );
+  void onPowerStateChanged( const QString &state );
   void updateAllProfiles();
   void updateActiveProfileIndex();
+  void loadCustomProfilesFromSettings();
+  void saveCustomProfilesToSettings();
 
   std::unique_ptr< TccdClient > m_client;
+  std::unique_ptr< QSettings > m_settings;
   QStringList m_defaultProfiles;
   QStringList m_customProfiles;
   QStringList m_allProfiles;
@@ -90,6 +100,7 @@ private:
 
   QJsonArray m_defaultProfilesData;
   QJsonArray m_customProfilesData;
+  QJsonObject m_stateMap;
 };
 
 } // namespace ucc

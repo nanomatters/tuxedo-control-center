@@ -41,7 +41,6 @@ const TccProfile maxEnergySave = []()
   profile.fan.minimumFanspeed = 0;
   profile.fan.maximumFanspeed = 100;
   profile.fan.offsetFanspeed = 0;
-  profile.fan.customFanCurve = customFanPreset;
 
   profile.odmProfile.name = "power_save";
   profile.odmPowerLimits.tdpValues = { 5, 10, 15 };
@@ -72,7 +71,6 @@ const TccProfile silent = []()
   profile.fan.minimumFanspeed = 0;
   profile.fan.maximumFanspeed = 100;
   profile.fan.offsetFanspeed = 0;
-  profile.fan.customFanCurve = customFanPreset;
 
   profile.odmProfile.name = "power_save";
   profile.odmPowerLimits.tdpValues = { 10, 15, 25 };
@@ -103,7 +101,6 @@ const TccProfile office = []()
   profile.fan.minimumFanspeed = 0;
   profile.fan.maximumFanspeed = 100;
   profile.fan.offsetFanspeed = 0;
-  profile.fan.customFanCurve = customFanPreset;
 
   profile.odmProfile.name = "enthusiast";
   profile.odmPowerLimits.tdpValues = { 25, 35, 35 };
@@ -134,7 +131,6 @@ const TccProfile highPerformance = []()
   profile.fan.minimumFanspeed = 0;
   profile.fan.maximumFanspeed = 100;
   profile.fan.offsetFanspeed = 0;
-  profile.fan.customFanCurve = customFanPreset;
 
   profile.odmProfile.name = "overboost";
   profile.odmPowerLimits.tdpValues = { 60, 60, 70 };
@@ -166,10 +162,8 @@ const TccProfile defaultCustomProfile = []()
   profile.fan.minimumFanspeed = 0;
   profile.fan.maximumFanspeed = 100;
   profile.fan.offsetFanspeed = 0;
-  profile.fan.customFanCurve = customFanPreset;
 
-  // odmProfile.name is optional, leave unset
-  // odmPowerLimits.tdpValues is empty
+  profile.odmPowerLimits.tdpValues = { 60, 60, 70 };
   profile.nvidiaPowerCTRLProfile = TccNVIDIAPowerCTRLProfile(0);
 
   return profile;
@@ -199,7 +193,6 @@ const TccProfile defaultMobileCustomProfileTDP = []()
   profile.fan.minimumFanspeed = 0;
   profile.fan.maximumFanspeed = 100;
   profile.fan.offsetFanspeed = 0;
-  profile.fan.customFanCurve = customFanPreset;
 
   // odmProfile.name is optional, leave unset
   profile.odmPowerLimits.tdpValues = { 15, 25, 50 };
@@ -232,10 +225,8 @@ const TccProfile defaultMobileCustomProfileCl = []()
   profile.fan.minimumFanspeed = 0;
   profile.fan.maximumFanspeed = 100;
   profile.fan.offsetFanspeed = 0;
-  profile.fan.customFanCurve = customFanPreset;
 
-  // odmProfile.name is optional, leave unset
-  // odmPowerLimits.tdpValues is empty
+  profile.odmPowerLimits.tdpValues = { 15, 25, 50 };
   profile.nvidiaPowerCTRLProfile = TccNVIDIAPowerCTRLProfile(0);
 
   return profile;
@@ -263,7 +254,6 @@ const TccProfile highPerformance25WcTGP = []()
   profile.fan.minimumFanspeed = 0;
   profile.fan.maximumFanspeed = 100;
   profile.fan.offsetFanspeed = 0;
-  profile.fan.customFanCurve = customFanPreset;
 
   profile.odmProfile.name = "overboost";
   profile.odmPowerLimits.tdpValues = { 60, 60, 70 };
@@ -295,10 +285,8 @@ const TccProfile defaultCustomProfile25WcTGP = []()
   profile.fan.minimumFanspeed = 0;
   profile.fan.maximumFanspeed = 100;
   profile.fan.offsetFanspeed = 0;
-  profile.fan.customFanCurve = customFanPreset;
 
-  // odmProfile.name is optional, leave unset
-  // odmPowerLimits.tdpValues is empty
+  profile.odmPowerLimits.tdpValues = { 15, 25, 50 };
   profile.nvidiaPowerCTRLProfile = TccNVIDIAPowerCTRLProfile(25);
 
   return profile;
@@ -327,7 +315,6 @@ const TccProfile legacyDefault = []()
   profile.fan.minimumFanspeed = 0;
   profile.fan.maximumFanspeed = 100;
   profile.fan.offsetFanspeed = 0;
-  profile.fan.customFanCurve = customFanPreset;
 
   // odmProfile.name is optional, leave unset
   profile.odmPowerLimits.tdpValues = { 25, 35, 35 };
@@ -358,7 +345,6 @@ const TccProfile legacyCoolAndBreezy = []()
   profile.fan.minimumFanspeed = 0;
   profile.fan.maximumFanspeed = 100;
   profile.fan.offsetFanspeed = 0;
-  profile.fan.customFanCurve = customFanPreset;
 
   // odmProfile.name is optional, leave unset
   profile.odmPowerLimits.tdpValues = { 10, 15, 25 };
@@ -389,7 +375,6 @@ const TccProfile legacyPowersaveExtreme = []()
   profile.fan.minimumFanspeed = 0;
   profile.fan.maximumFanspeed = 100;
   profile.fan.offsetFanspeed = 0;
-  profile.fan.customFanCurve = customFanPreset;
 
   // odmProfile.name is optional, leave unset
   profile.odmPowerLimits.tdpValues = { 5, 10, 15 };

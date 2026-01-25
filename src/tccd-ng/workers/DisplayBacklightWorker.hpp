@@ -117,6 +117,10 @@ protected:
   {
     // Figure out which brightness percentage to set
     const TccProfile currentProfile = m_getActiveProfile();
+    
+    if ( currentProfile.id.empty() )
+      return;
+    
     int32_t brightnessPercent;
     
     if ( not currentProfile.display.useBrightness or currentProfile.display.brightness < 0 )

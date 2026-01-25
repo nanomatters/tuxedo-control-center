@@ -58,7 +58,11 @@ public:
   void onStart() override
   {
     detectProfileType();
-    applyODMProfile();
+    const TccProfile profile = m_getActiveProfile();
+    if ( !profile.id.empty() )
+    {
+      applyODMProfile();
+    }
   }
 
   void onWork() override

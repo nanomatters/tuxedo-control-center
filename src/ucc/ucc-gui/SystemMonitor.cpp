@@ -42,6 +42,7 @@ void SystemMonitor::updateMetrics()
   // Get CPU Temperature
   {
     QString cpuTemp = "--";
+
     if ( auto temp = m_client->getCpuTemperature() )
     {
       qDebug() << "[SystemMonitor] CPU temp:" << *temp;
@@ -51,6 +52,7 @@ void SystemMonitor::updateMetrics()
     {
       qDebug() << "[SystemMonitor] Failed to get CPU temperature";
     }
+
     if ( m_cpuTemp != cpuTemp )
     {
       m_cpuTemp = cpuTemp;
@@ -61,10 +63,12 @@ void SystemMonitor::updateMetrics()
   // Get CPU Frequency
   {
     QString cpuFreq = "--";
+
     if ( auto freq = m_client->getCpuFrequency() )
     {
       cpuFreq = QString::number( *freq ) + " MHz";
     }
+
     if ( m_cpuFrequency != cpuFreq )
     {
       m_cpuFrequency = cpuFreq;
@@ -75,10 +79,12 @@ void SystemMonitor::updateMetrics()
   // Get CPU Power
   {
     QString cpuPow = "--";
+
     if ( auto power = m_client->getCpuPower() )
     {
       cpuPow = QString::number( *power, 'f', 1 ) + " W";
     }
+
     if ( m_cpuPower != cpuPow )
     {
       m_cpuPower = cpuPow;
@@ -89,6 +95,7 @@ void SystemMonitor::updateMetrics()
   // Get GPU Temperature
   {
     QString gpuTemp = "--";
+
     if ( auto temp = m_client->getGpuTemperature() )
     {
       qDebug() << "[SystemMonitor] GPU temp:" << *temp;
@@ -108,6 +115,7 @@ void SystemMonitor::updateMetrics()
   // Get GPU Frequency
   {
     QString gpuFreq = "--";
+
     if ( auto freq = m_client->getGpuFrequency() )
     {
       qDebug() << "[SystemMonitor] GPU freq:" << *freq;
@@ -117,6 +125,7 @@ void SystemMonitor::updateMetrics()
     {
       qDebug() << "[SystemMonitor] Failed to get GPU frequency";
     }
+
     if ( m_gpuFrequency != gpuFreq )
     {
       m_gpuFrequency = gpuFreq;
@@ -127,6 +136,7 @@ void SystemMonitor::updateMetrics()
   // Get GPU Power
   {
     QString gpuPow = "--";
+
     if ( auto power = m_client->getGpuPower() )
     {
       gpuPow = QString::number( *power, 'f', 1 ) + " W";
@@ -141,6 +151,7 @@ void SystemMonitor::updateMetrics()
   // Get Fan Speed
   {
     QString fanSpd = "--";
+
     if ( auto rpm = m_client->getFanSpeedRPM() )
     {
       qDebug() << "[SystemMonitor] Fan speed:" << *rpm << "RPM";
@@ -150,6 +161,7 @@ void SystemMonitor::updateMetrics()
     {
       qDebug() << "[SystemMonitor] Failed to get fan speed";
     }
+
     if ( m_fanSpeed != fanSpd )
     {
       m_fanSpeed = fanSpd;
@@ -160,6 +172,7 @@ void SystemMonitor::updateMetrics()
   // Get GPU Fan Speed
   {
     QString fanSpd = "--";
+
     if ( auto rpm = m_client->getGpuFanSpeedRPM() )
     {
       qDebug() << "[SystemMonitor] GPU fan speed:" << *rpm << "RPM";
@@ -177,8 +190,10 @@ void SystemMonitor::updateMetrics()
   }
 
   // Get display brightness
+
   if ( auto brightness = m_client->getDisplayBrightness() )
   {
+
     if ( m_displayBrightness != *brightness )
     {
       m_displayBrightness = *brightness;

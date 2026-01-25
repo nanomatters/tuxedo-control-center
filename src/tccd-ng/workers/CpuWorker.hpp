@@ -52,7 +52,7 @@ public:
 
   void onStart() override
   {
-    if ( m_getCpuSettingsEnabled() )
+    if ( m_getCpuSettingsEnabled() && !m_getActiveProfile().id.empty() )
     {
       applyCpuProfile( m_getActiveProfile() );
     }

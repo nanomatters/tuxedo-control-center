@@ -8,8 +8,8 @@ FanCurveEditorWidget::FanCurveEditorWidget(QWidget *parent)
     : QWidget(parent)
 {
     m_points.clear();
-    // initialize 9 evenly spaced points from 20..100 with linear duty 0..100
-    const int count = 9;
+    // initialize 17 evenly spaced points from 20..100 with linear duty 0..100
+    const int count = 17;
     for (int i = 0; i < count; ++i) {
         double t = 20.0 + (80.0 * i) / (count - 1); // 20..100
         double d = (100.0 * i) / (count - 1); // 0..100
@@ -85,16 +85,16 @@ void FanCurveEditorWidget::paintEvent(QPaintEvent*) {
         p.drawText(labelRect, Qt::AlignRight|Qt::AlignVCenter, label);
     }
 
-    // X grid/ticks/labels (20-100°C every 10°C)
-    for (int i = 0; i <= 8; ++i) {
-        double frac = i / 8.0;
+    // X grid/ticks/labels (20-100°C every 5°C)
+    for (int i = 0; i <= 16; ++i) {
+        double frac = i / 16.0;
         qreal x = plotRect.left() + frac * plotRect.width();
         qreal xx = qRound(x) + 0.5;
         // grid line
         p.setPen(gridColor);
         p.drawLine(QPointF(xx, qRound(plotRect.top()) + 0.5), QPointF(xx, qRound(plotRect.bottom()) + 0.5));
         // tick label
-        int temp = 20 + i * 10;
+        int temp = 20 + i * 5;
         QString label = QString::number(temp) + QChar(0x00B0) + "C";
         p.setPen(labelColor);
         QRectF labelRect(xx-20, plotRect.bottom()+12, 40, 20);
@@ -137,66 +137,65 @@ void FanCurveEditorWidget::paintEvent(QPaintEvent*) {
     // Draw points
     for (int i = 0; i < m_points.size(); ++i) {
         QRectF r = pointRect(m_points[i]);
-        p.setBrush(Qt::white);
-        p.setPen(QPen(QColor("#3fa9f5"), 2));
+        if (m_editable) {
+            p.setBrush(Qt::white);
+            p.setPen(QPen(QColor("#3fa9f5"), 2));
+        } else {
+            p.setBrush(QColor("#666666"));
+            p.setPen(QPen(QColor("#999999"), 2));
+        }
         p.drawEllipse(r);
     }
 }
 
 void FanCurveEditorWidget::mousePressEvent(QMouseEvent* e) {
+    if (!m_editable) return;
     for (int i = 0; i < m_points.size(); ++i) {
         if (pointRect(m_points[i]).contains(e->pos())) {
             m_draggedIndex = i;
-            m_dragOffset = e->pos() - toWidget(m_points[i]).toPoint();
             return;
         }
     }
 }
 
 void FanCurveEditorWidget::mouseMoveEvent(QMouseEvent* e) {
-    if (m_draggedIndex >= 0) {
-        QPointF pos = e->pos() - m_dragOffset;
-        Point pt = fromWidget(pos);
-        // Clamp endpoints
-        if (m_draggedIndex == 0) pt.temp = 20;
-        if (m_draggedIndex == m_points.size()-1) pt.temp = 100;
-        m_points[m_draggedIndex] = pt;
-        sortPoints();
-        update();
-        emit pointsChanged(m_points);
-    }
+    if (!m_editable || m_draggedIndex < 0) return;
+    // Calculate fixed temperature for this point index (one every 5°C from 20°C to 100°C)
+    double fixedTemp = 20.0 + (5.0 * m_draggedIndex);
+    
+    // Calculate duty from mouse Y position
+    const int top = 28, bottom = 68;
+    double plotH = height() - top - bottom;
+    double duty = (1.0 - (e->pos().y() - top) / plotH) * 100.0;
+    duty = std::clamp(duty, 0.0, 100.0);
+    
+    m_points[m_draggedIndex] = {fixedTemp, duty};
+    // No need to sort since temperatures are fixed in order
+    update();
+    emit pointsChanged(m_points);
 }
 
 void FanCurveEditorWidget::mouseReleaseEvent(QMouseEvent*) {
     m_draggedIndex = -1;
 }
 
-void FanCurveEditorWidget::contextMenuEvent(QContextMenuEvent* e) {
-    QMenu menu(this);
-    QAction* add = nullptr;
-    if (m_points.size() < 9)
-        add = menu.addAction("Add Point");
-    QAction* rem = nullptr;
-    int idx = -1;
-    for (int i = 0; i < m_points.size(); ++i) {
-        if (pointRect(m_points[i]).contains(e->pos())) {
-            idx = i;
-            if (m_points.size() > 9 && i != 0 && i != m_points.size()-1)
-                rem = menu.addAction("Remove Point");
-            break;
-        }
-    }
-    QAction* chosen = menu.exec(e->globalPos());
-    if (add && chosen == add) {
-        Point pt = fromWidget(e->pos());
-        addPoint(pt);
-    } else if (rem && chosen == rem) {
-        removePoint(idx);
-    }
+void FanCurveEditorWidget::contextMenuEvent(QContextMenuEvent*) {
+    // No context menu - points are fixed
 }
 
 void FanCurveEditorWidget::addPoint(const Point& pt) {
-    m_points.push_back(pt);
+    // Snap temperature to nearest 5°C grid position
+    double snappedTemp = std::round((pt.temp - 20.0) / 5.0) * 5.0 + 20.0;
+    snappedTemp = std::clamp(snappedTemp, 20.0, 100.0);
+    
+    // Check if a point already exists at this temperature
+    for (const auto& existingPt : m_points) {
+        if (std::abs(existingPt.temp - snappedTemp) < 1.0) {
+            return; // Don't add duplicate
+        }
+    }
+    
+    m_points.push_back({snappedTemp, pt.duty});
     sortPoints();
     update();
     emit pointsChanged(m_points);

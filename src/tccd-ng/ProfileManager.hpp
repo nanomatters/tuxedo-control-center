@@ -621,6 +621,55 @@ public:
     return profile;
   }
 
+  /**
+   * @brief Parse JSON array of profiles
+   * @param json JSON string containing profile array
+   * @return Vector of parsed profiles
+   */
+  [[nodiscard]] static std::vector< TccProfile > parseProfilesJSON( const std::string &json )
+  {
+    std::vector< TccProfile > profiles;
+    
+    // Simple JSON array parser
+    size_t pos = json.find( '[' );
+    if ( pos == std::string::npos )
+    {
+      return profiles;
+    }
+
+    size_t depth = 0;
+    size_t start = pos + 1;
+    
+    for ( size_t i = pos; i < json.length(); ++i )
+    {
+      char c = json[ i ];
+      
+      if ( c == '{' )
+      {
+        if ( depth == 0 )
+        {
+          start = i;
+        }
+        ++depth;
+      }
+      else if ( c == '}' )
+      {
+        --depth;
+        if ( depth == 0 )
+        {
+          std::string profileJson = json.substr( start, i - start + 1 );
+          auto profile = parseProfileJSON( profileJson );
+          if ( !profile.id.empty() )
+          {
+            profiles.push_back( profile );
+          }
+        }
+      }
+    }
+
+    return profiles;
+  }
+
 private:
   std::string m_profilesPath;
   std::string m_settingsPath;
@@ -713,55 +762,6 @@ private:
     }
     
     return modified;
-  }
-
-  /**
-   * @brief Parse JSON array of profiles
-   * @param json JSON string containing profile array
-   * @return Vector of parsed profiles
-   */
-  [[nodiscard]] static std::vector< TccProfile > parseProfilesJSON( const std::string &json )
-  {
-    std::vector< TccProfile > profiles;
-    
-    // Simple JSON array parser
-    size_t pos = json.find( '[' );
-    if ( pos == std::string::npos )
-    {
-      return profiles;
-    }
-
-    size_t depth = 0;
-    size_t start = pos + 1;
-    
-    for ( size_t i = pos; i < json.length(); ++i )
-    {
-      char c = json[ i ];
-      
-      if ( c == '{' )
-      {
-        if ( depth == 0 )
-        {
-          start = i;
-        }
-        ++depth;
-      }
-      else if ( c == '}' )
-      {
-        --depth;
-        if ( depth == 0 )
-        {
-          std::string profileJson = json.substr( start, i - start + 1 );
-          auto profile = parseProfileJSON( profileJson );
-          if ( !profile.id.empty() )
-          {
-            profiles.push_back( profile );
-          }
-        }
-      }
-    }
-
-    return profiles;
   }
 
   /**

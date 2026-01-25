@@ -15,6 +15,13 @@
 
 #include "ProfileManager.hpp"
 #include <QDebug>
+#include <QSettings>
+#include <QStandardPaths>
+#include <QDir>
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QUuid>
 
 namespace ucc
 {
@@ -22,9 +29,11 @@ namespace ucc
 ProfileManager::ProfileManager( QObject *parent )
   : QObject( parent )
   , m_client( std::make_unique< TccdClient >( this ) )
+  , m_settings( std::make_unique< QSettings >( QDir::homePath() + "/.config/uccrc", QSettings::IniFormat, this ) )
 {
   FILE *log = fopen( "/tmp/ucc-debug.log", "a" );
   fprintf( log, "ProfileManager constructor called\n" );
+  fprintf( log, "QSettings file path: %s\n", m_settings->fileName().toStdString().c_str() );
   fflush( log );
   
   m_connected = m_client->isConnected();
@@ -44,6 +53,19 @@ ProfileManager::ProfileManager( QObject *parent )
       onProfileChanged( profileId.toStdString() );
     } );
 
+    // Connect to power state changed signal
+    connect( m_client.get(), &TccdClient::powerStateChanged,
+             this, [this]( const QString &state ) {
+      onPowerStateChanged( state );
+    } );
+
+    // Load custom profiles from local storage
+    loadCustomProfilesFromSettings();
+    
+    // No need to send profiles to tccd-ng; UCC handles profile application
+    
+    // No need to set stateMap in tccd-ng; UCC handles power state changes
+    
     // DO NOT load profiles here - defer to after signals are connected
     fprintf( log, "NOT calling updateProfiles() in constructor - will be called later\n" );
     fflush( log );
@@ -72,96 +94,88 @@ void ProfileManager::updateProfiles()
   fprintf( log, "updateProfiles() called\n" );
   fflush( log );
   
-  // Get default profiles
-  if ( auto json = m_client->getDefaultProfilesJSON() )
-  {
-    fprintf( log, "Got default profiles JSON\n" );
-    fflush( log );
-    
-    QJsonDocument doc = QJsonDocument::fromJson( QString::fromStdString( *json ).toUtf8() );
-    if ( doc.isArray() )
-    {
-      m_defaultProfilesData = doc.array();
-      m_defaultProfiles.clear();
-      fprintf( log, "Default profiles count: %ld\n", (long)m_defaultProfilesData.size() );
-      fflush( log );
-      
-      for ( const auto &profile : m_defaultProfilesData )
+  // Fetch default profiles if not already loaded
+  if (m_defaultProfilesData.isEmpty()) {
+    try {
+      if ( auto json = m_client->getDefaultProfilesJSON() )
       {
-        if ( profile.isObject() )
+        QJsonDocument doc = QJsonDocument::fromJson( QString::fromStdString( *json ).toUtf8() );
+        if ( doc.isArray() )
         {
-          QString name = profile.toObject()["name"].toString();
-          m_defaultProfiles.append( name );
-          fprintf( log, "  Added default profile: %s\n", name.toStdString().c_str() );
-          fflush( log );
+          m_defaultProfilesData = doc.array();
+          m_defaultProfiles.clear();
+          for ( const auto &profile : m_defaultProfilesData )
+          {
+            if ( profile.isObject() )
+            {
+              QString name = profile.toObject()["name"].toString();
+              if ( !name.isEmpty() )
+              {
+                m_defaultProfiles.append( name );
+              }
+            }
+          }
         }
       }
-      emit defaultProfilesChanged();
+    } catch (const std::exception &e) {
+      qWarning() << "Failed to get default profiles:" << e.what();
     }
   }
-  else
-  {
-    fprintf( log, "ERROR: Failed to get default profiles JSON\n" );
+  
+  // Default profiles are cached
+  emit defaultProfilesChanged();
+
+  // Custom profiles are loaded from local storage, no need to fetch from server
+  emit customProfilesChanged();
+
+  // Get active profile - but prefer locally stored active profile
+  if (m_activeProfile.isEmpty() || !m_allProfiles.contains(m_activeProfile)) {
+    if ( auto json = m_client->getActiveProfileJSON() )
+    {
+      fprintf( log, "Got active profile JSON from server\n" );
+      fflush( log );
+      
+      QJsonDocument doc = QJsonDocument::fromJson( QString::fromStdString( *json ).toUtf8() );
+
+      if ( doc.isObject() )
+      {
+        QString name = doc.object()["name"].toString();
+        fprintf( log, "Active profile name from server: %s\n", name.toStdString().c_str() );
+        fflush( log );
+        
+
+        if ( m_activeProfile != name )
+        {
+          m_activeProfile = name;
+          m_settings->setValue("activeProfile", name);
+          emit activeProfileChanged();
+        }
+      }
+    }
+    else
+    {
+      fprintf( log, "ERROR: Failed to get active profile JSON from server\n" );
+      fflush( log );
+      // If we can't get from server and don't have a valid local one, default to "Default"
+      if (m_activeProfile.isEmpty() || !m_allProfiles.contains(m_activeProfile)) {
+        m_activeProfile = "Default";
+        m_settings->setValue("activeProfile", "Default");
+        fprintf( log, "Setting default active profile: Default\n" );
+        fflush( log );
+      }
+    }
+  } else {
+    fprintf( log, "Using locally stored active profile: %s\n", m_activeProfile.toStdString().c_str() );
     fflush( log );
   }
 
-  // Get custom profiles
-  if ( auto json = m_client->getCustomProfilesJSON() )
+  // Apply mains profile since UCC starts in mains mode
+  QString mainsProfile = m_stateMap["power_ac"].toString();
+  if ( !mainsProfile.isEmpty() && m_allProfiles.contains( mainsProfile ) )
   {
-    fprintf( log, "Got custom profiles JSON\n" );
+    fprintf( log, "Applying mains profile: %s\n", mainsProfile.toStdString().c_str() );
     fflush( log );
-    
-    QJsonDocument doc = QJsonDocument::fromJson( QString::fromStdString( *json ).toUtf8() );
-    if ( doc.isArray() )
-    {
-      m_customProfilesData = doc.array();
-      m_customProfiles.clear();
-      fprintf( log, "Custom profiles count: %ld\n", (long)m_customProfilesData.size() );
-      fflush( log );
-      
-      for ( const auto &profile : m_customProfilesData )
-      {
-        if ( profile.isObject() )
-        {
-          QString name = profile.toObject()["name"].toString();
-          m_customProfiles.append( name );
-          fprintf( log, "  Added custom profile: %s\n", name.toStdString().c_str() );
-          fflush( log );
-        }
-      }
-      emit customProfilesChanged();
-    }
-  }
-  else
-  {
-    fprintf( log, "ERROR: Failed to get custom profiles JSON\n" );
-    fflush( log );
-  }
-
-  // Get active profile
-  if ( auto json = m_client->getActiveProfileJSON() )
-  {
-    fprintf( log, "Got active profile JSON\n" );
-    fflush( log );
-    
-    QJsonDocument doc = QJsonDocument::fromJson( QString::fromStdString( *json ).toUtf8() );
-    if ( doc.isObject() )
-    {
-      QString name = doc.object()["name"].toString();
-      fprintf( log, "Active profile name: %s\n", name.toStdString().c_str() );
-      fflush( log );
-      
-      if ( m_activeProfile != name )
-      {
-        m_activeProfile = name;
-        emit activeProfileChanged();
-      }
-    }
-  }
-  else
-  {
-    fprintf( log, "ERROR: Failed to get active profile JSON\n" );
-    fflush( log );
+    setActiveProfile( mainsProfile );
   }
 
   // Update combined list and index
@@ -183,9 +197,11 @@ void ProfileManager::setActiveProfile( const QString &profileId )
   // Search in default profiles
   for ( const auto &profile : m_defaultProfilesData )
   {
+
     if ( profile.isObject() )
     {
       QJsonObject obj = profile.toObject();
+
       if ( obj["name"].toString() == profileId )
       {
         actualId = obj["id"].toString();
@@ -195,13 +211,16 @@ void ProfileManager::setActiveProfile( const QString &profileId )
   }
   
   // Search in custom profiles if not found
+
   if ( actualId == profileId )
   {
     for ( const auto &profile : m_customProfilesData )
     {
+
       if ( profile.isObject() )
       {
         QJsonObject obj = profile.toObject();
+
         if ( obj["name"].toString() == profileId )
         {
           actualId = obj["id"].toString();
@@ -211,41 +230,168 @@ void ProfileManager::setActiveProfile( const QString &profileId )
     }
   }
   
-  if ( m_client->setActiveProfile( actualId.toStdString() ) )
-  {
-    qDebug() << "Profile activated:" << profileId << "(ID:" << actualId << ")";
-    updateProfiles();
+  // Check if this is a custom profile
+  bool isCustom = false;
+  QString profileData;
+  for (const auto &profile : m_customProfilesData) {
+    QJsonObject obj = profile.toObject();
+    if (obj.value("id").toString() == actualId) {
+      isCustom = true;
+      profileData = QJsonDocument(obj).toJson(QJsonDocument::Compact);
+      break;
+    }
   }
-  else
-  {
-    emit error( "Failed to activate profile: " + profileId );
+  
+  bool success = false;
+  if (isCustom && !profileData.isEmpty()) {
+    // Send full profile data for custom profiles
+    try {
+      success = m_client->applyProfile(profileData.toStdString());
+    } catch (const std::exception &e) {
+      qWarning() << "Failed to apply custom profile:" << e.what();
+    }
+    qDebug() << "Custom profile applied:" << profileId << "(ID:" << actualId << ")";
+  } else {
+    // Use ID for default profiles
+    try {
+      success = m_client->setActiveProfile(actualId.toStdString());
+    } catch (const std::exception &e) {
+      qWarning() << "Failed to set active profile:" << e.what();
+    }
+    qDebug() << "Default profile activated:" << profileId << "(ID:" << actualId << ")";
+  }
+  
+  // Always update local state and emit signals, regardless of DBus success
+  // The UI should reflect the selected profile even if application to system fails
+  if (m_activeProfile != profileId) {
+    m_activeProfile = profileId;
+    m_settings->setValue("activeProfile", profileId);
+    emit activeProfileChanged();
+  }
+  updateAllProfiles();
+  updateActiveProfileIndex();
+  
+  if (!success) {
+    emit error("Failed to activate profile on system: " + profileId);
   }
 }
 
 void ProfileManager::saveProfile( const QString &profileJSON )
 {
-  if ( m_client->saveCustomProfile( profileJSON.toStdString() ) )
-  {
-    qDebug() << "Profile saved successfully";
-    updateProfiles();
+  QJsonDocument doc = QJsonDocument::fromJson(profileJSON.toUtf8());
+  if (!doc.isObject()) {
+    emit error("Invalid profile JSON");
+    return;
   }
-  else
-  {
-    emit error( "Failed to save profile" );
+  
+  QJsonObject profileObj = doc.object();
+  QString profileId = profileObj.value("id").toString();
+  QString profileName = profileObj.value("name").toString();
+  
+  if (profileId.isEmpty() || profileName.isEmpty()) {
+    emit error("Profile missing id or name");
+    return;
   }
+  
+  // Check if profile already exists
+  bool exists = false;
+  for (int i = 0; i < m_customProfilesData.size(); ++i) {
+    QJsonObject existingProfile = m_customProfilesData[i].toObject();
+    if (existingProfile.value("id").toString() == profileId) {
+      // Update existing profile
+      m_customProfilesData[i] = profileObj;
+      exists = true;
+      break;
+    }
+  }
+  
+  if (!exists) {
+    // Add new profile
+    m_customProfilesData.append(profileObj);
+    m_customProfiles.append(profileName);
+  } else {
+    // Update name in the list if it changed
+    int index = m_customProfiles.indexOf(profileName);
+    if (index == -1) {
+      // Name changed, update the list
+      for (int i = 0; i < m_customProfilesData.size(); ++i) {
+        QJsonObject existingProfile = m_customProfilesData[i].toObject();
+        if (existingProfile.value("id").toString() == profileId) {
+          QString oldName = existingProfile.value("name").toString();
+          m_customProfiles.replace(m_customProfiles.indexOf(oldName), profileName);
+          break;
+        }
+      }
+    }
+  }
+  
+  // Save to local storage
+  saveCustomProfilesToSettings();
+  
+  // Update the UI
+  updateAllProfiles();
+  
+  qDebug() << "Profile saved locally:" << profileName;
 }
 
 void ProfileManager::deleteProfile( const QString &profileId )
 {
-  if ( m_client->deleteCustomProfile( profileId.toStdString() ) )
-  {
-    qDebug() << "Profile deleted:" << profileId;
-    updateProfiles();
+  // Find and remove the profile
+  for (int i = 0; i < m_customProfilesData.size(); ++i) {
+    QJsonObject profileObj = m_customProfilesData[i].toObject();
+    if (profileObj.value("id").toString() == profileId) {
+      QString profileName = profileObj.value("name").toString();
+      m_customProfilesData.removeAt(i);
+      m_customProfiles.removeAll(profileName);
+      
+      // Save to local storage
+      saveCustomProfilesToSettings();
+      
+      // Update the UI
+      updateAllProfiles();
+      
+      qDebug() << "Profile deleted locally:" << profileName;
+      return;
+    }
   }
-  else
-  {
-    emit error( "Failed to delete profile: " + profileId );
+  
+  emit error("Profile not found: " + profileId);
+}
+
+QString ProfileManager::createProfileFromDefault( const QString &name )
+{
+  // Get default profile template from server
+  if (auto defaultJson = m_client->getDefaultValuesProfileJSON()) {
+    QJsonDocument doc = QJsonDocument::fromJson(QString::fromStdString(*defaultJson).toUtf8());
+    if (doc.isObject()) {
+      QJsonObject profileObj = doc.object();
+      
+      // Generate a unique ID
+      QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+      
+      // Set the name and ID
+      profileObj["name"] = name;
+      profileObj["id"] = id;
+      
+      // Add to custom profiles
+      m_customProfilesData.append(profileObj);
+      m_customProfiles.append(name);
+      
+      // Save to local storage
+      saveCustomProfilesToSettings();
+      
+      // Update the UI
+      updateAllProfiles();
+      
+      qDebug() << "Created new profile from default:" << name;
+      
+      // Return the profile JSON
+      return QJsonDocument(profileObj).toJson(QJsonDocument::Compact);
+    }
   }
+  
+  emit error("Failed to get default profile template");
+  return QString();
 }
 
 QString ProfileManager::getProfileDetails( const QString &profileId )
@@ -298,6 +444,55 @@ void ProfileManager::onProfileChanged( const std::string &profileId )
 {
   qDebug() << "Profile changed signal:" << QString::fromStdString( profileId );
   updateProfiles();
+}
+
+void ProfileManager::onPowerStateChanged( const QString &state )
+{
+  qDebug() << "Power state changed:" << state;
+  
+  QString profileId = m_stateMap[state].toString();
+  
+  if ( profileId.isEmpty() )
+  {
+    qWarning() << "No profile mapped for state:" << state;
+    return;
+  }
+  
+  qDebug() << "Applying profile" << profileId << "for power state" << state;
+  
+  QString profileJson = getProfileDetails( profileId );
+  if ( !profileJson.isEmpty() )
+  {
+    try {
+      m_client->applyProfile( profileJson.toStdString() );
+    } catch (const std::exception &e) {
+      qWarning() << "Failed to apply profile:" << e.what();
+      return;
+    }
+    // Update active profile
+    for ( const auto &profile : m_defaultProfilesData )
+    {
+      if ( profile.toObject()["id"].toString() == profileId )
+      {
+        m_activeProfile = profile.toObject()["name"].toString();
+        emit activeProfileChanged();
+        return;
+      }
+    }
+    for ( const auto &profile : m_customProfilesData )
+    {
+      if ( profile.toObject()["id"].toString() == profileId )
+      {
+        m_activeProfile = profile.toObject()["name"].toString();
+        emit activeProfileChanged();
+        return;
+      }
+    }
+  }
+  else
+  {
+    qWarning() << "Profile not found:" << profileId;
+  }
 }
 
 void ProfileManager::updateAllProfiles()
@@ -389,6 +584,117 @@ bool ProfileManager::isCustomProfile( const QString &profileName ) const
 {
   // A profile is custom if it's in the custom profiles list
   return m_customProfiles.contains( profileName );
+}
+
+void ProfileManager::loadCustomProfilesFromSettings()
+{
+  m_customProfilesData = QJsonArray();
+  m_customProfiles.clear();
+  
+  // Load custom profiles from QSettings
+  QString profilesJson = m_settings->value("customProfiles", "{}").toString();
+  qDebug() << "Loading custom profiles from settings, JSON:" << profilesJson;
+  QJsonDocument doc = QJsonDocument::fromJson(profilesJson.toUtf8());
+  
+  if (doc.isArray()) {
+    m_customProfilesData = doc.array();
+    for (const QJsonValue &value : m_customProfilesData) {
+      if (value.isObject()) {
+        QJsonObject profileObj = value.toObject();
+        QString name = profileObj.value("name").toString();
+        if (!name.isEmpty()) {
+          m_customProfiles.append(name);
+          qDebug() << "Loaded custom profile:" << name;
+        }
+      }
+    }
+  }
+  
+  // Load active profile from settings
+  QString activeProfileName = m_settings->value("activeProfile", "Default").toString();
+  if (m_allProfiles.contains(activeProfileName) || m_customProfiles.contains(activeProfileName)) {
+    m_activeProfile = activeProfileName;
+    qDebug() << "Loaded active profile from settings:" << m_activeProfile;
+  } else {
+    m_activeProfile = "Default"; // fallback
+    qDebug() << "Active profile from settings not found, using Default";
+  }
+  
+  // Load stateMap from settings
+  QString stateMapJson = m_settings->value("stateMap", "{}").toString();
+  qDebug() << "Loading stateMap from settings, JSON:" << stateMapJson;
+  QJsonDocument stateMapDoc = QJsonDocument::fromJson(stateMapJson.toUtf8());
+  if (stateMapDoc.isObject()) {
+    m_stateMap = stateMapDoc.object();
+    qDebug() << "Loaded stateMap:" << m_stateMap;
+  } else {
+    // Default stateMap
+    m_stateMap["power_ac"] = "__default_custom_profile__";
+    m_stateMap["power_bat"] = "__default_custom_profile__";
+  }
+  
+  qDebug() << "Loaded" << m_customProfiles.size() << "custom profiles from local storage";
+}
+
+void ProfileManager::saveCustomProfilesToSettings()
+{
+  QJsonDocument doc(m_customProfilesData);
+  QString jsonStr = doc.toJson(QJsonDocument::Compact);
+  qDebug() << "Saving custom profiles to settings file:" << m_settings->fileName();
+  qDebug() << "JSON:" << jsonStr;
+  m_settings->setValue("customProfiles", jsonStr);
+  
+  // Save stateMap
+  QJsonDocument stateMapDoc(m_stateMap);
+  QString stateMapJson = stateMapDoc.toJson(QJsonDocument::Compact);
+  qDebug() << "Saving stateMap:" << stateMapJson;
+  m_settings->setValue("stateMap", stateMapJson);
+  
+  m_settings->sync();
+  qDebug() << "QSettings sync completed";
+  
+  qDebug() << "Saved" << m_customProfilesData.size() << "custom profiles to local storage";
+}
+
+QString ProfileManager::getFanProfile( const QString &name )
+{
+  if ( auto json = m_client->getFanProfile( name.toStdString() ) )
+  {
+    return QString::fromStdString( *json );
+  }
+  return "{}";
+}
+
+bool ProfileManager::setFanProfile( const QString &name, const QString &json )
+{
+  if ( auto result = m_client->setFanProfile( name.toStdString(), json.toStdString() ) )
+  {
+    return result.value();
+  }
+  return false;
+}
+
+QString ProfileManager::getSettingsJSON()
+{
+  try {
+    if ( auto json = m_client->getSettingsJSON() )
+    {
+      return QString::fromStdString( *json );
+    }
+  } catch (const std::exception &e) {
+    qWarning() << "Failed to get settings JSON:" << e.what();
+  }
+  return "{}";
+}
+
+bool ProfileManager::setStateMap( const QString &state, const QString &profileId )
+{
+  // Update local stateMap
+  m_stateMap[state] = profileId;
+  saveCustomProfilesToSettings();
+  
+  // Update tccd-ng
+  return m_client->setStateMap( state.toStdString(), profileId.toStdString() );
 }
 
 } // namespace ucc

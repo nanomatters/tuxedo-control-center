@@ -21,28 +21,45 @@
 #include "FanCurveEditorWidget.hpp"
 #include "../libucc-dbus/TccdClient.hpp"
 
+#include <QtWidgets/QTableWidget>
+#include <QtWidgets/QHeaderView>
+
 
 // Helper widget for rotated y-axis label
-class RotatedLabel : public QLabel {
+class RotatedLabel : public QLabel
+{
 public:
-  explicit RotatedLabel(const QString &text, QWidget *parent = nullptr) : QLabel(text, parent) {}
-protected:
-  void paintEvent(QPaintEvent *event) override {
-    (void)event;
-    QPainter p(this);
-    p.setRenderHint(QPainter::Antialiasing);
-    p.translate(width()/2, height()/2);
-    p.rotate(-90);
-    p.translate(-height()/2, -width()/2);
-    QRect r(0, 0, height(), width());
-    p.setPen(QColor("#bdbdbd"));
-    QFont f = font();
-    f.setPointSize(11);
-    p.setFont(f);
-    p.drawText(r, Qt::AlignCenter, "% Duty");
+  explicit RotatedLabel( const QString &text, QWidget *parent = nullptr )
+    : QLabel( text, parent )
+  {
   }
-  QSize minimumSizeHint() const override { return QSize(24, 80); }
-  QSize sizeHint() const override { return QSize(24, 120); }
+
+protected:
+  void paintEvent( QPaintEvent *event ) override
+  {
+    ( void )event;
+    QPainter p( this );
+    p.setRenderHint( QPainter::Antialiasing );
+    p.translate( width() / 2, height() / 2 );
+    p.rotate( -90 );
+    p.translate( -height() / 2, -width() / 2 );
+    QRect r( 0, 0, height(), width() );
+    p.setPen( QColor( "#bdbdbd" ) );
+    QFont f = font();
+    f.setPointSize( 11 );
+    p.setFont( f );
+    p.drawText( r, Qt::AlignCenter, "% Duty" );
+  }
+
+  QSize minimumSizeHint() const override
+  {
+    return QSize( 24, 80 );
+  }
+
+  QSize sizeHint() const override
+  {
+    return QSize( 24, 120 );
+  }
 };
 #include <QWidget>
 #include <QVBoxLayout>
@@ -56,6 +73,11 @@ protected:
 #include <QCheckBox>
 #include <QTextEdit>
 #include <QScrollArea>
+#include <QListWidget>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QMenu>
+#include <QAction>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QDebug>
@@ -91,6 +113,12 @@ MainWindow::MainWindow( QWidget *parent )
 
   // Load initial data
   m_profileManager->refresh();
+  
+  // Initialize current fan profile
+  m_currentFanProfile = "Custom";
+  
+  // Update fan tab visibility now that profiles are loaded
+  updateFanTabVisibility();
 
   // Start monitoring since dashboard is the first tab
   m_systemMonitor->setMonitoringActive( true );
@@ -108,107 +136,147 @@ void MainWindow::setupUI()
   setCentralWidget( m_tabs );
 
   // Connect tab changes to control monitoring
+
   connect( m_tabs, &QTabWidget::currentChanged, this, &MainWindow::onTabChanged );
 
   setupDashboardPage();
   setupProfilesPage();
+
   // Place the Fan Control tab directly after Profiles and rename it
   setupFanControlTab();
+  qDebug() << "Calling updateFanTabVisibility during setupUI";
   updateFanTabVisibility(); // Set initial visibility based on current profile
   setupHardwarePage();
-
-// --- Fan Control Tab ---
-// (moved to end of file)
-// --- Fan Control Tab ---
 }
 
 void MainWindow::setupFanControlTab()
 {
-  QWidget *fanTab = new QWidget();
-  fanTab->setStyleSheet("background-color: #242424; color: #e6e6e6;");
-  QVBoxLayout *mainLayout = new QVBoxLayout(fanTab);
-  mainLayout->setContentsMargins(20, 20, 20, 20);
-  mainLayout->setSpacing(20);
+  m_fanTab = new QWidget();
+  m_fanTab->setStyleSheet( "background-color: #242424; color: #e6e6e6;" );
+  QVBoxLayout *mainLayout = new QVBoxLayout( m_fanTab );
+  mainLayout->setContentsMargins( 20, 20, 20, 20 );
+  mainLayout->setSpacing( 20 );
 
-  QLabel *title = new QLabel("Fan Curve Control");
-  title->setStyleSheet("font-size: 20px; font-weight: bold;");
-  mainLayout->addWidget(title, 0, Qt::AlignHCenter);
-
-  // Stack CPU and GPU fan curve editors vertically
-  QVBoxLayout *curveLayout = new QVBoxLayout();
-  // CPU Fan Curve
-  QLabel *cpuLabel = new QLabel("CPU Fan Curve");
-  cpuLabel->setStyleSheet("font-weight: bold; font-size: 14px;");
-  curveLayout->addWidget(cpuLabel, 0, Qt::AlignHCenter);
-  m_cpuFanCurveEditor = new FanCurveEditorWidget();
-  curveLayout->addWidget(m_cpuFanCurveEditor);
-    // Enable save button when fan curve points change
-    connect(m_cpuFanCurveEditor, &FanCurveEditorWidget::pointsChanged,
-      this, [this](const QVector<FanCurveEditorWidget::Point> &){ this->markChanged(); });
-
-  // GPU Fan Curve
-  QLabel *gpuLabel = new QLabel("GPU Fan Curve");
-  gpuLabel->setStyleSheet("font-weight: bold; font-size: 14px;");
-  curveLayout->addWidget(gpuLabel, 0, Qt::AlignHCenter);
-  m_gpuFanCurveEditor = new FanCurveEditorWidget();
-  curveLayout->addWidget(m_gpuFanCurveEditor);
-    connect(m_gpuFanCurveEditor, &FanCurveEditorWidget::pointsChanged,
-      this, [this](const QVector<FanCurveEditorWidget::Point> &){ this->markChanged(); });
-
-  mainLayout->addLayout(curveLayout);
+  // Top controls: profile selection and copy button
+  QHBoxLayout *topLayout = new QHBoxLayout();
+  QLabel *profileLabel = new QLabel( "Profile:" );
+  topLayout->addWidget( profileLabel );
+  m_fanProfileCombo = new QComboBox();
+  m_fanProfileCombo->addItem( "Silent" );
+  m_fanProfileCombo->addItem( "Quiet" );
+  m_fanProfileCombo->addItem( "Balanced" );
+  m_fanProfileCombo->addItem( "Cool" );
+  m_fanProfileCombo->addItem( "Freezy" );
+  m_fanProfileCombo->addItem( "Custom" );
+  m_fanProfileCombo->setCurrentText( "Custom" );
+  topLayout->addWidget( m_fanProfileCombo );
   
-  // Add Apply and Save buttons for fan profiles
-  QHBoxLayout *buttonLayout = new QHBoxLayout();
-  buttonLayout->addStretch();
+  topLayout->addSpacing( 20 );
   
-  m_applyFanProfilesButton = new QPushButton("Apply Fan Profiles");
+  QPushButton *copyButton = new QPushButton("Copy to Custom");
+  copyButton->setStyleSheet(
+    "QPushButton { background-color: #FF9800; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; }"
+    "QPushButton:hover { background-color: #F57C00; }"
+    "QPushButton:pressed { background-color: #EF6C00; }"
+    "QPushButton:disabled { background-color: #666666; color: #999999; }"
+  );
+  connect(copyButton, &QPushButton::clicked, this, &MainWindow::onCopyFanProfileClicked);
+  topLayout->addWidget( copyButton );
+  
+  topLayout->addStretch();
+  
+  // Action buttons
+  m_applyFanProfilesButton = new QPushButton("Apply");
   m_applyFanProfilesButton->setStyleSheet(
-    "QPushButton { background-color: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; }"
+    "QPushButton { background-color: #4CAF50; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; }"
     "QPushButton:hover { background-color: #45a049; }"
     "QPushButton:pressed { background-color: #3e8e41; }"
     "QPushButton:disabled { background-color: #666666; color: #999999; }"
   );
   connect(m_applyFanProfilesButton, &QPushButton::clicked, this, &MainWindow::onApplyFanProfilesClicked);
-  buttonLayout->addWidget(m_applyFanProfilesButton);
+  topLayout->addWidget(m_applyFanProfilesButton);
   
-  m_saveFanProfilesButton = new QPushButton("Save Fan Profiles");
+  m_saveFanProfilesButton = new QPushButton("Save");
   m_saveFanProfilesButton->setStyleSheet(
-    "QPushButton { background-color: #2196F3; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; }"
+    "QPushButton { background-color: #2196F3; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; }"
     "QPushButton:hover { background-color: #1976D2; }"
     "QPushButton:pressed { background-color: #1565C0; }"
     "QPushButton:disabled { background-color: #666666; color: #999999; }"
   );
   connect(m_saveFanProfilesButton, &QPushButton::clicked, this, &MainWindow::onSaveFanProfilesClicked);
-  buttonLayout->addWidget(m_saveFanProfilesButton);
+  topLayout->addWidget(m_saveFanProfilesButton);
   
-  m_revertFanProfilesButton = new QPushButton("Revert to Saved");
+  m_revertFanProfilesButton = new QPushButton("Revert");
   m_revertFanProfilesButton->setStyleSheet(
-    "QPushButton { background-color: #FF9800; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; }"
+    "QPushButton { background-color: #FF9800; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; }"
     "QPushButton:hover { background-color: #F57C00; }"
     "QPushButton:pressed { background-color: #EF6C00; }"
     "QPushButton:disabled { background-color: #666666; color: #999999; }"
   );
   connect(m_revertFanProfilesButton, &QPushButton::clicked, this, &MainWindow::onRevertFanProfilesClicked);
-  buttonLayout->addWidget(m_revertFanProfilesButton);
+  topLayout->addWidget(m_revertFanProfilesButton);
   
-  buttonLayout->addStretch();
-  mainLayout->addLayout(buttonLayout);
+  mainLayout->addLayout( topLayout );
+
+  // CPU and GPU fan curve editors on top of each other
+  QVBoxLayout *editorsLayout = new QVBoxLayout();
+  editorsLayout->setSpacing( 20 );
   
+  // CPU fan curve editor
+  QVBoxLayout *cpuLayout = new QVBoxLayout();
+  QLabel *cpuLabel = new QLabel( "CPU Fan Curve" );
+  cpuLabel->setStyleSheet( "font-weight: bold; font-size: 14px;" );
+  cpuLayout->addWidget( cpuLabel );
+  m_cpuFanCurveEditor = new FanCurveEditorWidget();
+  m_cpuFanCurveEditor->setStyleSheet( "background-color: #1a1a1a; border: 1px solid #555;" );
+  cpuLayout->addWidget( m_cpuFanCurveEditor );
+  editorsLayout->addLayout( cpuLayout );
+  
+  // GPU fan curve editor
+  QVBoxLayout *gpuLayout = new QVBoxLayout();
+  QLabel *gpuLabel = new QLabel( "GPU Fan Curve" );
+  gpuLabel->setStyleSheet( "font-weight: bold; font-size: 14px;" );
+  gpuLayout->addWidget( gpuLabel );
+  m_gpuFanCurveEditor = new FanCurveEditorWidget();
+  m_gpuFanCurveEditor->setStyleSheet( "background-color: #1a1a1a; border: 1px solid #555;" );
+  gpuLayout->addWidget( m_gpuFanCurveEditor );
+  editorsLayout->addLayout( gpuLayout );
+  
+  mainLayout->addLayout( editorsLayout );
+
+  // Connect signals
+  connect( m_fanProfileCombo, &QComboBox::currentTextChanged,
+           this, &MainWindow::onFanProfileChanged );
+  connect( m_cpuFanCurveEditor, &FanCurveEditorWidget::pointsChanged,
+           this, &MainWindow::onCpuFanPointsChanged );
+  connect( m_gpuFanCurveEditor, &FanCurveEditorWidget::pointsChanged,
+           this, &MainWindow::onGpuFanPointsChanged );
+
   mainLayout->addStretch();
-  // Store the tab widget but don't add to tabs yet - visibility depends on profile type
-  m_fanTab = fanTab;
+
+  // Load initial data
+  onFanProfileChanged("Custom");
 }
 
 void MainWindow::updateFanTabVisibility()
 {
+  qDebug() << "=== updateFanTabVisibility called ===";
   bool isCustom = m_profileManager->isCustomProfile(m_profileManager->activeProfile());
   bool currentlyVisible = (m_tabs->indexOf(m_fanTab) != -1);
 
-  if (isCustom && !currentlyVisible) {
-    // Add the fan tab after profiles
-    m_tabs->insertTab(m_fanTabIndex, m_fanTab, "Profile Fan Control");
-  } else if (!isCustom && currentlyVisible) {
+  qDebug() << "updateFanTabVisibility: activeProfile=" << m_profileManager->activeProfile()
+           << ", isCustom=" << isCustom << ", currentlyVisible=" << currentlyVisible;
+
+  if (isCustom && !currentlyVisible)
+  {
+    // Add the fan tab at the end
+    qDebug() << "Adding fan tab";
+    m_tabs->addTab(m_fanTab, "Profile Fan Control");
+  }
+  else if (!isCustom && currentlyVisible)
+  {
     // Remove the fan tab
+    qDebug() << "Removing fan tab";
     m_tabs->removeTab(m_tabs->indexOf(m_fanTab));
   }
 }
@@ -333,7 +401,7 @@ void MainWindow::setupProfilesPage()
   m_profileCombo = new QComboBox();
   m_profileCombo->addItems( m_profileManager->allProfiles() );
   m_profileCombo->setCurrentIndex( m_profileManager->activeProfileIndex() );
-  
+  m_selectedProfileIndex = m_profileManager->activeProfileIndex();
   m_applyButton = new QPushButton( "Apply" );
   m_applyButton->setMaximumWidth( 80 );
   m_applyButton->setEnabled( false );
@@ -342,10 +410,18 @@ void MainWindow::setupProfilesPage()
   m_saveButton->setMaximumWidth( 80 );
   m_saveButton->setEnabled( false );
   
+  m_addProfileButton = new QPushButton( "Add" );
+  m_addProfileButton->setMaximumWidth( 60 );
+  
+  m_removeProfileButton = new QPushButton( "Remove" );
+  m_removeProfileButton->setMaximumWidth( 70 );
+  
   selectLayout->addWidget( selectLabel );
   selectLayout->addWidget( m_profileCombo, 1 );
   selectLayout->addWidget( m_applyButton );
   selectLayout->addWidget( m_saveButton );
+  selectLayout->addWidget( m_addProfileButton );
+  selectLayout->addWidget( m_removeProfileButton );
   mainLayout->addLayout( selectLayout );
 
   // Add a separator line
@@ -700,6 +776,7 @@ void MainWindow::setupHardwarePage()
 void MainWindow::connectSignals()
 {
   // Profile page connections
+
   connect( m_profileManager.get(), &ProfileManager::allProfilesChanged,
            this, &MainWindow::onAllProfilesChanged );
 
@@ -708,6 +785,7 @@ void MainWindow::connectSignals()
 
   connect( m_profileManager.get(), &ProfileManager::activeProfileChanged,
            this, [this]() {
+    qDebug() << "activeProfileChanged signal received, updating UI";
     m_activeProfileLabel->setText( m_profileManager->activeProfile() );
     loadProfileDetails( m_profileManager->activeProfile() );
     updateFanTabVisibility();
@@ -717,10 +795,12 @@ void MainWindow::connectSignals()
            this, &MainWindow::onProfileIndexChanged );
 
   // Display controls
+
   connect( m_brightnessSlider, &QSlider::valueChanged,
            this, &MainWindow::onBrightnessSliderChanged );
 
   // Fan controls
+
   connect( m_minFanSpeedSlider, &QSlider::valueChanged,
            this, &MainWindow::onMinFanSpeedChanged );
 
@@ -731,6 +811,7 @@ void MainWindow::connectSignals()
            this, &MainWindow::onOffsetFanSpeedChanged );
 
   // ODM Power Limit controls
+
   connect( m_odmPowerLimit1Slider, &QSlider::valueChanged,
            this, &MainWindow::onODMPowerLimit1Changed );
 
@@ -741,6 +822,7 @@ void MainWindow::connectSignals()
            this, &MainWindow::onODMPowerLimit3Changed );
 
   // CPU frequency controls
+
   connect( m_cpuCoresSlider, &QSlider::valueChanged,
            this, &MainWindow::onCpuCoresChanged );
 
@@ -754,10 +836,12 @@ void MainWindow::connectSignals()
   } );
 
   // GPU power control
+
   connect( m_gpuPowerSlider, &QSlider::valueChanged,
            this, &MainWindow::onGpuPowerChanged );
 
   // Dashboard page connections
+
   connect( m_systemMonitor.get(), &SystemMonitor::cpuTempChanged,
            this, &MainWindow::onCpuTempChanged );
 
@@ -800,24 +884,21 @@ void MainWindow::connectSignals()
            this, &MainWindow::onFnLockToggled );
 
   // Apply and Save buttons
+
   connect( m_applyButton, &QPushButton::clicked,
            this, &MainWindow::onApplyClicked );
 
   connect( m_saveButton, &QPushButton::clicked,
            this, &MainWindow::onSaveClicked );
 
-  // When custom profiles list changes, if we were saving show success
-  connect( m_profileManager.get(), &ProfileManager::customProfilesChanged,
-           this, [this]() {
-    if ( m_saveInProgress ) {
-      statusBar()->showMessage( "Profile saved successfully" );
-      m_saveInProgress = false;
-      m_profileChanged = false;
-      updateButtonStates();
-    }
-  } );
+  connect( m_addProfileButton, &QPushButton::clicked,
+           this, &MainWindow::onAddProfileClicked );
+
+  connect( m_removeProfileButton, &QPushButton::clicked,
+           this, &MainWindow::onRemoveProfileClicked );
 
   // Connect all profile controls to mark changes
+
   connect( m_descriptionEdit, &QTextEdit::textChanged,
            this, &MainWindow::markChanged );
 
@@ -863,7 +944,15 @@ void MainWindow::connectSignals()
   connect( m_gpuPowerSlider, &QSlider::valueChanged,
            this, [this]() { markChanged(); } );
 
+  // Mains/Battery activation buttons
+  connect( m_mainsButton, &QPushButton::toggled,
+           this, &MainWindow::markChanged );
+
+  connect( m_batteryButton, &QPushButton::toggled,
+           this, &MainWindow::markChanged );
+
   // Error handling
+
   connect( m_profileManager.get(), QOverload< const QString & >::of( &ProfileManager::error ),
            this, [this]( const QString &msg ) {
     statusBar()->showMessage( "Error: " + msg );
@@ -875,11 +964,13 @@ void MainWindow::connectSignals()
 // Dashboard slots
 void MainWindow::onCpuTempChanged()
 {
+
   if ( m_cpuTempLabel )
   {
     QString temp = m_systemMonitor->cpuTemp().replace( "°C", "" ).trimmed();
     bool ok = false;
     int tempValue = temp.toInt( &ok );
+
     if ( ok && tempValue > 0 )
     {
       m_cpuTempLabel->setText( temp );
@@ -893,15 +984,19 @@ void MainWindow::onCpuTempChanged()
 
 void MainWindow::onCpuFrequencyChanged()
 {
+
   if ( m_cpuFrequencyLabel )
   {
     QString freq = m_systemMonitor->cpuFrequency();
+
     if ( freq.endsWith( " MHz" ) )
     {
       bool ok = false;
       double mhz = freq.left( freq.size() - 4 ).trimmed().toDouble( &ok );
+
       if ( ok )
       {
+
         if ( mhz > 0.0 )
         {
           double ghz = mhz / 1000.0;
@@ -918,12 +1013,14 @@ void MainWindow::onCpuFrequencyChanged()
 
 void MainWindow::onCpuPowerChanged()
 {
+
   if ( m_cpuPowerLabel )
   {
     QString power = m_systemMonitor->cpuPower();
     QString trimmed = power.replace( " W", "" ).trimmed();
     bool ok = false;
     double watts = trimmed.toDouble( &ok );
+
     if ( ok && watts > 0.0 )
     {
       m_cpuPowerLabel->setText( QString::number( watts, 'f', 1 ) );
@@ -935,11 +1032,13 @@ void MainWindow::onCpuPowerChanged()
 
 void MainWindow::onGpuTempChanged()
 {
+
   if ( m_gpuTempLabel )
   {
     QString temp = m_systemMonitor->gpuTemp().replace( "°C", "" ).trimmed();
     bool ok = false;
     int tempValue = temp.toInt( &ok );
+
     if ( ok && tempValue > 0 )
     {
       m_gpuTempLabel->setText( temp );
@@ -953,15 +1052,19 @@ void MainWindow::onGpuTempChanged()
 
 void MainWindow::onGpuFrequencyChanged()
 {
+
   if ( m_gpuFrequencyLabel )
   {
     QString freq = m_systemMonitor->gpuFrequency();
+
     if ( freq.endsWith( " MHz" ) )
     {
       bool ok = false;
       double mhz = freq.left( freq.size() - 4 ).trimmed().toDouble( &ok );
+
       if ( ok )
       {
+
         if ( mhz > 0.0 )
         {
           double ghz = mhz / 1000.0;
@@ -978,12 +1081,14 @@ void MainWindow::onGpuFrequencyChanged()
 
 void MainWindow::onGpuPowerDashboardChanged()
 {
+
   if ( m_gpuPowerLabel )
   {
     QString power = m_systemMonitor->gpuPower();
     QString trimmed = power.replace( " W", "" ).trimmed();
     bool ok = false;
     double watts = trimmed.toDouble( &ok );
+
     if ( ok && watts > 0.0 )
     {
       m_gpuPowerLabel->setText( QString::number( watts, 'f', 1 ) );
@@ -998,11 +1103,13 @@ void MainWindow::onFanSpeedChanged()
   QString fan = m_systemMonitor->fanSpeed();
   QString display = "---";
   
+
   if ( fan.endsWith( " RPM" ) )
   {
     QString rpmStr = fan.left( fan.size() - 4 ).trimmed();
     bool ok = false;
     int rpm = rpmStr.toInt( &ok );
+
     if ( ok && rpm > 0 )
     {
       display = QString::number( rpm );
@@ -1020,11 +1127,13 @@ void MainWindow::onGpuFanSpeedChanged()
   QString fan = m_systemMonitor->gpuFanSpeed();
   QString display = "---";
   
+
   if ( fan.endsWith( " RPM" ) )
   {
     QString rpmStr = fan.left( fan.size() - 4 ).trimmed();
     bool ok = false;
     int rpm = rpmStr.toInt( &ok );
+
     if ( ok && rpm > 0 )
     {
       display = QString::number( rpm );
@@ -1069,10 +1178,11 @@ void MainWindow::onProfileIndexChanged( int index )
   if ( index >= 0 )
   {
     QString profileName = m_profileCombo->currentText();
-    qDebug() << "Profile selected:" << profileName;
-    m_profileManager->setActiveProfileByIndex( index );
+    qDebug() << "Profile selected:" << profileName << "at index" << index;
+    m_selectedProfileIndex = index;
     loadProfileDetails( profileName );
-    statusBar()->showMessage( "Profile activated: " + profileName );
+    m_applyButton->setEnabled( true );
+    statusBar()->showMessage( "Profile selected: " + profileName + " (click Apply to activate)" );
   }
 }
 
@@ -1098,6 +1208,7 @@ void MainWindow::onAllProfilesChanged()
   m_profileCombo->clear();
   m_profileCombo->addItems( m_profileManager->allProfiles() );
   m_profileCombo->setCurrentIndex( m_profileManager->activeProfileIndex() );
+  m_selectedProfileIndex = m_profileManager->activeProfileIndex();
 
   // Load the active profile details
   QString activeProfile = m_profileManager->activeProfile();
@@ -1139,13 +1250,15 @@ void MainWindow::onAllProfilesChanged()
 
 void MainWindow::onActiveProfileIndexChanged()
 {
-  int newIndex = m_profileManager->activeProfileIndex();
-  if ( m_profileCombo->currentIndex() != newIndex )
+  int activeIndex = m_profileManager->activeProfileIndex();
+  if ( m_profileCombo->currentIndex() != activeIndex )
   {
     m_profileCombo->blockSignals( true );
-    m_profileCombo->setCurrentIndex( newIndex );
+    m_profileCombo->setCurrentIndex( activeIndex );
     m_profileCombo->blockSignals( false );
   }
+  m_selectedProfileIndex = activeIndex;
+  m_applyButton->setEnabled( false );
 }
 
 // Profile detail control slot implementations
@@ -1214,6 +1327,7 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   // Get the profile ID from the profile name
   QString profileId = m_profileManager->getProfileIdByName( profileName );
   
+
   if ( profileId.isEmpty() )
   {
     fprintf( log, "ERROR: Failed to find profile ID for %s\n", profileName.toStdString().c_str() );
@@ -1227,6 +1341,7 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   // Get the profile JSON from ProfileManager using the profile ID
   QString profileJson = m_profileManager->getProfileDetails( profileId );
   
+
   if ( profileJson.isEmpty() )
   {
     fprintf( log, "ERROR: Failed to load profile data for %s\n", profileName.toStdString().c_str() );
@@ -1239,6 +1354,7 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   fflush( log );
 
   QJsonDocument doc = QJsonDocument::fromJson( profileJson.toUtf8() );
+
   if ( !doc.isObject() )
   {
     fprintf( log, "ERROR: Invalid profile JSON structure\n" );
@@ -1271,18 +1387,23 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   m_odmPowerLimit2Slider->blockSignals( true );
   m_odmPowerLimit3Slider->blockSignals( true );
   m_gpuPowerSlider->blockSignals( true );
+  m_mainsButton->blockSignals( true );
+  m_batteryButton->blockSignals( true );
 
   // Load Display settings (nested in display object)
+
   if ( obj.contains( "display" ) && obj["display"].isObject() )
   {
     QJsonObject displayObj = obj["display"].toObject();
     
+
     if ( displayObj.contains( "brightness" ) )
     {
       int brightness = displayObj["brightness"].toInt( 100 );
       m_brightnessSlider->setValue( brightness );
     }
     
+
     if ( displayObj.contains( "useBrightness" ) )
     {
       bool useBrightness = displayObj["useBrightness"].toBool( false );
@@ -1291,14 +1412,17 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   }
 
   // Load Fan Control settings (nested in fan object)
+
   if ( obj.contains( "fan" ) && obj["fan"].isObject() )
   {
     QJsonObject fanObj = obj["fan"].toObject();
     
+
     if ( fanObj.contains( "fanProfile" ) )
     {
       QString fanProfile = fanObj["fanProfile"].toString( "Balanced" );
       int idx = m_fanProfileCombo->findText( fanProfile );
+
       if ( idx >= 0 )
         m_fanProfileCombo->setCurrentIndex( idx );
     }
@@ -1314,10 +1438,12 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   }
 
   // Load CPU settings (nested in cpu object)
+
   if ( obj.contains( "cpu" ) && obj["cpu"].isObject() )
   {
     QJsonObject cpuObj = obj["cpu"].toObject();
     
+
     if ( cpuObj.contains( "onlineCores" ) )
       m_cpuCoresSlider->setValue( cpuObj["onlineCores"].toInt( 32 ) );
 
@@ -1341,16 +1467,19 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   }
   fflush( log );
   
+
   if ( hardwareLimits.size() > 0 )
   {
     m_odmPowerLimit1Slider->setMaximum( hardwareLimits[0] );
     fprintf( log, "Set ODM Power Limit 1 max to: %d\n", hardwareLimits[0] );
   }
+
   if ( hardwareLimits.size() > 1 )
   {
     m_odmPowerLimit2Slider->setMaximum( hardwareLimits[1] );
     fprintf( log, "Set ODM Power Limit 2 max to: %d\n", hardwareLimits[1] );
   }
+
   if ( hardwareLimits.size() > 2 )
   {
     m_odmPowerLimit3Slider->setMaximum( hardwareLimits[2] );
@@ -1359,18 +1488,21 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   fflush( log );
   
   // Then, set slider values from profile
+
   if ( obj.contains( "odmPowerLimits" ) && obj["odmPowerLimits"].isObject() )
   {
     QJsonObject odmLimitsObj = obj["odmPowerLimits"].toObject();
     fprintf( log, "odmPowerLimits object found\n" );
     fflush( log );
     
+
     if ( odmLimitsObj.contains( "tdpValues" ) && odmLimitsObj["tdpValues"].isArray() )
     {
       QJsonArray tdpArray = odmLimitsObj["tdpValues"].toArray();
       fprintf( log, "tdpValues array found with size: %ld\n", (long)tdpArray.size() );
       
       // Load actual values from profile - these are the current settings
+
       if ( tdpArray.size() > 0 )
       {
         int val0 = tdpArray[0].toInt();
@@ -1378,6 +1510,7 @@ void MainWindow::loadProfileDetails( const QString &profileName )
         m_odmPowerLimit1Slider->setValue( val0 );
       }
       
+
       if ( tdpArray.size() > 1 )
       {
         int val1 = tdpArray[1].toInt();
@@ -1385,6 +1518,7 @@ void MainWindow::loadProfileDetails( const QString &profileName )
         m_odmPowerLimit2Slider->setValue( val1 );
       }
       
+
       if ( tdpArray.size() > 2 )
       {
         int val2 = tdpArray[2].toInt();
@@ -1404,12 +1538,34 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   fflush( log );
 
   // Load NVIDIA Power Control settings (nested in nvidiaPowerCTRLProfile object)
+
   if ( obj.contains( "nvidiaPowerCTRLProfile" ) && obj["nvidiaPowerCTRLProfile"].isObject() )
   {
     QJsonObject gpuObj = obj["nvidiaPowerCTRLProfile"].toObject();
     
+
     if ( gpuObj.contains( "cTGPOffset" ) )
       m_gpuPowerSlider->setValue( gpuObj["cTGPOffset"].toInt( 175 ) + 100 ); // Offset value, adjust as needed
+  }
+
+  // Load power state activation settings
+  QString settingsJson = m_profileManager->getSettingsJSON();
+  if ( !settingsJson.isEmpty() )
+  {
+    QJsonDocument settingsDoc = QJsonDocument::fromJson( settingsJson.toUtf8() );
+    if ( settingsDoc.isObject() )
+    {
+      QJsonObject settingsObj = settingsDoc.object();
+      if ( settingsObj.contains( "stateMap" ) && settingsObj["stateMap"].isObject() )
+      {
+        QJsonObject stateMap = settingsObj["stateMap"].toObject();
+        QString mainsProfile = stateMap["power_ac"].toString();
+        QString batteryProfile = stateMap["power_bat"].toString();
+        
+        m_mainsButton->setChecked( mainsProfile == profileId );
+        m_batteryButton->setChecked( batteryProfile == profileId );
+      }
+    }
   }
 
   // Unblock signals
@@ -1427,6 +1583,8 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   m_odmPowerLimit2Slider->blockSignals( false );
   m_odmPowerLimit3Slider->blockSignals( false );
   m_gpuPowerSlider->blockSignals( false );
+  m_mainsButton->blockSignals( false );
+  m_batteryButton->blockSignals( false );
 
   // Trigger label updates by calling the slots directly
   onBrightnessSliderChanged( m_brightnessSlider->value() );
@@ -1447,40 +1605,107 @@ void MainWindow::loadProfileDetails( const QString &profileName )
            m_odmPowerLimit1Slider->maximum(), m_odmPowerLimit2Slider->maximum(), m_odmPowerLimit3Slider->maximum() );
   fflush( log );
   
+  // Fan profiles are now separate from TCC profiles, so no need to load fan curves here
+  /*
   // Enable/disable and populate fan curve editors depending on whether profile is editable
   const bool isCustom = m_profileManager ? m_profileManager->isCustomProfile( profileName ) : false;
 
-  // Helper function to parse fan points from JSON array
+  // Helper function to parse fan points from JSON array, extracting or interpolating points at 5°C intervals
   auto parseFanPoints = []( const QJsonArray &arr ) -> QVector< FanCurveEditorWidget::Point > {
     QVector< FanCurveEditorWidget::Point > pts;
-    for ( int i = 0; i < arr.size() && i < 10; ++i )
-    {
+    
+    // Collect all points from the array
+    QVector< FanCurveEditorWidget::Point > givenPts;
+    for ( int i = 0; i < arr.size(); ++i ) {
       QJsonValue v = arr.at( i );
-      if ( v.isObject() )
-      {
+      if ( v.isObject() ) {
         QJsonObject o = v.toObject();
         FanCurveEditorWidget::Point p;
-        p.temp = o.value( "temp" ).toDouble( 0 );
+        p.temp = o.value( "temp" ).toDouble( -1 );
         p.duty = o.value( "speed" ).toDouble( 0 );
-        pts.append( p );
+        if ( p.temp >= 0 ) {
+          givenPts.append( p );
+        }
       }
     }
+    
+    // Sort given points by temp
+    std::sort( givenPts.begin(), givenPts.end(), []( const FanCurveEditorWidget::Point &a, const FanCurveEditorWidget::Point &b ) {
+      return a.temp < b.temp;
+    } );
+    
+    // Generate 17 points at 5°C intervals from 20 to 100
+    for ( int i = 0; i < 17; ++i ) {
+      double targetTemp = 20.0 + i * 5.0;
+      double targetDuty = 0.0;
+      
+      // Find the interval in givenPts
+      if ( givenPts.size() == 0 ) {
+        targetDuty = 0.0;
+      } else if ( givenPts.size() == 1 ) {
+        targetDuty = givenPts[0].duty;
+      } else {
+        // Find the two points to interpolate between
+        FanCurveEditorWidget::Point left = givenPts[0];
+        FanCurveEditorWidget::Point right = givenPts[givenPts.size() - 1];
+        for ( int j = 0; j < givenPts.size() - 1; ++j ) {
+          if ( targetTemp >= givenPts[j].temp && targetTemp <= givenPts[j+1].temp ) {
+            left = givenPts[j];
+            right = givenPts[j+1];
+            break;
+          }
+        }
+        if ( left.temp == right.temp ) {
+          targetDuty = left.duty;
+        } else {
+          double ratio = (targetTemp - left.temp) / (right.temp - left.temp);
+          targetDuty = left.duty + ratio * (right.duty - left.duty);
+        }
+      }
+      
+      FanCurveEditorWidget::Point p;
+      p.temp = targetTemp;
+      p.duty = std::clamp( targetDuty, 0.0, 100.0 );
+      pts.append( p );
+    }
+    
     return pts;
   };
 
   if ( m_cpuFanCurveEditor )
   {
     m_cpuFanCurveEditor->setEnabled( isCustom );
+
     if ( isCustom && obj.contains( "fan" ) && obj["fan"].isObject() )
     {
       QJsonObject fanObj = obj["fan"].toObject();
+
       if ( fanObj.contains( "customFanCurve" ) && fanObj["customFanCurve"].isObject() )
       {
         QJsonObject curveObj = fanObj["customFanCurve"].toObject();
+
         if ( curveObj.contains( "tableCPU" ) && curveObj["tableCPU"].isArray() )
         {
           QJsonArray cpuArray = curveObj["tableCPU"].toArray();
+          
+          // If customFanCurve is empty, load from fanProfile
+          if ( cpuArray.isEmpty() && fanObj.contains( "fanProfile" ) )
+          {
+            QString fanProfileName = fanObj["fanProfile"].toString();
+            QString fanProfileJson = m_profileManager->getFanProfile( fanProfileName );
+            QJsonDocument fanDoc = QJsonDocument::fromJson( fanProfileJson.toUtf8() );
+            if ( fanDoc.isObject() )
+            {
+              QJsonObject fanObj = fanDoc.object();
+              if ( fanObj.contains( "tableCPU" ) && fanObj["tableCPU"].isArray() )
+              {
+                cpuArray = fanObj["tableCPU"].toArray();
+              }
+            }
+          }
+          
           QVector< FanCurveEditorWidget::Point > pts = parseFanPoints( cpuArray );
+
           if ( pts.size() > 0 )
             m_cpuFanCurveEditor->setPoints( pts );
         }
@@ -1491,22 +1716,44 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   if ( m_gpuFanCurveEditor )
   {
     m_gpuFanCurveEditor->setEnabled( isCustom );
+
     if ( isCustom && obj.contains( "fan" ) && obj["fan"].isObject() )
     {
       QJsonObject fanObj = obj["fan"].toObject();
+
       if ( fanObj.contains( "customFanCurve" ) && fanObj["customFanCurve"].isObject() )
       {
         QJsonObject curveObj = fanObj["customFanCurve"].toObject();
+
         if ( curveObj.contains( "tableGPU" ) && curveObj["tableGPU"].isArray() )
         {
           QJsonArray gpuArray = curveObj["tableGPU"].toArray();
+          
+          // If customFanCurve is empty, load from fanProfile
+          if ( gpuArray.isEmpty() && fanObj.contains( "fanProfile" ) )
+          {
+            QString fanProfileName = fanObj["fanProfile"].toString();
+            QString fanProfileJson = m_profileManager->getFanProfile( fanProfileName );
+            QJsonDocument fanDoc = QJsonDocument::fromJson( fanProfileJson.toUtf8() );
+            if ( fanDoc.isObject() )
+            {
+              QJsonObject fanObj = fanDoc.object();
+              if ( fanObj.contains( "tableGPU" ) && fanObj["tableGPU"].isArray() )
+              {
+                gpuArray = fanObj["tableGPU"].toArray();
+              }
+            }
+          }
+          
           QVector< FanCurveEditorWidget::Point > pts = parseFanPoints( gpuArray );
+
           if ( pts.size() > 0 )
             m_gpuFanCurveEditor->setPoints( pts );
         }
       }
     }
   }
+  */
 
   fclose( log );
 }
@@ -1528,14 +1775,17 @@ void MainWindow::updateButtonStates()
   m_saveButton->setEnabled( m_profileChanged && isCustom );
   
   // Fan profile buttons
+
   if ( m_applyFanProfilesButton )
   {
     m_applyFanProfilesButton->setEnabled( isCustom && isConnected );
   }
+
   if ( m_saveFanProfilesButton )
   {
     m_saveFanProfilesButton->setEnabled( isCustom );
   }
+
   if ( m_revertFanProfilesButton )
   {
     m_revertFanProfilesButton->setEnabled( isCustom && isConnected );
@@ -1544,8 +1794,17 @@ void MainWindow::updateButtonStates()
 
 void MainWindow::onApplyClicked()
 {
-  // Apply changes without saving
-  statusBar()->showMessage( "Changes applied (not saved)" );
+  if ( m_selectedProfileIndex >= 0 )
+  {
+    QString profileName = m_profileCombo->currentText();
+    m_profileManager->setActiveProfileByIndex( m_selectedProfileIndex );
+    m_applyButton->setEnabled( false );
+    statusBar()->showMessage( "Profile applied: " + profileName );
+  }
+  else
+  {
+    statusBar()->showMessage( "No profile selected" );
+  }
 }
 
 void MainWindow::onSaveClicked()
@@ -1559,7 +1818,6 @@ void MainWindow::onSaveClicked()
   // Save changes to profile
   QString profileName = m_profileCombo->currentText();
   QString profileId = m_profileManager->getProfileIdByName( profileName );
-  const bool isCustom = m_profileManager ? m_profileManager->isCustomProfile( profileName ) : false;
   
   // Build updated profile JSON
   QJsonObject profileObj;
@@ -1582,16 +1840,20 @@ void MainWindow::onSaveClicked()
   fanObj["maxSpeed"] = m_maxFanSpeedSlider->value();
   fanObj["offset"] = m_offsetFanSpeedSlider->value();
   
+  /*
   // Add fan curves to the profile JSON if custom profile
+
   if ( isCustom )
   {
     QJsonObject customFanCurveObj;
     
     // CPU fan curve
+
     if ( m_cpuFanCurveEditor && m_cpuFanCurveEditor->isEnabled() )
     {
       const auto &pts = m_cpuFanCurveEditor->points();
-      if ( pts.size() == 9 )
+
+      if ( pts.size() == 17 )
       {
         QJsonArray cpuArr;
         for ( const auto &p : pts )
@@ -1606,10 +1868,12 @@ void MainWindow::onSaveClicked()
     }
     
     // GPU fan curve
+
     if ( m_gpuFanCurveEditor && m_gpuFanCurveEditor->isEnabled() )
     {
       const auto &pts = m_gpuFanCurveEditor->points();
-      if ( pts.size() == 9 )
+
+      if ( pts.size() == 17 )
       {
         QJsonArray gpuArr;
         for ( const auto &p : pts )
@@ -1623,12 +1887,14 @@ void MainWindow::onSaveClicked()
       }
     }
     
+
     if ( !customFanCurveObj.isEmpty() )
     {
       fanObj["customFanCurve"] = customFanCurveObj;
     }
   }
-  
+  */
+
   profileObj["fan"] = fanObj;
   
   // CPU settings
@@ -1660,192 +1926,253 @@ void MainWindow::onSaveClicked()
   QString profileJSON = QString::fromUtf8( doc.toJson() );
 
   m_profileManager->saveProfile( profileJSON );
+  
+  // Update stateMap based on mains/battery button states
+  if ( m_mainsButton->isChecked() )
+  {
+    m_profileManager->setStateMap( "power_ac", profileId );
+  }
+  if ( m_batteryButton->isChecked() )
+  {
+    m_profileManager->setStateMap( "power_bat", profileId );
+  }
+  
   // Indicate saving; actual success will be reflected when ProfileManager signals
   m_saveInProgress = true;
   statusBar()->showMessage( "Saving profile..." );
   updateButtonStates();
 }
 
-void MainWindow::onApplyFanProfilesClicked()
+void MainWindow::onSaveFanProfilesClicked()
 {
-  // Apply fan curves temporarily to the running system
-  if ( !m_tccdClient || !m_tccdClient->isConnected() )
-  {
-    statusBar()->showMessage( "Not connected to system service" );
-    return;
-  }
+  // Save fan profiles via DBus
+  saveFanPoints();
+  statusBar()->showMessage( "Fan profiles saved" );
+}
 
-  // Build fan profile JSON with both CPU and GPU curves
-  QJsonObject fanProfileObj;
+void MainWindow::onAddProfileClicked()
+{
+  // Generate a unique profile name
+  QString baseName = "New Profile";
+  QString profileName;
+  int counter = 1;
   
-  // CPU fan curve
-  if ( m_cpuFanCurveEditor && m_cpuFanCurveEditor->isEnabled() )
-  {
-    const auto &pts = m_cpuFanCurveEditor->points();
-    if ( pts.size() == 9 )
-    {
-      QJsonArray cpuArr;
-      for ( const auto &p : pts )
-      {
-        QJsonObject o;
-        o[ "temp" ] = static_cast< int >( std::lround( p.temp ) );
-        o[ "speed" ] = static_cast< int >( std::lround( p.duty ) );
-        cpuArr.append( o );
-      }
-      fanProfileObj["cpu"] = cpuArr;
+  do {
+    profileName = QString("%1 %2").arg(baseName).arg(counter);
+    counter++;
+  } while (m_profileManager->allProfiles().contains(profileName));
+  
+  // Create profile from default
+  QString profileJson = m_profileManager->createProfileFromDefault(profileName);
+  if (!profileJson.isEmpty()) {
+    statusBar()->showMessage( QString("Profile '%1' created successfully").arg(profileName) );
+    
+    // Switch to the newly created profile
+    int newIndex = m_profileCombo->findText(profileName);
+    if (newIndex != -1) {
+      m_profileCombo->setCurrentIndex(newIndex);
     }
-  }
-  
-  // GPU fan curve
-  if ( m_gpuFanCurveEditor && m_gpuFanCurveEditor->isEnabled() )
-  {
-    const auto &pts = m_gpuFanCurveEditor->points();
-    if ( pts.size() == 9 )
-    {
-      QJsonArray gpuArr;
-      for ( const auto &p : pts )
-      {
-        QJsonObject o;
-        o[ "temp" ] = static_cast< int >( std::lround( p.temp ) );
-        o[ "speed" ] = static_cast< int >( std::lround( p.duty ) );
-        gpuArr.append( o );
-      }
-      fanProfileObj["gpu"] = gpuArr;
-    }
-  }
-  
-  if ( fanProfileObj.isEmpty() )
-  {
-    statusBar()->showMessage( "No fan curves to apply" );
-    return;
-  }
-  
-  QJsonDocument doc( fanProfileObj );
-  QString fanProfileJSON = QString::fromUtf8( doc.toJson() );
-  
-  // Call the new unified ApplyFanProfiles method
-  bool ok = m_tccdClient->applyFanProfiles( fanProfileJSON.toStdString() );
-  if ( ok )
-  {
-    statusBar()->showMessage( "Fan profiles applied temporarily" );
-  }
-  else
-  {
-    statusBar()->showMessage( "Failed to apply fan profiles" );
+  } else {
+    QMessageBox::warning(this, "Error", "Failed to create profile.");
   }
 }
 
-void MainWindow::onSaveFanProfilesClicked()
+void MainWindow::onRemoveProfileClicked()
 {
-  // Save fan curves to the current profile
-  if ( !m_profileManager->isCustomProfile( m_profileCombo->currentText() ) )
-  {
-    statusBar()->showMessage( "Built-in profiles are read-only" );
+  QString currentProfile = m_profileCombo->currentText();
+  
+  // Check if it's a built-in profile
+  if (!m_profileManager->isCustomProfile(currentProfile)) {
+    QMessageBox::information(this, "Cannot Remove", 
+                            "Built-in profiles cannot be removed.");
     return;
   }
+  
+  // Confirm deletion
+  QMessageBox::StandardButton reply = QMessageBox::question(
+    this, "Remove Profile",
+    QString("Are you sure you want to remove the profile '%1'?").arg(currentProfile),
+    QMessageBox::Yes | QMessageBox::No
+  );
+  
+  if (reply == QMessageBox::Yes) {
+    QString profileId = m_profileManager->getProfileIdByName(currentProfile);
+    m_profileManager->deleteProfile(profileId);
+    statusBar()->showMessage( QString("Profile '%1' removed").arg(currentProfile) );
+  }
+}
 
-  QString profileName = m_profileCombo->currentText();
-  QString profileId = m_profileManager->getProfileIdByName( profileName );
-  
-  // Get current profile JSON
-  QString profileJSON = m_profileManager->getProfileDetails( profileId );
-  if ( profileJSON.isEmpty() )
-  {
-    statusBar()->showMessage( "Failed to load current profile" );
-    return;
-  }
-  
-  QJsonDocument doc = QJsonDocument::fromJson( profileJSON.toUtf8() );
-  if ( !doc.isObject() )
-  {
-    statusBar()->showMessage( "Failed to parse current profile" );
-    return;
-  }
-  
-  QJsonObject profileObj = doc.object();
-  
-  // Update fan curves in the profile
-  QJsonObject fanObj = profileObj["fan"].toObject();
-  QJsonObject customFanCurveObj;
-  
-  // CPU fan curve
-  if ( m_cpuFanCurveEditor && m_cpuFanCurveEditor->isEnabled() )
-  {
-    const auto &pts = m_cpuFanCurveEditor->points();
-    if ( pts.size() == 9 )
-    {
-      QJsonArray cpuArr;
-      for ( const auto &p : pts )
-      {
-        QJsonObject o;
-        o[ "temp" ] = static_cast< int >( std::lround( p.temp ) );
-        o[ "speed" ] = static_cast< int >( std::lround( p.duty ) );
-        cpuArr.append( o );
+void MainWindow::onFanProfileChanged(const QString& profileName)
+{
+  QString json = m_profileManager->getFanProfile(profileName);
+  QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8());
+  if (doc.isObject()) {
+    QJsonObject obj = doc.object();
+    
+    // Load CPU points
+    if (obj.contains("tableCPU")) {
+      QJsonArray arr = obj["tableCPU"].toArray();
+      QVector<FanCurveEditorWidget::Point> cpuPoints;
+      for (const QJsonValue &v : arr) {
+        QJsonObject o = v.toObject();
+        double temp = o["temp"].toDouble();
+        double speed = o["speed"].toDouble();
+        cpuPoints.append({temp, speed});
       }
-      customFanCurveObj["tableCPU"] = cpuArr;
+      if (m_cpuFanCurveEditor && !cpuPoints.isEmpty()) {
+        m_cpuFanCurveEditor->setPoints(cpuPoints);
+      }
+    }
+    
+    // Load GPU points
+    if (obj.contains("tableGPU")) {
+      QJsonArray arr = obj["tableGPU"].toArray();
+      QVector<FanCurveEditorWidget::Point> gpuPoints;
+      for (const QJsonValue &v : arr) {
+        QJsonObject o = v.toObject();
+        double temp = o["temp"].toDouble();
+        double speed = o["speed"].toDouble();
+        gpuPoints.append({temp, speed});
+      }
+      if (m_gpuFanCurveEditor && !gpuPoints.isEmpty()) {
+        m_gpuFanCurveEditor->setPoints(gpuPoints);
+      }
     }
   }
   
-  // GPU fan curve
-  if ( m_gpuFanCurveEditor && m_gpuFanCurveEditor->isEnabled() )
-  {
-    const auto &pts = m_gpuFanCurveEditor->points();
-    if ( pts.size() == 9 )
-    {
-      QJsonArray gpuArr;
-      for ( const auto &p : pts )
-      {
-        QJsonObject o;
-        o[ "temp" ] = static_cast< int >( std::lround( p.temp ) );
-        o[ "speed" ] = static_cast< int >( std::lround( p.duty ) );
-        gpuArr.append( o );
-      }
-      customFanCurveObj["tableGPU"] = gpuArr;
-    }
+  // Update the current profile selection
+  m_currentFanProfile = profileName;
+  
+  // Set editors as editable only for Custom profile
+  bool isEditable = (profileName == "Custom");
+  if (m_cpuFanCurveEditor) {
+    m_cpuFanCurveEditor->setEditable(isEditable);
+  }
+  if (m_gpuFanCurveEditor) {
+    m_gpuFanCurveEditor->setEditable(isEditable);
+  }
+}
+
+void MainWindow::onCpuFanPointsChanged(const QVector<FanCurveEditorWidget::Point>& points)
+{
+  m_cpuFanPoints.clear();
+  for (const auto& p : points) {
+    m_cpuFanPoints.append({static_cast<int>(p.temp), static_cast<int>(p.duty)});
+  }
+}
+
+void MainWindow::onGpuFanPointsChanged(const QVector<FanCurveEditorWidget::Point>& points)
+{
+  m_gpuFanPoints.clear();
+  for (const auto& p : points) {
+    m_gpuFanPoints.append({static_cast<int>(p.temp), static_cast<int>(p.duty)});
+  }
+}
+
+void MainWindow::onCopyFanProfileClicked()
+{
+  QString currentProfile = m_fanProfileCombo->currentText();
+  if (currentProfile == "Custom") {
+    // Already on Custom, no need to copy
+    return;
   }
   
-  if ( !customFanCurveObj.isEmpty() )
-  {
-    fanObj["customFanCurve"] = customFanCurveObj;
-    profileObj["fan"] = fanObj;
-    
-    QJsonDocument newDoc( profileObj );
-    QString newProfileJSON = QString::fromUtf8( newDoc.toJson() );
-    
-    m_profileManager->saveProfile( newProfileJSON );
-    statusBar()->showMessage( "Fan profiles saved to profile" );
+  // Get the current profile data
+  QString json = m_profileManager->getFanProfile(currentProfile);
+  
+  // Save it as Custom
+  if (m_profileManager->setFanProfile("Custom", json)) {
+    // Switch to Custom profile
+    m_fanProfileCombo->setCurrentText("Custom");
+    statusBar()->showMessage( QString("Copied '%1' profile to Custom").arg(currentProfile) );
+  } else {
+    QMessageBox::warning(this, "Error", "Failed to copy profile to Custom.");
   }
-  else
-  {
-    statusBar()->showMessage( "No fan curves to save" );
-  }
+}
+
+void MainWindow::onApplyFanProfilesClicked()
+{
+  saveFanPoints();
 }
 
 void MainWindow::onRevertFanProfilesClicked()
 {
-  // Revert temporary fan curves back to saved profile defaults
-  if ( !m_tccdClient || !m_tccdClient->isConnected() )
-  {
-    statusBar()->showMessage( "Not connected to system service" );
-    return;
-  }
+  loadFanPoints();
+}
 
-  // Call the RevertFanProfiles method
-  bool ok = m_tccdClient->revertFanProfiles();
-  if ( ok )
-  {
-    // Reload the current profile to update the UI with saved fan curves
-    QString currentProfile = m_profileCombo->currentText();
-    if ( !currentProfile.isEmpty() )
-    {
-      loadProfileDetails( currentProfile );
+void MainWindow::loadFanPoints()
+{
+  QString json = m_profileManager->getFanProfile("Custom");
+  QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8());
+  if (doc.isObject()) {
+    QJsonObject obj = doc.object();
+    if (obj.contains("tableCPU")) {
+      QJsonArray arr = obj["tableCPU"].toArray();
+      m_cpuFanPoints.clear();
+      QVector<FanCurveEditorWidget::Point> cpuPoints;
+      for (const QJsonValue &v : arr) {
+        QJsonObject o = v.toObject();
+        int temp = o["temp"].toInt();
+        int speed = o["speed"].toInt();
+        m_cpuFanPoints.append({temp, speed});
+        cpuPoints.append({static_cast<double>(temp), static_cast<double>(speed)});
+      }
+      if (m_cpuFanCurveEditor) {
+        m_cpuFanCurveEditor->setPoints(cpuPoints);
+      }
     }
-    statusBar()->showMessage( "Fan profiles reverted to saved defaults" );
+    if (obj.contains("tableGPU")) {
+      QJsonArray arr = obj["tableGPU"].toArray();
+      m_gpuFanPoints.clear();
+      QVector<FanCurveEditorWidget::Point> gpuPoints;
+      for (const QJsonValue &v : arr) {
+        QJsonObject o = v.toObject();
+        int temp = o["temp"].toInt();
+        int speed = o["speed"].toInt();
+        m_gpuFanPoints.append({temp, speed});
+        gpuPoints.append({static_cast<double>(temp), static_cast<double>(speed)});
+      }
+      if (m_gpuFanCurveEditor) {
+        m_gpuFanCurveEditor->setPoints(gpuPoints);
+      }
+    }
   }
-  else
-  {
-    statusBar()->showMessage( "Failed to revert fan profiles" );
+}
+
+
+void MainWindow::saveFanPoints()
+{
+  QJsonObject obj;
+  
+  // Get CPU points from the editor
+  QJsonArray cpuArr;
+  if (m_cpuFanCurveEditor) {
+    const auto& cpuPoints = m_cpuFanCurveEditor->points();
+    for (const auto &p : cpuPoints) {
+      QJsonObject o;
+      o["temp"] = p.temp;
+      o["speed"] = p.duty;
+      cpuArr.append(o);
+    }
   }
+  obj["tableCPU"] = cpuArr;
+  
+  // Get GPU points from the editor
+  QJsonArray gpuArr;
+  if (m_gpuFanCurveEditor) {
+    const auto& gpuPoints = m_gpuFanCurveEditor->points();
+    for (const auto &p : gpuPoints) {
+      QJsonObject o;
+      o["temp"] = p.temp;
+      o["speed"] = p.duty;
+      gpuArr.append(o);
+    }
+  }
+  obj["tableGPU"] = gpuArr;
+  
+  QJsonDocument doc(obj);
+  QString json = doc.toJson(QJsonDocument::Compact);
+  m_profileManager->setFanProfile("Custom", json);
 }
 
 } // namespace ucc
