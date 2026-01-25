@@ -249,6 +249,7 @@ public:
 
   // profile methods
   std::string GetActiveProfileJSON();
+  std::string GetPowerState();
   bool SetTempProfile( const std::string &profileName );
   bool SetTempProfileById( const std::string &id );
   bool SetActiveProfile( const std::string &id );

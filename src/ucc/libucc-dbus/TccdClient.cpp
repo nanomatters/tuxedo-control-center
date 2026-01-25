@@ -264,6 +264,15 @@ std::optional< std::string > TccdClient::getSettingsJSON()
   return std::nullopt;
 }
 
+std::optional< std::string > TccdClient::getPowerState()
+{
+  if ( auto result = callMethod< QString >( "GetPowerState" ) )
+  {
+    return result->toStdString();
+  }
+  return std::nullopt;
+}
+
 bool TccdClient::setStateMap( const std::string &state, const std::string &profileId )
 {
   const QString qState = QString::fromStdString( state );

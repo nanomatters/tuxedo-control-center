@@ -302,6 +302,7 @@ void TccDBusInterfaceAdaptor::registerAdaptor()
     registerMethod("GetFanProfileNames").implementedAs([this](){ return this->GetFanProfileNames(); }),
     registerMethod("SetFanProfile").implementedAs([this](const std::string &name, const std::string &json){ return this->SetFanProfile(name, json); }),
     registerMethod("GetSettingsJSON").implementedAs([this](){ return this->GetSettingsJSON(); }),
+    registerMethod("GetPowerState").implementedAs([this](){ return this->GetPowerState(); }),
     registerMethod("SetStateMap").implementedAs([this](const std::string &state, const std::string &profileId){ return this->SetStateMap(state, profileId); }),
     registerMethod("ODMProfilesAvailable").implementedAs([this](){ return this->ODMProfilesAvailable(); }),
     registerMethod("ODMPowerLimitsJSON").implementedAs([this](){ return this->ODMPowerLimitsJSON(); }),
@@ -985,6 +986,23 @@ std::string TccDBusInterfaceAdaptor::GetSettingsJSON()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.settingsJSON;
+}
+
+std::string TccDBusInterfaceAdaptor::GetPowerState()
+{
+  // Return the current power state string (e.g. "power_ac" or "power_bat")
+  try {
+    // m_service owns m_currentState
+    if ( m_service )
+    {
+      return profileStateToString( m_service->m_currentState );
+    }
+  }
+  catch ( const std::exception &e )
+  {
+    std::cerr << "[DBus] GetPowerState exception: " << e.what() << std::endl;
+  }
+  return std::string("power_ac");
 }
 
 bool TccDBusInterfaceAdaptor::SetStateMap( const std::string &state, const std::string &profileId )

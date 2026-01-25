@@ -22,6 +22,8 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QUuid>
+#include <QFile>
+#include <QDir>
 
 namespace ucc
 {
@@ -128,54 +130,36 @@ void ProfileManager::updateProfiles()
   // Custom profiles are loaded from local storage, no need to fetch from server
   emit customProfilesChanged();
 
-  // Get active profile - but prefer locally stored active profile
-  if (m_activeProfile.isEmpty() || !m_allProfiles.contains(m_activeProfile)) {
-    if ( auto json = m_client->getActiveProfileJSON() )
-    {
-      fprintf( log, "Got active profile JSON from server\n" );
-      fflush( log );
-      
-      QJsonDocument doc = QJsonDocument::fromJson( QString::fromStdString( *json ).toUtf8() );
+  // Ensure combined list is up-to-date before deciding which profile to activate
+  updateAllProfiles();
 
-      if ( doc.isObject() )
-      {
-        QString name = doc.object()["name"].toString();
-        fprintf( log, "Active profile name from server: %s\n", name.toStdString().c_str() );
-        fflush( log );
-        
-
-        if ( m_activeProfile != name )
-        {
-          m_activeProfile = name;
-          m_settings->setValue("activeProfile", name);
-          emit activeProfileChanged();
-        }
+  // Do not persist an 'activeProfile' in settings anymore.
+  // Decide which profile to activate based on the current power state and stateMap.
+  // Ask the daemon for the current power state if we don't yet have it.
+  if ( m_powerState.isEmpty() && m_client ) {
+    try {
+      if ( auto ps = m_client->getPowerState() ) {
+        m_powerState = QString::fromStdString( *ps );
+        emit powerStateChanged();
       }
+    } catch ( const std::exception &e ) {
+      qWarning() << "Failed to query daemon power state:" << e.what();
     }
-    else
-    {
-      fprintf( log, "ERROR: Failed to get active profile JSON from server\n" );
-      fflush( log );
-      // If we can't get from server and don't have a valid local one, default to "Default"
-      if (m_activeProfile.isEmpty() || !m_allProfiles.contains(m_activeProfile)) {
-        m_activeProfile = "Default";
-        m_settings->setValue("activeProfile", "Default");
-        fprintf( log, "Setting default active profile: Default\n" );
-        fflush( log );
-      }
-    }
-  } else {
-    fprintf( log, "Using locally stored active profile: %s\n", m_activeProfile.toStdString().c_str() );
-    fflush( log );
   }
 
-  // Apply mains profile since UCC starts in mains mode
-  QString mainsProfile = m_stateMap["power_ac"].toString();
-  if ( !mainsProfile.isEmpty() && m_allProfiles.contains( mainsProfile ) )
+  QString desiredProfile;
+  if ( !m_powerState.isEmpty() ) {
+    desiredProfile = resolveStateMapToProfileName( m_powerState );
+  } else {
+    // If we still don't know power state, default to AC mapping if available
+    desiredProfile = resolveStateMapToProfileName( "power_ac" );
+  }
+
+  if ( !desiredProfile.isEmpty() && m_allProfiles.contains( desiredProfile ) && desiredProfile != m_activeProfile )
   {
-    fprintf( log, "Applying mains profile: %s\n", mainsProfile.toStdString().c_str() );
+    fprintf( log, "Applying desired profile based on state: %s\n", desiredProfile.toStdString().c_str() );
     fflush( log );
-    setActiveProfile( mainsProfile );
+    setActiveProfile( desiredProfile );
   }
 
   // Update combined list and index
@@ -187,6 +171,7 @@ void ProfileManager::updateProfiles()
   fflush( log );
   fclose( log );
 }
+
 
 void ProfileManager::setActiveProfile( const QString &profileId )
 {
@@ -265,7 +250,6 @@ void ProfileManager::setActiveProfile( const QString &profileId )
   // The UI should reflect the selected profile even if application to system fails
   if (m_activeProfile != profileId) {
     m_activeProfile = profileId;
-    m_settings->setValue("activeProfile", profileId);
     emit activeProfileChanged();
   }
   updateAllProfiles();
@@ -293,34 +277,36 @@ void ProfileManager::saveProfile( const QString &profileJSON )
     return;
   }
   
-  // Check if profile already exists
-  bool exists = false;
+  // Check if profile already exists and remember old name
+  int foundIndex = -1;
+  QString oldName;
   for (int i = 0; i < m_customProfilesData.size(); ++i) {
     QJsonObject existingProfile = m_customProfilesData[i].toObject();
     if (existingProfile.value("id").toString() == profileId) {
-      // Update existing profile
-      m_customProfilesData[i] = profileObj;
-      exists = true;
+      // remember index and old name before replacing
+      foundIndex = i;
+      oldName = existingProfile.value("name").toString();
       break;
     }
   }
   
-  if (!exists) {
+  if (foundIndex == -1) {
     // Add new profile
     m_customProfilesData.append(profileObj);
     m_customProfiles.append(profileName);
   } else {
-    // Update name in the list if it changed
-    int index = m_customProfiles.indexOf(profileName);
-    if (index == -1) {
-      // Name changed, update the list
-      for (int i = 0; i < m_customProfilesData.size(); ++i) {
-        QJsonObject existingProfile = m_customProfilesData[i].toObject();
-        if (existingProfile.value("id").toString() == profileId) {
-          QString oldName = existingProfile.value("name").toString();
-          m_customProfiles.replace(m_customProfiles.indexOf(oldName), profileName);
-          break;
-        }
+    // Update existing profile object
+    m_customProfilesData[foundIndex] = profileObj;
+
+    // If the name changed, update the names list so UI widgets refresh
+    if (!oldName.isEmpty() && oldName != profileName) {
+      int nameIndex = m_customProfiles.indexOf(oldName);
+      if (nameIndex != -1) {
+        m_customProfiles.replace(nameIndex, profileName);
+      } else {
+        // Fallback: ensure the new name is present
+        if (!m_customProfiles.contains(profileName))
+          m_customProfiles.append(profileName);
       }
     }
   }
@@ -449,49 +435,40 @@ void ProfileManager::onProfileChanged( const std::string &profileId )
 void ProfileManager::onPowerStateChanged( const QString &state )
 {
   qDebug() << "Power state changed:" << state;
-  
-  QString profileId = m_stateMap[state].toString();
-  
-  if ( profileId.isEmpty() )
+
+  // Update internal power state and notify GUI
+  m_powerState = state;
+  emit powerStateChanged();
+
+  // Resolve mapped profile and apply it
+  QString desiredProfile = resolveStateMapToProfileName( state );
+  if ( desiredProfile.isEmpty() )
   {
     qWarning() << "No profile mapped for state:" << state;
     return;
   }
-  
-  qDebug() << "Applying profile" << profileId << "for power state" << state;
-  
-  QString profileJson = getProfileDetails( profileId );
-  if ( !profileJson.isEmpty() )
+
+  qDebug() << "Applying profile" << desiredProfile << "for power state" << state;
+  QString profileJson = getProfileDetails( desiredProfile );
+  if ( profileJson.isEmpty() )
   {
-    try {
-      m_client->applyProfile( profileJson.toStdString() );
-    } catch (const std::exception &e) {
-      qWarning() << "Failed to apply profile:" << e.what();
-      return;
-    }
-    // Update active profile
-    for ( const auto &profile : m_defaultProfilesData )
-    {
-      if ( profile.toObject()["id"].toString() == profileId )
-      {
-        m_activeProfile = profile.toObject()["name"].toString();
-        emit activeProfileChanged();
-        return;
-      }
-    }
-    for ( const auto &profile : m_customProfilesData )
-    {
-      if ( profile.toObject()["id"].toString() == profileId )
-      {
-        m_activeProfile = profile.toObject()["name"].toString();
-        emit activeProfileChanged();
-        return;
-      }
-    }
+    qWarning() << "Profile not found for:" << desiredProfile;
+    return;
   }
-  else
-  {
-    qWarning() << "Profile not found:" << profileId;
+
+  try {
+    m_client->applyProfile( profileJson.toStdString() );
+  } catch (const std::exception &e) {
+    qWarning() << "Failed to apply profile:" << e.what();
+    return;
+  }
+
+  // Update active profile name and notify
+  if ( m_activeProfile != desiredProfile ) {
+    m_activeProfile = desiredProfile;
+    emit activeProfileChanged();
+    updateAllProfiles();
+    updateActiveProfileIndex();
   }
 }
 
@@ -610,15 +587,9 @@ void ProfileManager::loadCustomProfilesFromSettings()
     }
   }
   
-  // Load active profile from settings
-  QString activeProfileName = m_settings->value("activeProfile", "Default").toString();
-  if (m_allProfiles.contains(activeProfileName) || m_customProfiles.contains(activeProfileName)) {
-    m_activeProfile = activeProfileName;
-    qDebug() << "Loaded active profile from settings:" << m_activeProfile;
-  } else {
-    m_activeProfile = "Default"; // fallback
-    qDebug() << "Active profile from settings not found, using Default";
-  }
+  // Do not load or persist an 'activeProfile' in settings anymore.
+  // Active profile will be determined from the stateMap + current power state.
+  m_activeProfile = "";
   
   // Load stateMap from settings
   QString stateMapJson = m_settings->value("stateMap", "{}").toString();
@@ -654,6 +625,30 @@ void ProfileManager::saveCustomProfilesToSettings()
   qDebug() << "QSettings sync completed";
   
   qDebug() << "Saved" << m_customProfilesData.size() << "custom profiles to local storage";
+}
+
+// Helper: resolve a stateMap entry (which may be an id or name) to a profile name
+QString ProfileManager::resolveStateMapToProfileName( const QString &state )
+{
+  if ( !m_stateMap.contains( state ) ) return QString();
+  QString mapped = m_stateMap[state].toString();
+  if ( mapped.isEmpty() ) return QString();
+
+  // If mapped is already a profile name in our list, return it
+  if ( m_allProfiles.contains( mapped ) || m_customProfiles.contains( mapped ) || m_defaultProfiles.contains( mapped ) )
+    return mapped;
+
+  // Otherwise, try to resolve as an ID
+  for ( const auto &p : m_defaultProfilesData ) {
+    if ( p.isObject() && p.toObject()["id"].toString() == mapped )
+      return p.toObject()["name"].toString();
+  }
+  for ( const auto &p : m_customProfilesData ) {
+    if ( p.isObject() && p.toObject()["id"].toString() == mapped )
+      return p.toObject()["name"].toString();
+  }
+
+  return QString();
 }
 
 QString ProfileManager::getFanProfile( const QString &name )

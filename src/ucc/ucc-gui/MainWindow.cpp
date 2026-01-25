@@ -23,6 +23,7 @@
 
 #include <QtWidgets/QTableWidget>
 #include <QtWidgets/QHeaderView>
+#include <QUuid>
 
 
 // Helper widget for rotated y-axis label
@@ -393,7 +394,7 @@ void MainWindow::setupProfilesPage()
   m_profileCombo->addItems( m_profileManager->allProfiles() );
   m_profileCombo->setCurrentIndex( m_profileManager->activeProfileIndex() );
   m_selectedProfileIndex = m_profileManager->activeProfileIndex();
-  m_applyButton = new QPushButton( "Apply" );
+  m_applyButton = new QPushButton( "Activate" );
   m_applyButton->setMaximumWidth( 80 );
   m_applyButton->setEnabled( false );
   
@@ -401,8 +402,8 @@ void MainWindow::setupProfilesPage()
   m_saveButton->setMaximumWidth( 80 );
   m_saveButton->setEnabled( false );
   
-  m_addProfileButton = new QPushButton( "Add" );
-  m_addProfileButton->setMaximumWidth( 60 );
+  m_copyProfileButton = new QPushButton( "Copy" );
+  m_copyProfileButton->setMaximumWidth( 60 );
   
   m_removeProfileButton = new QPushButton( "Remove" );
   m_removeProfileButton->setMaximumWidth( 70 );
@@ -411,7 +412,7 @@ void MainWindow::setupProfilesPage()
   selectLayout->addWidget( m_profileCombo, 1 );
   selectLayout->addWidget( m_applyButton );
   selectLayout->addWidget( m_saveButton );
-  selectLayout->addWidget( m_addProfileButton );
+  selectLayout->addWidget( m_copyProfileButton );
   selectLayout->addWidget( m_removeProfileButton );
   mainLayout->addLayout( selectLayout );
 
@@ -433,9 +434,11 @@ void MainWindow::setupProfilesPage()
   // === NAME ===
   QLabel *nameLabel = new QLabel( "Name" );
   nameLabel->setStyleSheet( "font-weight: bold;" );
-  QLabel *nameValue = new QLabel( "TUXEDO Defaults" );
+  m_nameEdit = new QLineEdit();
+  m_nameEdit->setPlaceholderText( "Profile name" );
+  m_nameEdit->setReadOnly( true );
   detailsLayout->addWidget( nameLabel, row, 0, Qt::AlignTop );
-  detailsLayout->addWidget( nameValue, row, 1 );
+  detailsLayout->addWidget( m_nameEdit, row, 1 );
   row++;
 
   // === DESCRIPTION ===
@@ -885,8 +888,8 @@ void MainWindow::connectSignals()
   connect( m_saveButton, &QPushButton::clicked,
            this, &MainWindow::onSaveClicked );
 
-  connect( m_addProfileButton, &QPushButton::clicked,
-           this, &MainWindow::onAddProfileClicked );
+  connect( m_copyProfileButton, &QPushButton::clicked,
+           this, &MainWindow::onCopyProfileClicked );
 
   connect( m_removeProfileButton, &QPushButton::clicked,
            this, &MainWindow::onRemoveProfileClicked );
@@ -895,6 +898,11 @@ void MainWindow::connectSignals()
 
   connect( m_descriptionEdit, &QTextEdit::textChanged,
            this, &MainWindow::markChanged );
+
+  if ( m_nameEdit ) {
+    connect( m_nameEdit, &QLineEdit::textChanged,
+             this, &MainWindow::markChanged );
+  }
 
   connect( m_setBrightnessCheckBox, &QCheckBox::toggled,
            this, &MainWindow::markChanged );
@@ -1184,6 +1192,8 @@ void MainWindow::onProfileIndexChanged( int index )
     m_selectedProfileIndex = index;
     loadProfileDetails( profileName );
     m_applyButton->setEnabled( true );
+    m_removeProfileButton->setEnabled( m_profileManager->customProfiles().contains( profileName ) );
+    m_copyProfileButton->setEnabled( true );
     statusBar()->showMessage( "Profile selected: " + profileName + " (click Apply to activate)" );
   }
 }
@@ -1392,6 +1402,16 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   m_gpuPowerSlider->blockSignals( true );
   m_mainsButton->blockSignals( true );
   m_batteryButton->blockSignals( true );
+
+  // Set profile name and description fields
+  if ( obj.contains( "name" ) ) {
+    QString name = obj["name"].toString();
+    if ( m_nameEdit ) {
+      m_nameEdit->blockSignals( true );
+      m_nameEdit->setText( name );
+      m_nameEdit->blockSignals( false );
+    }
+  }
 
   // Load Display settings (nested in display object)
 
@@ -1790,6 +1810,12 @@ void MainWindow::updateProfileEditingWidgets( bool isCustom )
     m_descriptionEdit->setEnabled( isCustom );
     m_descriptionEdit->setReadOnly( !isCustom );
   }
+
+  // Name edit
+  if ( m_nameEdit ) {
+    m_nameEdit->setEnabled( isCustom );
+    m_nameEdit->setReadOnly( !isCustom );
+  }
   
   // Auto-activate buttons (always enabled for power state assignment)
   if ( m_mainsButton ) m_mainsButton->setEnabled( true );
@@ -1840,7 +1866,6 @@ void MainWindow::updateButtonStates()
                            (m_batteryButton && m_batteryButton->isChecked() != m_loadedBatteryAssignment);
   m_saveButton->setEnabled( (m_profileChanged && isCustom) || (!isCustom && powerStateChanged) );
   
-  m_addProfileButton->setEnabled( true );  // Always allow adding new profiles
   m_removeProfileButton->setEnabled( isCustom );  // Only allow removing custom profiles
   
   // Fan profile buttons
@@ -1890,7 +1915,11 @@ void MainWindow::onSaveClicked()
     // Build updated profile JSON
     QJsonObject profileObj;
     profileObj["id"] = profileId;
-    profileObj["name"] = profileName;
+    // Use the possibly edited name from the name edit field
+    if ( m_nameEdit )
+      profileObj["name"] = m_nameEdit->text();
+    else
+      profileObj["name"] = profileName;
     profileObj["description"] = m_descriptionEdit->toPlainText();
     
     // Brightness settings
@@ -2041,9 +2070,66 @@ void MainWindow::onAddProfileClicked()
     if (newIndex != -1) {
       m_profileCombo->setCurrentIndex(newIndex);
     }
-  } else {
-    QMessageBox::warning(this, "Error", "Failed to create profile.");
   }
+  else
+    QMessageBox::warning(this, "Error", "Failed to create new profile.");
+}
+void MainWindow::onCopyProfileClicked()
+{
+  QString current = m_profileCombo->currentText();
+  
+  // Allow copying any profile (built-in or custom)
+  QString profileId = m_profileManager->getProfileIdByName(current);
+  QString json = m_profileManager->getProfileDetails(profileId);
+  if (json.isEmpty()) {
+    QMessageBox::warning(this, "Error", "Failed to get profile data.");
+    return;
+  }
+  
+  QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8());
+  if (!doc.isObject()) {
+    QMessageBox::warning(this, "Error", "Invalid profile data.");
+    return;
+  }
+  
+  QJsonObject obj = doc.object();
+  
+  // Generate a new unique ID for the copied profile
+  obj["id"] = QUuid::createUuid().toString(QUuid::WithoutBraces);
+  
+  // Generate new name by incrementing number
+  QString baseName = current;
+  int number = 0;
+  int lastSpace = current.lastIndexOf(' ');
+  if (lastSpace > 0) {
+    QString after = current.mid(lastSpace + 1);
+    bool ok;
+    int num = after.toInt(&ok);
+    if (ok) {
+      baseName = current.left(lastSpace);
+      number = num;
+    }
+  }
+  QString newName;
+  do {
+    number++;
+    newName = QString("%1 %2").arg(baseName).arg(number);
+  } while (m_profileManager->allProfiles().contains(newName));
+  
+  // Set new name
+  obj["name"] = newName;
+  
+  // Save
+  QString newJson = QJsonDocument(obj).toJson(QJsonDocument::Compact);
+  m_profileManager->saveProfile(newJson);
+  
+  // Switch
+  int newIndex = m_profileCombo->findText(newName);
+  if (newIndex != -1) {
+    m_profileCombo->setCurrentIndex(newIndex);
+  }
+  
+  statusBar()->showMessage( QString("Profile '%1' copied to '%2'").arg(current).arg(newName) );
 }
 
 void MainWindow::onRemoveProfileClicked()

@@ -70,6 +70,7 @@ namespace ucc
     void onSaveFanProfilesClicked();
     void onRevertFanProfilesClicked();
     void onAddProfileClicked();
+    void onCopyProfileClicked();
     void onRemoveProfileClicked();
     void onAddFanProfileClicked();
     void onRemoveFanProfileClicked();
@@ -139,9 +140,10 @@ namespace ucc
     int m_selectedProfileIndex = -1;
     QPushButton *m_applyButton = nullptr;
     QPushButton *m_saveButton = nullptr;
-    QPushButton *m_addProfileButton = nullptr;
+    QPushButton *m_copyProfileButton = nullptr;
     QPushButton *m_removeProfileButton = nullptr;
     QTextEdit *m_descriptionEdit = nullptr;
+    QLineEdit *m_nameEdit = nullptr;
     QPushButton *m_mainsButton = nullptr;
     QPushButton *m_batteryButton = nullptr;
     

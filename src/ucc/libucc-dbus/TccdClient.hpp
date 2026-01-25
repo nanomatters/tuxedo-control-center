@@ -52,6 +52,7 @@ public:
   std::optional< std::string > getCustomProfilesJSON();
   std::optional< std::string > getActiveProfileJSON();
   std::optional< std::string > getSettingsJSON();
+  std::optional< std::string > getPowerState();
   bool setStateMap( const std::string &state, const std::string &profileId );
   bool setActiveProfile( const std::string &profileId );
   bool setActiveProfileByName( const std::string &profileName );

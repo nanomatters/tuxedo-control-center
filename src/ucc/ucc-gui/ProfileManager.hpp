@@ -40,6 +40,7 @@ class ProfileManager : public QObject
   Q_PROPERTY( QStringList customProfiles READ customProfiles NOTIFY customProfilesChanged )
   Q_PROPERTY( QStringList allProfiles READ allProfiles NOTIFY allProfilesChanged )
   Q_PROPERTY( QString activeProfile READ activeProfile NOTIFY activeProfileChanged )
+  Q_PROPERTY( QString powerState READ powerState NOTIFY powerStateChanged )
   Q_PROPERTY( int activeProfileIndex READ activeProfileIndex NOTIFY activeProfileIndexChanged )
   Q_PROPERTY( bool connected READ isConnected NOTIFY connectedChanged )
 
@@ -51,6 +52,7 @@ public:
   QStringList customProfiles() const { return m_customProfiles; }
   QStringList allProfiles() const { return m_allProfiles; }
   QString activeProfile() const { return m_activeProfile; }
+  QString powerState() const { return m_powerState; }
   int activeProfileIndex() const { return m_activeProfileIndex; }
   bool isConnected() const { return m_connected; }
 
@@ -75,6 +77,7 @@ signals:
   void customProfilesChanged();
   void allProfilesChanged();
   void activeProfileChanged();
+  void powerStateChanged();
   void activeProfileIndexChanged();
   void connectedChanged();
   void error( const QString &message );
@@ -83,6 +86,8 @@ private:
   void updateProfiles();
   void onProfileChanged( const std::string &profileId );
   void onPowerStateChanged( const QString &state );
+  // Local detection removed; daemon provides current power state via DBus
+  QString resolveStateMapToProfileName( const QString &state );
   void updateAllProfiles();
   void updateActiveProfileIndex();
   void loadCustomProfilesFromSettings();
@@ -94,6 +99,7 @@ private:
   QStringList m_customProfiles;
   QStringList m_allProfiles;
   QString m_activeProfile;
+  QString m_powerState;
   int m_activeProfileIndex = -1;
   bool m_connected = false;
   std::vector< int > m_hardwarePowerLimits;
