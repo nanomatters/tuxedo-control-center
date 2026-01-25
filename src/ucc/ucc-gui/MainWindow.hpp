@@ -71,6 +71,8 @@ namespace ucc
     void onRevertFanProfilesClicked();
     void onAddProfileClicked();
     void onRemoveProfileClicked();
+    void onAddFanProfileClicked();
+    void onRemoveFanProfileClicked();
     void onCpuFanPointsChanged(const QVector<FanCurveEditorWidget::Point>& points);
     void onGpuFanPointsChanged(const QVector<FanCurveEditorWidget::Point>& points);
     void onFanProfileChanged(const QString& profileName);
@@ -108,6 +110,7 @@ namespace ucc
     void updateButtonStates();
     void setupFanControlTab();
     void updateFanTabVisibility();
+    void updateProfileEditingWidgets( bool isCustom );
 
     std::unique_ptr< ProfileManager > m_profileManager;
     std::unique_ptr< SystemMonitor > m_systemMonitor;
@@ -156,11 +159,14 @@ namespace ucc
     QLabel *m_offsetFanSpeedValue = nullptr;
     // Fan curve editor widgets
     QComboBox *m_fanProfileCombo = nullptr;
+    QComboBox *m_profileFanProfileCombo = nullptr;
     FanCurveEditorWidget *m_cpuFanCurveEditor = nullptr;
     FanCurveEditorWidget *m_gpuFanCurveEditor = nullptr;
     QPushButton *m_applyFanProfilesButton = nullptr;
     QPushButton *m_saveFanProfilesButton = nullptr;
     QPushButton *m_revertFanProfilesButton = nullptr;
+    QPushButton *m_addFanProfileButton = nullptr;
+    QPushButton *m_removeFanProfileButton = nullptr;
     QVector<FanPoint> m_cpuFanPoints;
     QVector<FanPoint> m_gpuFanPoints;
     
@@ -192,6 +198,8 @@ namespace ucc
     bool m_profileChanged = false;
     QString m_currentLoadedProfile;
     QString m_currentFanProfile;
+    bool m_loadedMainsAssignment = false;
+    bool m_loadedBatteryAssignment = false;
     bool m_saveInProgress = false;
   };
 }

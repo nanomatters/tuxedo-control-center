@@ -154,95 +154,80 @@ void MainWindow::setupFanControlTab()
   m_fanTab = new QWidget();
   m_fanTab->setStyleSheet( "background-color: #242424; color: #e6e6e6;" );
   QVBoxLayout *mainLayout = new QVBoxLayout( m_fanTab );
-  mainLayout->setContentsMargins( 20, 20, 20, 20 );
-  mainLayout->setSpacing( 20 );
+  mainLayout->setContentsMargins( 0, 0, 0, 0 );
+  mainLayout->setSpacing( 0 );
 
-  // Top controls: profile selection and copy button
-  QHBoxLayout *topLayout = new QHBoxLayout();
-  QLabel *profileLabel = new QLabel( "Profile:" );
-  topLayout->addWidget( profileLabel );
+  // Create scroll area for the fan control content
+  QScrollArea *scrollArea = new QScrollArea();
+  scrollArea->setWidgetResizable( true );
+  
+  QWidget *scrollWidget = new QWidget();
+  QVBoxLayout *scrollLayout = new QVBoxLayout( scrollWidget );
+  scrollLayout->setContentsMargins( 20, 20, 20, 20 );
+  scrollLayout->setSpacing( 15 );
+
+  // Top controls: profile selection
+  QHBoxLayout *selectLayout = new QHBoxLayout();
+  QLabel *profileLabel = new QLabel( "Active Profile:" );
+  profileLabel->setStyleSheet( "font-weight: bold;" );
   m_fanProfileCombo = new QComboBox();
-  m_fanProfileCombo->addItem( "Silent" );
-  m_fanProfileCombo->addItem( "Quiet" );
-  m_fanProfileCombo->addItem( "Balanced" );
-  m_fanProfileCombo->addItem( "Cool" );
-  m_fanProfileCombo->addItem( "Freezy" );
-  m_fanProfileCombo->addItem( "Custom" );
-  m_fanProfileCombo->setCurrentText( "Custom" );
-  topLayout->addWidget( m_fanProfileCombo );
+
+  if ( auto names = m_tccdClient->getFanProfileNames() )
+  {
+    for ( const auto &name : *names )
+      m_fanProfileCombo->addItem( QString::fromStdString( name ) );
+  }
   
-  topLayout->addSpacing( 20 );
-  
-  QPushButton *copyButton = new QPushButton("Copy to Custom");
-  copyButton->setStyleSheet(
-    "QPushButton { background-color: #FF9800; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; }"
-    "QPushButton:hover { background-color: #F57C00; }"
-    "QPushButton:pressed { background-color: #EF6C00; }"
-    "QPushButton:disabled { background-color: #666666; color: #999999; }"
-  );
-  connect(copyButton, &QPushButton::clicked, this, &MainWindow::onCopyFanProfileClicked);
-  topLayout->addWidget( copyButton );
-  
-  topLayout->addStretch();
-  
-  // Action buttons
   m_applyFanProfilesButton = new QPushButton("Apply");
-  m_applyFanProfilesButton->setStyleSheet(
-    "QPushButton { background-color: #4CAF50; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; }"
-    "QPushButton:hover { background-color: #45a049; }"
-    "QPushButton:pressed { background-color: #3e8e41; }"
-    "QPushButton:disabled { background-color: #666666; color: #999999; }"
-  );
-  connect(m_applyFanProfilesButton, &QPushButton::clicked, this, &MainWindow::onApplyFanProfilesClicked);
-  topLayout->addWidget(m_applyFanProfilesButton);
+  m_applyFanProfilesButton->setMaximumWidth(80);
+  m_applyFanProfilesButton->setEnabled( false );
   
   m_saveFanProfilesButton = new QPushButton("Save");
-  m_saveFanProfilesButton->setStyleSheet(
-    "QPushButton { background-color: #2196F3; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; }"
-    "QPushButton:hover { background-color: #1976D2; }"
-    "QPushButton:pressed { background-color: #1565C0; }"
-    "QPushButton:disabled { background-color: #666666; color: #999999; }"
-  );
-  connect(m_saveFanProfilesButton, &QPushButton::clicked, this, &MainWindow::onSaveFanProfilesClicked);
-  topLayout->addWidget(m_saveFanProfilesButton);
+  m_saveFanProfilesButton->setMaximumWidth(80);
+  m_saveFanProfilesButton->setEnabled( false );
   
-  m_revertFanProfilesButton = new QPushButton("Revert");
-  m_revertFanProfilesButton->setStyleSheet(
-    "QPushButton { background-color: #FF9800; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; }"
-    "QPushButton:hover { background-color: #F57C00; }"
-    "QPushButton:pressed { background-color: #EF6C00; }"
-    "QPushButton:disabled { background-color: #666666; color: #999999; }"
-  );
-  connect(m_revertFanProfilesButton, &QPushButton::clicked, this, &MainWindow::onRevertFanProfilesClicked);
-  topLayout->addWidget(m_revertFanProfilesButton);
+  m_addFanProfileButton = new QPushButton("Add");
+  m_addFanProfileButton->setMaximumWidth(60);
   
-  mainLayout->addLayout( topLayout );
+  m_removeFanProfileButton = new QPushButton("Remove");
+  m_removeFanProfileButton->setMaximumWidth(70);
+  
+  selectLayout->addWidget( profileLabel );
+  selectLayout->addWidget( m_fanProfileCombo, 1 );
+  selectLayout->addWidget(m_applyFanProfilesButton);
+  selectLayout->addWidget(m_saveFanProfilesButton);
+  selectLayout->addWidget(m_addFanProfileButton);
+  selectLayout->addWidget(m_removeFanProfileButton);
+  mainLayout->addLayout( selectLayout );
 
-  // CPU and GPU fan curve editors on top of each other
-  QVBoxLayout *editorsLayout = new QVBoxLayout();
-  editorsLayout->setSpacing( 20 );
-  
+  // Add a separator line
+  QFrame *separator = new QFrame();
+  separator->setFrameShape( QFrame::HLine );
+  separator->setStyleSheet( "color: #cccccc;" );
+  mainLayout->addWidget( separator );
+
+  // CPU and GPU fan curve editors
   // CPU fan curve editor
   QVBoxLayout *cpuLayout = new QVBoxLayout();
+  cpuLayout->setSpacing( 0 );
   QLabel *cpuLabel = new QLabel( "CPU Fan Curve" );
   cpuLabel->setStyleSheet( "font-weight: bold; font-size: 14px;" );
   cpuLayout->addWidget( cpuLabel );
   m_cpuFanCurveEditor = new FanCurveEditorWidget();
   m_cpuFanCurveEditor->setStyleSheet( "background-color: #1a1a1a; border: 1px solid #555;" );
   cpuLayout->addWidget( m_cpuFanCurveEditor );
-  editorsLayout->addLayout( cpuLayout );
+  scrollLayout->addLayout( cpuLayout );
   
   // GPU fan curve editor
   QVBoxLayout *gpuLayout = new QVBoxLayout();
+  gpuLayout->setSpacing( 0 );
   QLabel *gpuLabel = new QLabel( "GPU Fan Curve" );
   gpuLabel->setStyleSheet( "font-weight: bold; font-size: 14px;" );
   gpuLayout->addWidget( gpuLabel );
   m_gpuFanCurveEditor = new FanCurveEditorWidget();
   m_gpuFanCurveEditor->setStyleSheet( "background-color: #1a1a1a; border: 1px solid #555;" );
   gpuLayout->addWidget( m_gpuFanCurveEditor );
-  editorsLayout->addLayout( gpuLayout );
-  
-  mainLayout->addLayout( editorsLayout );
+  scrollLayout->addLayout( gpuLayout );
 
   // Connect signals
   connect( m_fanProfileCombo, &QComboBox::currentTextChanged,
@@ -251,8 +236,13 @@ void MainWindow::setupFanControlTab()
            this, &MainWindow::onCpuFanPointsChanged );
   connect( m_gpuFanCurveEditor, &FanCurveEditorWidget::pointsChanged,
            this, &MainWindow::onGpuFanPointsChanged );
+  connect( m_addFanProfileButton, &QPushButton::clicked,
+           this, &MainWindow::onAddFanProfileClicked );
+  connect( m_removeFanProfileButton, &QPushButton::clicked,
+           this, &MainWindow::onRemoveFanProfileClicked );
 
-  mainLayout->addStretch();
+  scrollArea->setWidget( scrollWidget );
+  mainLayout->addWidget( scrollArea );
 
   // Load initial data
   onFanProfileChanged("Custom");
@@ -398,6 +388,7 @@ void MainWindow::setupProfilesPage()
   QHBoxLayout *selectLayout = new QHBoxLayout();
   QLabel *selectLabel = new QLabel( "Active Profile:" );
   selectLabel->setStyleSheet( "font-weight: bold;" );
+
   m_profileCombo = new QComboBox();
   m_profileCombo->addItems( m_profileManager->allProfiles() );
   m_profileCombo->setCurrentIndex( m_profileManager->activeProfileIndex() );
@@ -518,11 +509,14 @@ void MainWindow::setupProfilesPage()
   row++;
 
   QLabel *fanProfileLabel = new QLabel( "Fan profile" );
-  m_fanProfileCombo = new QComboBox();
-  m_fanProfileCombo->addItems( QStringList() << "Quiet" << "Balanced" << "Performance" << "Custom" );
-  m_fanProfileCombo->setCurrentIndex( 1 );
+  m_profileFanProfileCombo = new QComboBox();
+  if ( auto names = m_tccdClient->getFanProfileNames() )
+  {
+    for ( const auto &name : *names )
+      m_profileFanProfileCombo->addItem( QString::fromStdString( name ) );
+  }
   detailsLayout->addWidget( fanProfileLabel, row, 0 );
-  detailsLayout->addWidget( m_fanProfileCombo, row, 1 );
+  detailsLayout->addWidget( m_profileFanProfileCombo, row, 1 );
   row++;
 
   QLabel *minFanLabel = new QLabel( "Minimum fan speed" );
@@ -908,8 +902,16 @@ void MainWindow::connectSignals()
   connect( m_brightnessSlider, &QSlider::valueChanged,
            this, [this]() { markChanged(); } );
 
-  connect( m_fanProfileCombo, QOverload< int >::of( &QComboBox::currentIndexChanged ),
-           this, &MainWindow::markChanged );
+  connect( m_profileFanProfileCombo, QOverload< int >::of( &QComboBox::currentIndexChanged ),
+           this, [this](int index) {
+             markChanged();
+             // Update fan profile tab to match profile tab selection
+             m_fanProfileCombo->blockSignals(true);
+             m_fanProfileCombo->setCurrentIndex(index);
+             m_fanProfileCombo->blockSignals(false);
+             // Load the fan curves for the new profile
+             onFanProfileChanged(m_profileFanProfileCombo->currentText());
+           } );
 
   connect( m_minFanSpeedSlider, &QSlider::valueChanged,
            this, [this]() { markChanged(); } );
@@ -1375,6 +1377,7 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   // Block signals while updating to avoid triggering slot updates
   m_brightnessSlider->blockSignals( true );
   m_setBrightnessCheckBox->blockSignals( true );
+  m_profileFanProfileCombo->blockSignals( true );
   m_fanProfileCombo->blockSignals( true );
   m_minFanSpeedSlider->blockSignals( true );
   m_maxFanSpeedSlider->blockSignals( true );
@@ -1413,6 +1416,7 @@ void MainWindow::loadProfileDetails( const QString &profileName )
 
   // Load Fan Control settings (nested in fan object)
 
+  QString loadedFanProfile;
   if ( obj.contains( "fan" ) && obj["fan"].isObject() )
   {
     QJsonObject fanObj = obj["fan"].toObject();
@@ -1421,10 +1425,14 @@ void MainWindow::loadProfileDetails( const QString &profileName )
     if ( fanObj.contains( "fanProfile" ) )
     {
       QString fanProfile = fanObj["fanProfile"].toString( "Balanced" );
-      int idx = m_fanProfileCombo->findText( fanProfile );
+      int idx = m_profileFanProfileCombo->findText( fanProfile );
 
       if ( idx >= 0 )
+      {
+        m_profileFanProfileCombo->setCurrentIndex( idx );
         m_fanProfileCombo->setCurrentIndex( idx );
+        loadedFanProfile = fanProfile;
+      }
     }
 
     if ( fanObj.contains( "minimumFanspeed" ) )
@@ -1564,6 +1572,10 @@ void MainWindow::loadProfileDetails( const QString &profileName )
         
         m_mainsButton->setChecked( mainsProfile == profileId );
         m_batteryButton->setChecked( batteryProfile == profileId );
+        
+        // Store the loaded power state assignments
+        m_loadedMainsAssignment = (mainsProfile == profileId);
+        m_loadedBatteryAssignment = (batteryProfile == profileId);
       }
     }
   }
@@ -1571,6 +1583,7 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   // Unblock signals
   m_brightnessSlider->blockSignals( false );
   m_setBrightnessCheckBox->blockSignals( false );
+  m_profileFanProfileCombo->blockSignals( false );
   m_fanProfileCombo->blockSignals( false );
   m_minFanSpeedSlider->blockSignals( false );
   m_maxFanSpeedSlider->blockSignals( false );
@@ -1597,6 +1610,12 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   onODMPowerLimit2Changed( m_odmPowerLimit2Slider->value() );
   onODMPowerLimit3Changed( m_odmPowerLimit3Slider->value() );
   onGpuPowerChanged( m_gpuPowerSlider->value() );
+  
+  // Trigger fan profile change if one was loaded
+  if ( !loadedFanProfile.isEmpty() )
+  {
+    onFanProfileChanged( loadedFanProfile );
+  }
   
   fprintf( log, "Profile details loaded for: %s\n", profileName.toStdString().c_str() );
   fprintf( log, "Final slider values: ODM1=%d, ODM2=%d, ODM3=%d\n", 
@@ -1755,7 +1774,50 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   }
   */
 
+  // Enable/disable editing widgets based on whether profile is custom
+  const bool isCustom = m_profileManager ? m_profileManager->isCustomProfile( profileName ) : false;
+  updateProfileEditingWidgets( isCustom );
+
   fclose( log );
+}
+
+void MainWindow::updateProfileEditingWidgets( bool isCustom )
+{
+  // Enable/disable editing widgets based on whether profile is custom
+  
+  // Description edit
+  if ( m_descriptionEdit ) {
+    m_descriptionEdit->setEnabled( isCustom );
+    m_descriptionEdit->setReadOnly( !isCustom );
+  }
+  
+  // Auto-activate buttons (always enabled for power state assignment)
+  if ( m_mainsButton ) m_mainsButton->setEnabled( true );
+  if ( m_batteryButton ) m_batteryButton->setEnabled( true );
+  
+  // Display controls
+  if ( m_setBrightnessCheckBox ) m_setBrightnessCheckBox->setEnabled( isCustom );
+  if ( m_brightnessSlider ) m_brightnessSlider->setEnabled( isCustom );
+  
+  // Fan controls
+  if ( m_profileFanProfileCombo ) m_profileFanProfileCombo->setEnabled( isCustom );
+  if ( m_minFanSpeedSlider ) m_minFanSpeedSlider->setEnabled( isCustom );
+  if ( m_maxFanSpeedSlider ) m_maxFanSpeedSlider->setEnabled( isCustom );
+  if ( m_offsetFanSpeedSlider ) m_offsetFanSpeedSlider->setEnabled( isCustom );
+  
+  // CPU controls
+  if ( m_cpuCoresSlider ) m_cpuCoresSlider->setEnabled( isCustom );
+  if ( m_maxPerformanceCheckBox ) m_maxPerformanceCheckBox->setEnabled( isCustom );
+  if ( m_minFrequencySlider ) m_minFrequencySlider->setEnabled( isCustom );
+  if ( m_maxFrequencySlider ) m_maxFrequencySlider->setEnabled( isCustom );
+  
+  // ODM Power controls
+  if ( m_odmPowerLimit1Slider ) m_odmPowerLimit1Slider->setEnabled( isCustom );
+  if ( m_odmPowerLimit2Slider ) m_odmPowerLimit2Slider->setEnabled( isCustom );
+  if ( m_odmPowerLimit3Slider ) m_odmPowerLimit3Slider->setEnabled( isCustom );
+  
+  // GPU controls
+  if ( m_gpuPowerSlider ) m_gpuPowerSlider->setEnabled( isCustom );
 }
 
 void MainWindow::markChanged()
@@ -1772,23 +1834,32 @@ void MainWindow::updateButtonStates()
 
   // Apply will be implemented later
   m_applyButton->setEnabled( false );
-  m_saveButton->setEnabled( m_profileChanged && isCustom );
+  
+  // Save button: enabled for custom profiles with changes, or built-in profiles with power state changes
+  bool powerStateChanged = (m_mainsButton && m_mainsButton->isChecked() != m_loadedMainsAssignment) ||
+                           (m_batteryButton && m_batteryButton->isChecked() != m_loadedBatteryAssignment);
+  m_saveButton->setEnabled( (m_profileChanged && isCustom) || (!isCustom && powerStateChanged) );
+  
+  m_addProfileButton->setEnabled( true );  // Always allow adding new profiles
+  m_removeProfileButton->setEnabled( isCustom );  // Only allow removing custom profiles
   
   // Fan profile buttons
+  const QString fanProfileName = m_fanProfileCombo ? m_fanProfileCombo->currentText() : QString();
+  const bool isFanCustom = (fanProfileName == "Custom");
 
   if ( m_applyFanProfilesButton )
   {
-    m_applyFanProfilesButton->setEnabled( isCustom && isConnected );
+    m_applyFanProfilesButton->setEnabled( isFanCustom && isConnected );
   }
 
   if ( m_saveFanProfilesButton )
   {
-    m_saveFanProfilesButton->setEnabled( isCustom );
+    m_saveFanProfilesButton->setEnabled( isFanCustom );
   }
 
   if ( m_revertFanProfilesButton )
   {
-    m_revertFanProfilesButton->setEnabled( isCustom && isConnected );
+    m_revertFanProfilesButton->setEnabled( isFanCustom && isConnected );
   }
 }
 
@@ -1809,53 +1880,50 @@ void MainWindow::onApplyClicked()
 
 void MainWindow::onSaveClicked()
 {
-  if ( !m_profileManager->isCustomProfile( m_profileCombo->currentText() ) )
-  {
-    statusBar()->showMessage( "Built-in profiles are read-only" );
-    return;
-  }
-
-  // Save changes to profile
   QString profileName = m_profileCombo->currentText();
   QString profileId = m_profileManager->getProfileIdByName( profileName );
+  const bool isCustom = m_profileManager->isCustomProfile( profileName );
   
-  // Build updated profile JSON
-  QJsonObject profileObj;
-  profileObj["id"] = profileId;
-  profileObj["name"] = profileName;
-  profileObj["description"] = m_descriptionEdit->toPlainText();
-  
-  // Brightness settings
-  QJsonObject displayObj;
-  if ( m_setBrightnessCheckBox->isChecked() )
-  {
-    displayObj["brightness"] = m_brightnessSlider->value();
-  }
-  profileObj["display"] = displayObj;
-  
-  // Fan settings
-  QJsonObject fanObj;
-  fanObj["profile"] = m_fanProfileCombo->currentText();
-  fanObj["minSpeed"] = m_minFanSpeedSlider->value();
-  fanObj["maxSpeed"] = m_maxFanSpeedSlider->value();
-  fanObj["offset"] = m_offsetFanSpeedSlider->value();
-  
-  /*
-  // Add fan curves to the profile JSON if custom profile
-
   if ( isCustom )
   {
-    QJsonObject customFanCurveObj;
+    // Save full profile changes for custom profiles
+    // Build updated profile JSON
+    QJsonObject profileObj;
+    profileObj["id"] = profileId;
+    profileObj["name"] = profileName;
+    profileObj["description"] = m_descriptionEdit->toPlainText();
     
-    // CPU fan curve
-
-    if ( m_cpuFanCurveEditor && m_cpuFanCurveEditor->isEnabled() )
+    // Brightness settings
+    QJsonObject displayObj;
+    if ( m_setBrightnessCheckBox->isChecked() )
     {
-      const auto &pts = m_cpuFanCurveEditor->points();
+      displayObj["brightness"] = m_brightnessSlider->value();
+    }
+    profileObj["display"] = displayObj;
+    
+    // Fan settings
+    QJsonObject fanObj;
+    fanObj["fanProfile"] = m_profileFanProfileCombo->currentText();
+    fanObj["minSpeed"] = m_minFanSpeedSlider->value();
+    fanObj["maxSpeed"] = m_maxFanSpeedSlider->value();
+    fanObj["offset"] = m_offsetFanSpeedSlider->value();
+    
+    /*
+    // Add fan curves to the profile JSON if custom profile
 
-      if ( pts.size() == 17 )
+    if ( isCustom )
+    {
+      QJsonObject customFanCurveObj;
+      
+      // CPU fan curve
+
+      if ( m_cpuFanCurveEditor && m_cpuFanCurveEditor->isEnabled() )
       {
-        QJsonArray cpuArr;
+        const auto &pts = m_cpuFanCurveEditor->points();
+
+        if ( pts.size() == 17 )
+        {
+          QJsonArray cpuArr;
         for ( const auto &p : pts )
         {
           QJsonObject o;
@@ -1926,8 +1994,9 @@ void MainWindow::onSaveClicked()
   QString profileJSON = QString::fromUtf8( doc.toJson() );
 
   m_profileManager->saveProfile( profileJSON );
+  }
   
-  // Update stateMap based on mains/battery button states
+  // For both custom and built-in profiles, update stateMap based on mains/battery button states
   if ( m_mainsButton->isChecked() )
   {
     m_profileManager->setStateMap( "power_ac", profileId );
@@ -2002,6 +2071,49 @@ void MainWindow::onRemoveProfileClicked()
   }
 }
 
+void MainWindow::onAddFanProfileClicked()
+{
+  // Generate a unique fan profile name
+  QString baseName = "Custom Fan Profile";
+  QString profileName;
+  int counter = 1;
+  
+  do {
+    profileName = QString("%1 %2").arg(baseName).arg(counter);
+    counter++;
+  } while (m_fanProfileCombo->findText(profileName) != -1);
+  
+  // Add to combo
+  m_fanProfileCombo->addItem(profileName);
+  m_fanProfileCombo->setCurrentText(profileName);
+  statusBar()->showMessage( QString("Fan profile '%1' created").arg(profileName) );
+}
+
+void MainWindow::onRemoveFanProfileClicked()
+{
+  QString currentProfile = m_fanProfileCombo->currentText();
+  
+  // Check if it's a built-in profile
+  QStringList builtIn = {"Silent", "Quiet", "Balanced", "Cool", "Freezy", "Custom"};
+  if (builtIn.contains(currentProfile)) {
+    QMessageBox::information(this, "Cannot Remove", 
+                            "Built-in fan profiles cannot be removed.");
+    return;
+  }
+  
+  // Confirm deletion
+  QMessageBox::StandardButton reply = QMessageBox::question(
+    this, "Remove Fan Profile",
+    QString("Are you sure you want to remove the fan profile '%1'?").arg(currentProfile),
+    QMessageBox::Yes | QMessageBox::No
+  );
+  
+  if (reply == QMessageBox::Yes) {
+    m_fanProfileCombo->removeItem(m_fanProfileCombo->currentIndex());
+    statusBar()->showMessage( QString("Fan profile '%1' removed").arg(currentProfile) );
+  }
+}
+
 void MainWindow::onFanProfileChanged(const QString& profileName)
 {
   QString json = m_profileManager->getFanProfile(profileName);
@@ -2043,6 +2155,14 @@ void MainWindow::onFanProfileChanged(const QString& profileName)
   // Update the current profile selection
   m_currentFanProfile = profileName;
   
+  // Synchronize profile tab fan profile combo with fan tab selection
+  m_profileFanProfileCombo->blockSignals(true);
+  int idx = m_profileFanProfileCombo->findText(profileName);
+  if (idx >= 0) {
+    m_profileFanProfileCombo->setCurrentIndex(idx);
+  }
+  m_profileFanProfileCombo->blockSignals(false);
+  
   // Set editors as editable only for Custom profile
   bool isEditable = (profileName == "Custom");
   if (m_cpuFanCurveEditor) {
@@ -2051,6 +2171,9 @@ void MainWindow::onFanProfileChanged(const QString& profileName)
   if (m_gpuFanCurveEditor) {
     m_gpuFanCurveEditor->setEditable(isEditable);
   }
+  
+  // Update button states
+  updateButtonStates();
 }
 
 void MainWindow::onCpuFanPointsChanged(const QVector<FanCurveEditorWidget::Point>& points)

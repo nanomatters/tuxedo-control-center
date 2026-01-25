@@ -142,10 +142,7 @@ const std::vector< FanProfile > defaultFanProfiles = {
       { 50, 40 }, { 55, 45 }, { 60, 50 }, { 65, 60 }, { 70, 65 }, { 75, 70 },
       { 80, 75 }, { 85, 85 }, { 90, 95 }, { 95, 98 }, { 100, 100 }
     } )
-  ),
-
-  // Custom profile (empty tables, to be filled by user)
-  FanProfile( "Custom" )
+  )
 };
 
 static FanProfile customFanProfile("Custom");

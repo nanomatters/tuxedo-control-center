@@ -60,6 +60,7 @@ public:
   bool saveCustomProfile( const std::string &profileJSON );
   bool deleteCustomProfile( const std::string &profileId );
   std::optional< std::string > getFanProfile( const std::string &name );
+  std::optional< std::vector< std::string > > getFanProfileNames();
   std::optional< bool > setFanProfile( const std::string &name, const std::string &json );
 
   // Display Control

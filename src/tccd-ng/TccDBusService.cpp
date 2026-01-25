@@ -299,6 +299,7 @@ void TccDBusInterfaceAdaptor::registerAdaptor()
     registerMethod("GetDefaultValuesProfileJSON").implementedAs([this](){ return this->GetDefaultValuesProfileJSON(); }),
     registerMethod("CopyProfile").implementedAs([this](const std::string &sourceId, const std::string &newName){ return this->CopyProfile(sourceId, newName); }),
     registerMethod("GetFanProfile").implementedAs([this](const std::string &name){ return this->GetFanProfile(name); }),
+    registerMethod("GetFanProfileNames").implementedAs([this](){ return this->GetFanProfileNames(); }),
     registerMethod("SetFanProfile").implementedAs([this](const std::string &name, const std::string &json){ return this->SetFanProfile(name, json); }),
     registerMethod("GetSettingsJSON").implementedAs([this](){ return this->GetSettingsJSON(); }),
     registerMethod("SetStateMap").implementedAs([this](const std::string &state, const std::string &profileId){ return this->SetStateMap(state, profileId); }),
@@ -954,6 +955,23 @@ std::string TccDBusInterfaceAdaptor::CopyProfile( const std::string &sourceId, c
 std::string TccDBusInterfaceAdaptor::GetFanProfile( const std::string &name )
 {
   return getFanProfileJson(name);
+}
+
+std::string TccDBusInterfaceAdaptor::GetFanProfileNames()
+{
+  std::vector< std::string > names;
+  for (const auto &p : defaultFanProfiles) {
+    names.push_back(p.name);
+  }
+  
+  // Return as JSON array
+  std::string json = "[";
+  for (size_t i = 0; i < names.size(); ++i) {
+    if (i > 0) json += ",";
+    json += "\"" + names[i] + "\"";
+  }
+  json += "]";
+  return json;
 }
 
 bool TccDBusInterfaceAdaptor::SetFanProfile( const std::string &name, const std::string &json )

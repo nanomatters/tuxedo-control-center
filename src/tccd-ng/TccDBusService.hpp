@@ -268,6 +268,7 @@ public:
   bool UpdateCustomProfile( const std::string &profileJSON );
   std::string CopyProfile( const std::string &sourceId, const std::string &newName );
   std::string GetFanProfile( const std::string &name );
+  std::string GetFanProfileNames();
   bool SetFanProfile( const std::string &name, const std::string &json );
 
   // settings methods

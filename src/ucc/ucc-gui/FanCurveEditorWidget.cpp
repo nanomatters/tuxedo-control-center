@@ -16,6 +16,7 @@ FanCurveEditorWidget::FanCurveEditorWidget(QWidget *parent)
         m_points.append({t, d});
     }
     setMouseTracking(true);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 }
 
 void FanCurveEditorWidget::setPoints(const QVector<Point>& pts) {

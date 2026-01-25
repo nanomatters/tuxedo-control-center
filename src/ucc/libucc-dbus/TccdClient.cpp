@@ -20,6 +20,7 @@
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QDateTime>
 #include <QThread>
 #include <QFile>
@@ -305,6 +306,28 @@ std::optional< std::string > TccdClient::getFanProfile( const std::string &name 
   if ( auto result = callMethod< QString >( "GetFanProfile", QString::fromStdString( name ) ) )
   {
     return result->toStdString();
+  }
+  return std::nullopt;
+}
+
+std::optional< std::vector< std::string > > TccdClient::getFanProfileNames()
+{
+  if ( auto result = callMethod< QString >( "GetFanProfileNames" ) )
+  {
+    // Parse JSON array
+    QJsonDocument doc = QJsonDocument::fromJson( result->toUtf8() );
+    if ( doc.isArray() )
+    {
+      std::vector< std::string > names;
+      for ( const auto &value : doc.array() )
+      {
+        if ( value.isString() )
+        {
+          names.push_back( value.toString().toStdString() );
+        }
+      }
+      return names;
+    }
   }
   return std::nullopt;
 }
