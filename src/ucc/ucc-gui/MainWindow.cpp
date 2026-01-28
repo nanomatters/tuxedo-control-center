@@ -392,39 +392,22 @@ void MainWindow::setupDashboardPage()
   gpuGrid->addWidget( makeGauge( "dGPU - Power", "W", m_gpuPowerLabel ), 0, 3 );
   layout->addLayout( gpuGrid );
 
-  // Same-speed toggle (UCC C++ UI control)
+  // Same-speed toggle (UCC C++ UI control) — reuse single checkbox `m_sameFanSpeedCheckBox`
   QHBoxLayout *sameSpeedLayout = new QHBoxLayout();
   sameSpeedLayout->setAlignment( Qt::AlignRight );
-  m_sameSpeedCheckbox = new QCheckBox( "Same fan speed for all fans" );
-  m_sameSpeedCheckbox->setToolTip( "When enabled, all fans are set to the highest decided percent" );
-  sameSpeedLayout->addWidget( m_sameSpeedCheckbox );
-  layout->addLayout( sameSpeedLayout );
+  if ( !m_sameFanSpeedCheckBox ) {
+    m_sameFanSpeedCheckBox = new QCheckBox( "Same fan speed for all fans", dashboardWidget );
+    m_sameFanSpeedCheckBox->setToolTip( "When enabled, all fans are set to the highest decided percent" );
 
-  connect( m_sameSpeedCheckbox, &QCheckBox::toggled, this, [this]( bool checked ) {
-    // Call DBus API to set same speed
-    if ( m_systemMonitor )
-    {
-      // Use TccdClient via SystemMonitor's client indirectly by creating a temporary one
-      ucc::TccdClient client;
-      if ( client.setFanSameSpeed( checked ) )
-      {
-        statusBar()->showMessage( QString( "Set same-speed to %1" ).arg( checked ? "ON" : "OFF" ), 2000 );
-      }
-      else
-      {
-        statusBar()->showMessage( "Failed to set same-speed", 2000 );
-      }
-    }
-  } );
+    // Hook the checkbox to update profile settings (no DBus call)
+    connect( m_sameFanSpeedCheckBox, &QCheckBox::toggled, this, &MainWindow::onSameSpeedToggled );
 
-  // Query current value to initialize checkbox
-  {
-    ucc::TccdClient client;
-    if ( auto val = client.getFanSameSpeed() )
-    {
-      m_sameSpeedCheckbox->setChecked( *val );
-    }
+    // Default state; actual value will be set when a profile is loaded
+    m_sameFanSpeedCheckBox->setChecked( true );
   }
+
+  sameSpeedLayout->addWidget( m_sameFanSpeedCheckBox );
+  layout->addLayout( sameSpeedLayout );
 
   layout->addStretch();
 
@@ -633,6 +616,16 @@ void MainWindow::setupProfilesPage()
   offsetFanLayout->addWidget( m_offsetFanSpeedValue );
   detailsLayout->addWidget( offsetFanLabel, row, 0 );
   detailsLayout->addLayout( offsetFanLayout, row, 1 );
+  row++;
+
+  QLabel *sameSpeedLabel = new QLabel( "Same fan speed for all fans" );
+  detailsLayout->addWidget( sameSpeedLabel, row, 0 );
+  // Reuse the shared checkbox created in the dashboard (create if not present)
+  if ( !m_sameFanSpeedCheckBox ) {
+    m_sameFanSpeedCheckBox = new QCheckBox();
+    m_sameFanSpeedCheckBox->setChecked( true );
+  }
+  detailsLayout->addWidget( m_sameFanSpeedCheckBox, row, 1, Qt::AlignLeft );
   row++;
 
   // Add spacer
@@ -1351,6 +1344,9 @@ void MainWindow::onAllProfilesChanged()
     updateButtonStates();
   }
 
+  // Ensure buttons reflect current profile set (remove button availability etc.)
+  updateButtonStates();
+
   fprintf( log2, "Profiles updated. Count: %ld\n", (long)m_profileManager->allProfiles().size() );
   fflush( log2 );
   fclose( log2 );
@@ -1559,6 +1555,12 @@ void MainWindow::loadProfileDetails( const QString &profileName )
 
     if ( fanObj.contains( "offsetFanspeed" ) )
       m_offsetFanSpeedSlider->setValue( fanObj["offsetFanspeed"].toInt( 0 ) );
+
+    // Load sameSpeed from profile (default true)
+    if ( fanObj.contains( "sameSpeed" ) )
+      m_sameFanSpeedCheckBox->setChecked( fanObj["sameSpeed"].toBool( true ) );
+    else
+      m_sameFanSpeedCheckBox->setChecked( true );
   }
 
   // Load CPU settings (nested in cpu object)
@@ -1901,6 +1903,7 @@ void MainWindow::updateProfileEditingWidgets( bool isCustom )
   if ( m_minFanSpeedSlider ) m_minFanSpeedSlider->setEnabled( isCustom );
   if ( m_maxFanSpeedSlider ) m_maxFanSpeedSlider->setEnabled( isCustom );
   if ( m_offsetFanSpeedSlider ) m_offsetFanSpeedSlider->setEnabled( isCustom );
+  if ( m_sameFanSpeedCheckBox ) m_sameFanSpeedCheckBox->setEnabled( isCustom );
   
   // CPU controls
   if ( m_cpuCoresSlider ) m_cpuCoresSlider->setEnabled( isCustom );
@@ -1930,14 +1933,20 @@ void MainWindow::updateButtonStates()
   const bool isConnected = m_tccdClient && m_tccdClient->isConnected();
 
   // Apply will be implemented later
-  m_applyButton->setEnabled( false );
+  // Note: updateButtonStates() may be invoked during setup (e.g., a checkbox
+  // toggled() can emit while other widgets are still being created). Guard
+  // accesses to optional widgets to avoid null dereferences during construction.
+  if ( m_applyButton )
+    m_applyButton->setEnabled( false );
   
-  // Save button: enabled for custom profiles with changes, or built-in profiles with power state changes
+  // Save button: enabled when there are unsaved profile changes, or built-in profile power-state changed
   bool powerStateChanged = (m_mainsButton && m_mainsButton->isChecked() != m_loadedMainsAssignment) ||
                            (m_batteryButton && m_batteryButton->isChecked() != m_loadedBatteryAssignment);
-  m_saveButton->setEnabled( (m_profileChanged && isCustom) || (!isCustom && powerStateChanged) );
+  if ( m_saveButton )
+    m_saveButton->setEnabled( m_profileChanged || (!isCustom && powerStateChanged) );
   
-  m_removeProfileButton->setEnabled( isCustom );  // Only allow removing custom profiles
+  if ( m_removeProfileButton )
+    m_removeProfileButton->setEnabled( isCustom );  // Only allow removing custom profiles
   
   // Fan profile buttons
   const QString fanProfileName = m_fanProfileCombo ? m_fanProfileCombo->currentText() : QString();
@@ -2013,18 +2022,18 @@ void MainWindow::onSaveClicked()
     fanObj["minSpeed"] = m_minFanSpeedSlider->value();
     fanObj["maxSpeed"] = m_maxFanSpeedSlider->value();
     fanObj["offset"] = m_offsetFanSpeedSlider->value();
-    
+    // Persist same-speed setting
+    fanObj["sameSpeed"] = m_sameFanSpeedCheckBox ? m_sameFanSpeedCheckBox->isChecked() : true;
 
+    profileObj["fan"] = fanObj;
 
-  profileObj["fan"] = fanObj;
-  
-  // CPU settings
-  QJsonObject cpuObj;
-  cpuObj["cores"] = m_cpuCoresSlider->value();
-  cpuObj["maxPerformance"] = m_maxPerformanceCheckBox->isChecked();
-  cpuObj["minFrequency"] = m_minFrequencySlider->value();
-  cpuObj["maxFrequency"] = m_maxFrequencySlider->value();
-  profileObj["cpu"] = cpuObj;
+    // CPU settings
+    QJsonObject cpuObj;
+    cpuObj["cores"] = m_cpuCoresSlider->value();
+    cpuObj["maxPerformance"] = m_maxPerformanceCheckBox->isChecked();
+    cpuObj["minFrequency"] = m_minFrequencySlider->value();
+    cpuObj["maxFrequency"] = m_maxFrequencySlider->value();
+    profileObj["cpu"] = cpuObj;
   
   // ODM Power Limit (TDP) settings
   QJsonObject odmObj;
@@ -2048,7 +2057,57 @@ void MainWindow::onSaveClicked()
 
   m_profileManager->saveProfile( profileJSON );
   }
-  
+  else if ( !isCustom && m_profileChanged )
+  {
+    // User edited a built-in profile; create a custom copy and save the changes
+    QString baseName = profileName;
+    QString newName;
+    int number = 1;
+    do {
+      newName = QString( "%1 %2" ).arg( baseName ).arg( number );
+      number++;
+    } while ( m_profileManager->allProfiles().contains( newName ) );
+
+    QString newJson = m_profileManager->createProfileFromDefault( newName );
+    if ( newJson.isEmpty() ) {
+      QMessageBox::warning( this, "Error", "Failed to create editable copy of profile." );
+    } else {
+      QJsonDocument doc = QJsonDocument::fromJson( newJson.toUtf8() );
+      if ( doc.isObject() ) {
+        QJsonObject obj = doc.object();
+        // Apply the same fields as for custom save
+        QJsonObject displayObj;
+        if ( m_setBrightnessCheckBox->isChecked() ) displayObj["brightness"] = m_brightnessSlider->value();
+        obj["display"] = displayObj;
+
+        QJsonObject fanObj;
+        fanObj["fanProfile"] = m_profileFanProfileCombo->currentText();
+        fanObj["minSpeed"] = m_minFanSpeedSlider->value();
+        fanObj["maxSpeed"] = m_maxFanSpeedSlider->value();
+        fanObj["offset"] = m_offsetFanSpeedSlider->value();
+        fanObj["sameSpeed"] = m_sameFanSpeedCheckBox ? m_sameFanSpeedCheckBox->isChecked() : true;
+        obj["fan"] = fanObj;
+
+        QJsonObject cpuObj;
+        cpuObj["cores"] = m_cpuCoresSlider->value();
+        cpuObj["maxPerformance"] = m_maxPerformanceCheckBox->isChecked();
+        cpuObj["minFrequency"] = m_minFrequencySlider->value();
+        cpuObj["maxFrequency"] = m_maxFrequencySlider->value();
+        obj["cpu"] = cpuObj;
+
+        QJsonDocument out( obj );
+        m_profileManager->saveProfile( QString::fromUtf8( out.toJson( QJsonDocument::Compact ) ) );
+
+        // Switch to new profile and update profileId for stateMap
+        int idx = m_profileCombo->findText( newName );
+        if ( idx != -1 ) {
+          m_profileCombo->setCurrentIndex( idx );
+          profileId = m_profileManager->getProfileIdByName( newName );
+        }
+      }
+    }
+  }
+
   // For both custom and built-in profiles, update stateMap based on mains/battery button states
   if ( m_mainsButton->isChecked() )
   {
@@ -2410,6 +2469,14 @@ void MainWindow::onApplyFanProfilesClicked()
 void MainWindow::onRevertFanProfilesClicked()
 {
   loadFanPoints();
+}
+
+void MainWindow::onSameSpeedToggled( bool checked )
+{
+  // Do not auto-apply or auto-copy on click — only mark the profile as changed so the user can Save.
+  Q_UNUSED( checked );
+  markChanged();
+  statusBar()->showMessage( QString( "Same-speed set to %1 (unsaved)" ).arg( m_sameFanSpeedCheckBox->isChecked() ? "ON" : "OFF" ), 1500 );
 }
 
 void MainWindow::loadFanPoints()
