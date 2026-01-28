@@ -99,15 +99,6 @@ static std::string fanTableToJSON( const std::vector< FanTableEntry > &table )
   return oss.str();
 }
 
-static std::string fanCurveToJSON( const FanProfile &profile )
-{
-  std::ostringstream oss;
-  oss << "{"
-      << "\"tableCPU\":" << fanTableToJSON( profile.tableCPU ) << ","
-      << "\"tableGPU\":" << fanTableToJSON( profile.tableGPU )
-      << "}";
-  return oss.str();
-}
 
 static int32_t getDefaultOnlineCores()
 {
@@ -182,8 +173,7 @@ static std::string profileToJSON( const TccProfile &profile,
       << "\"fanProfile\":\"" << jsonEscape( profile.fan.fanProfile ) << "\" ,"
       << "\"minimumFanspeed\":" << profile.fan.minimumFanspeed << ","
       << "\"maximumFanspeed\":" << profile.fan.maximumFanspeed << ","
-      << "\"offsetFanspeed\":" << profile.fan.offsetFanspeed << ","
-      << "\"customFanCurve\":" << fanCurveToJSON( profile.fan.customFanCurve )
+      << "\"offsetFanspeed\":" << profile.fan.offsetFanspeed
       << "},"
       << "\"odmProfile\":{"
       << "\"name\":\"" << jsonEscape( profile.odmProfile.name.value_or( "" ) ) << "\""
@@ -294,6 +284,8 @@ void TccDBusInterfaceAdaptor::registerAdaptor()
     registerMethod("SetTempProfileById").implementedAs([this](const std::string &id){ return this->SetTempProfileById(id); }),
     registerMethod("SetActiveProfile").implementedAs([this](const std::string &id){ return this->SetActiveProfile(id); }),
     registerMethod("ApplyProfile").implementedAs([this](const std::string &profileJSON){ return this->ApplyProfile(profileJSON); }),
+    registerMethod("SetFanSameSpeed").implementedAs([this](bool same){ return this->SetFanSameSpeed(same); }),
+    registerMethod("GetFanSameSpeed").implementedAs([this](){ bool same = false; this->GetFanSameSpeed(same); return same; }),
     registerMethod("GetProfilesJSON").implementedAs([this](){ return this->GetProfilesJSON(); }),
     registerMethod("GetDefaultProfilesJSON").implementedAs([this](){ return this->GetDefaultProfilesJSON(); }),
     registerMethod("GetDefaultValuesProfileJSON").implementedAs([this](){ return this->GetDefaultValuesProfileJSON(); }),
@@ -531,8 +523,13 @@ bool TccDBusInterfaceAdaptor::SetFanProfileCPU( const std::string &pointsJSON )
     if ( !editable )
       return false;
 
-    profile.fan.customFanCurve.tableCPU = table;
-    return m_service->updateCustomProfile( profile );
+    // Apply as temporary table (do not persist in daemon profiles)
+    if ( m_service->m_fanControlWorker )
+    {
+      m_service->m_fanControlWorker->applyTemporaryFanCurves( table, {} );
+      return true;
+    }
+    return false;
   }
   catch ( ... )
   {
@@ -566,8 +563,13 @@ bool TccDBusInterfaceAdaptor::SetFanProfileDGPU( const std::string &pointsJSON )
     if ( !editable )
       return false;
 
-    profile.fan.customFanCurve.tableGPU = table;
-    return m_service->updateCustomProfile( profile );
+    // Apply as temporary table (do not persist in daemon profiles)
+    if ( m_service->m_fanControlWorker )
+    {
+      m_service->m_fanControlWorker->applyTemporaryFanCurves( {}, table );
+      return true;
+    }
+    return false;
   }
   catch ( ... )
   {
@@ -726,6 +728,18 @@ bool TccDBusInterfaceAdaptor::ApplyProfile( const std::string &profileJSON )
   return m_service->applyProfileJSON( profileJSON );
 }
 
+bool TccDBusInterfaceAdaptor::SetFanSameSpeed( bool same )
+{
+  if ( !m_service ) return false;
+  return m_service->SetFanSameSpeed( same );
+}
+
+bool TccDBusInterfaceAdaptor::GetFanSameSpeed( bool &same )
+{
+  if ( !m_service ) return false;
+  return m_service->GetFanSameSpeed( same );
+}
+
 std::string TccDBusInterfaceAdaptor::GetProfilesJSON()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
@@ -852,8 +866,7 @@ bool TccDBusInterfaceAdaptor::UpdateCustomProfile( const std::string &profileJSO
     std::cout << "[Profile]   Min speed: " << profile.fan.minimumFanspeed << std::endl;
     std::cout << "[Profile]   Max speed: " << profile.fan.maximumFanspeed << std::endl;
     std::cout << "[Profile]   Offset: " << profile.fan.offsetFanspeed << std::endl;
-    std::cout << "[Profile]   Custom curve CPU points: " << profile.fan.customFanCurve.tableCPU.size() << std::endl;
-    std::cout << "[Profile]   Custom curve GPU points: " << profile.fan.customFanCurve.tableGPU.size() << std::endl;
+    std::cout << "[Profile]   Fan profile name: " << profile.fan.fanProfile << std::endl;
     
     bool result = m_service->updateCustomProfile( profile );
     
@@ -2064,7 +2077,82 @@ bool TccDBusService::applyProfileJSON( const std::string &profileJSON )
     // Set as active profile
     m_activeProfile = profile;
     updateDBusActiveProfileData();
-    
+
+    // If the profile explicitly sets sameSpeed, apply it to fan worker immediately
+    try
+    {
+      if ( m_fanControlWorker )
+      {
+        bool same = m_activeProfile.fan.sameSpeed;
+        m_fanControlWorker->setSameSpeed( same );
+        syslog( LOG_INFO, "TccDBusService: applied sameSpeed=%d from profile", same ? 1 : 0 );
+      }
+    }
+    catch ( ... ) { /* ignore */ }
+
+    // Try to resolve and apply a built-in fan profile referenced by the profile
+    try
+    {
+      const std::string fpName = profile.fan.fanProfile;
+      if ( !fpName.empty() )
+      {
+        std::string fanJson = getFanProfileJson( fpName );
+        if ( fanJson != "{}" )
+        {
+          // Extract CPU/GPU arrays from the fan JSON. Support both "tableCPU"/"tableGPU" and "cpu"/"gpu" names.
+          std::string cpuJson;
+          std::string gpuJson;
+
+          auto extractArrayByKey = [&]( const std::string &key )->std::string {
+            std::string keyStr1 = "\"" + key + "\":";
+            // fallback to short name (remove 'table' prefix if present)
+            std::string keyStr2;
+            if ( key.rfind("table", 0) == 0 && key.size() > 5 )
+              keyStr2 = "\"" + key.substr(5) + "\":"; // e.g. "cpu":
+
+            size_t pos = fanJson.find( keyStr1 );
+            if ( pos == std::string::npos && !keyStr2.empty() ) pos = fanJson.find( keyStr2 );
+            if ( pos == std::string::npos ) return std::string();
+
+            size_t bracketStart = fanJson.find( '[', pos );
+            if ( bracketStart == std::string::npos ) return std::string();
+
+            size_t bracketEnd = bracketStart;
+            int depth = 0;
+            for ( size_t i = bracketStart; i < fanJson.length(); ++i )
+            {
+              if ( fanJson[i] == '[' ) ++depth;
+              else if ( fanJson[i] == ']' ) --depth;
+              if ( depth == 0 ) { bracketEnd = i; break; }
+            }
+            if ( bracketEnd > bracketStart ) return fanJson.substr( bracketStart, bracketEnd - bracketStart + 1 );
+            return std::string();
+          };
+
+          cpuJson = extractArrayByKey( "tableCPU" );
+          if ( cpuJson.empty() ) cpuJson = extractArrayByKey( "cpu" );
+
+          gpuJson = extractArrayByKey( "tableGPU" );
+          if ( gpuJson.empty() ) gpuJson = extractArrayByKey( "gpu" );
+
+          std::vector< FanTableEntry > cpuTable;
+          std::vector< FanTableEntry > gpuTable;
+
+          if ( !cpuJson.empty() ) cpuTable = ProfileManager::parseFanTableFromJSON( cpuJson );
+          if ( !gpuJson.empty() ) gpuTable = ProfileManager::parseFanTableFromJSON( gpuJson );
+
+          if ( m_cpuWorker )
+          {
+            if ( m_fanControlWorker )
+            {
+              m_fanControlWorker->applyTemporaryFanCurves( cpuTable, gpuTable );
+            }
+          }
+        }
+      }
+    }
+    catch ( ... ) { /* ignore parse errors and continue applying other profile settings */ }
+
     // Apply to workers
     if ( m_cpuWorker )
     {
@@ -2090,6 +2178,32 @@ bool TccDBusService::applyProfileJSON( const std::string &profileJSON )
     std::cerr << "[Profile] Failed to apply profile JSON: " << e.what() << std::endl;
     return false;
   }
+}
+
+bool TccDBusService::SetFanSameSpeed( bool same )
+{
+  syslog( LOG_INFO, "TccDBusService: SetFanSameSpeed called with %d", same ? 1 : 0 );
+
+  // Update active profile setting
+  m_activeProfile.fan.sameSpeed = same;
+  updateDBusActiveProfileData();
+
+  // Apply immediately
+  if ( m_fanControlWorker )
+  {
+    m_fanControlWorker->setSameSpeed( same );
+  }
+
+  // Notify DBus clients about the profile change
+  if ( m_adaptor ) m_adaptor->emitProfileChanged( m_activeProfile.id );
+
+  return true;
+}
+
+bool TccDBusService::GetFanSameSpeed( bool &same )
+{
+  same = m_activeProfile.fan.sameSpeed;
+  return true;
 }
 
 std::vector< TccProfile > TccDBusService::getAllProfiles() const

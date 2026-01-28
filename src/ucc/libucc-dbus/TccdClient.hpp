@@ -86,6 +86,9 @@ public:
   bool revertFanProfiles();
   std::optional< std::string > getCurrentFanSpeed();
   std::optional< std::string > getFanTemperatures();
+  // Same-speed control
+  bool setFanSameSpeed( bool same );
+  std::optional< bool > getFanSameSpeed();
 
   // Power Management
   bool setODMPowerLimits( const std::vector< int > &limits );
@@ -124,6 +127,8 @@ public:
   std::optional< double > getGpuPower();
   std::optional< int > getFanSpeedRPM();
   std::optional< int > getGpuFanSpeedRPM();
+  std::optional< int > getFanSpeedPercent();
+  std::optional< int > getGpuFanSpeedPercent();
 
   // Signal Subscription
   using ProfileChangedCallback = std::function< void( const std::string &profileId ) >;

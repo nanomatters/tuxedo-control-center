@@ -94,14 +94,15 @@ struct TccProfileFanControl
   int32_t minimumFanspeed;
   int32_t maximumFanspeed;
   int32_t offsetFanspeed;
-  FanProfile customFanCurve;
+  bool sameSpeed; // when true, all fans are driven at the same percent (highest)
 
   TccProfileFanControl()
     : useControl( true ),
       fanProfile( "Balanced" ),
       minimumFanspeed( 0 ),
       maximumFanspeed( 100 ),
-      offsetFanspeed( 0 )
+      offsetFanspeed( 0 ),
+      sameSpeed( true )
   {
   }
 };

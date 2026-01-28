@@ -148,18 +148,18 @@ void SystemMonitor::updateMetrics()
     }
   }
 
-  // Get Fan Speed
+  // Get Fan Speed (percentage)
   {
     QString fanSpd = "--";
 
-    if ( auto rpm = m_client->getFanSpeedRPM() )
+    if ( auto pct = m_client->getFanSpeedPercent() )
     {
-      qDebug() << "[SystemMonitor] Fan speed:" << *rpm << "RPM";
-      fanSpd = QString::number( *rpm ) + " RPM";
+      qDebug() << "[SystemMonitor] Fan speed:" << *pct << "%";
+      fanSpd = QString::number( *pct ) + " %";
     }
     else
     {
-      qDebug() << "[SystemMonitor] Failed to get fan speed";
+      qDebug() << "[SystemMonitor] Failed to get fan speed (percent)";
     }
 
     if ( m_fanSpeed != fanSpd )
@@ -169,18 +169,18 @@ void SystemMonitor::updateMetrics()
     }
   }
 
-  // Get GPU Fan Speed
+  // Get GPU Fan Speed (percentage)
   {
     QString fanSpd = "--";
 
-    if ( auto rpm = m_client->getGpuFanSpeedRPM() )
+    if ( auto pct = m_client->getGpuFanSpeedPercent() )
     {
-      qDebug() << "[SystemMonitor] GPU fan speed:" << *rpm << "RPM";
-      fanSpd = QString::number( *rpm ) + " RPM";
+      qDebug() << "[SystemMonitor] GPU fan speed:" << *pct << "%";
+      fanSpd = QString::number( *pct ) + " %";
     }
     else
     {
-      qDebug() << "[SystemMonitor] Failed to get GPU fan speed";
+      qDebug() << "[SystemMonitor] Failed to get GPU fan speed (percent)";
     }
     if ( m_gpuFanSpeed != fanSpd )
     {

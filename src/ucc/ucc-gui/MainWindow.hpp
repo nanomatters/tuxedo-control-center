@@ -128,6 +128,7 @@ namespace ucc
     QLabel *m_gpuFrequencyLabel = nullptr;
     QLabel *m_fanSpeedLabel = nullptr;
     QLabel *m_gpuFanSpeedLabel = nullptr;
+    QCheckBox *m_sameSpeedCheckbox = nullptr;
     QLabel *m_cpuPowerLabel = nullptr;
     QLabel *m_gpuPowerLabel = nullptr;
     QSlider *m_displayBrightnessSlider = nullptr;
@@ -168,6 +169,9 @@ namespace ucc
     QPushButton *m_saveFanProfilesButton = nullptr;
     QPushButton *m_revertFanProfilesButton = nullptr;
     QPushButton *m_addFanProfileButton = nullptr;
+    QPushButton *m_copyFanProfileButton = nullptr;
+    // List of built-in fan profile names provided by tccd-ng
+    QStringList m_builtinFanProfiles; 
     QPushButton *m_removeFanProfileButton = nullptr;
     QVector<FanPoint> m_cpuFanPoints;
     QVector<FanPoint> m_gpuFanPoints;

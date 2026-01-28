@@ -27,6 +27,7 @@
 #include <cstdlib>
 #include <sys/stat.h>
 #include <cstring>
+#include <iostream>
 
 /**
  * @brief Manages TCC profile loading, saving, and manipulation
@@ -565,16 +566,15 @@ public:
       profile.fan.minimumFanspeed = extractInt( fanJson, "minimumFanspeed", 0 );
       profile.fan.maximumFanspeed = extractInt( fanJson, "maximumFanspeed", 100 );
       profile.fan.offsetFanspeed = extractInt( fanJson, "offsetFanspeed", 0 );
+      profile.fan.sameSpeed = extractBool( fanJson, "sameSpeed", true );
       
-      // Debug: log the parsed fan offset
+      // Debug: log the parsed fan offset and sameSpeed
       std::cout << "[ProfileManager] Parsed profile '" << profile.name 
-                << "' offsetFanspeed: " << profile.fan.offsetFanspeed << std::endl;
+                << "' offsetFanspeed: " << profile.fan.offsetFanspeed
+                << " sameSpeed: " << ( profile.fan.sameSpeed ? "true" : "false" ) << std::endl;
       
-      std::string customCurveJson = extractObject( fanJson, "customFanCurve" );
-      if ( !customCurveJson.empty() )
-      {
-        profile.fan.customFanCurve = parseFanProfile( customCurveJson );
-      }
+      // No embedded custom fan tables allowed in profiles. Fan profiles should reference a named preset only.
+      // Fan table data will be supplied by UCC via ApplyFanProfiles or persisted separately.
     }
 
     // Parse ODM profile
@@ -741,18 +741,8 @@ private:
       modified = true;
     }
 
-    // fill fan customFanCurve if completely missing
-    if ( profile.fan.customFanCurve.tableCPU.empty() and not defaultProfile.fan.customFanCurve.tableCPU.empty() )
-    {
-      profile.fan.customFanCurve.tableCPU = defaultProfile.fan.customFanCurve.tableCPU;
-      modified = true;
-    }
-
-    if ( profile.fan.customFanCurve.tableGPU.empty() and not defaultProfile.fan.customFanCurve.tableGPU.empty() )
-    {
-      profile.fan.customFanCurve.tableGPU = defaultProfile.fan.customFanCurve.tableGPU;
-      modified = true;
-    }
+    // Profiles should not contain embedded fan tables. Fan presets are named references only.
+    // Do not fill or copy any custom fan curve data here.
     
     // fill ODM profile name
     if ( not profile.odmProfile.name.has_value() and defaultProfile.odmProfile.name.has_value() )
@@ -764,27 +754,8 @@ private:
     return modified;
   }
 
-  /**
-   * @brief Parse fan profile from JSON
-   */
-  [[nodiscard]] static FanProfile parseFanProfile( const std::string &json )
-  {
-    FanProfile profile;
-    
-    std::string cpuTableJson = extractArray( json, "tableCPU" );
-    if ( !cpuTableJson.empty() )
-    {
-      profile.tableCPU = parseFanTable( cpuTableJson );
-    }
-    
-    std::string gpuTableJson = extractArray( json, "tableGPU" );
-    if ( !gpuTableJson.empty() )
-    {
-      profile.tableGPU = parseFanTable( gpuTableJson );
-    }
-    
-    return profile;
-  }
+  // Profiles are not allowed to embed full fan tables (customFanCurve). Fan tables are supplied
+  // as named presets (via GetFanProfile) or sent at runtime via ApplyFanProfiles.
 
   /**
    * @brief Parse fan table from JSON array
@@ -884,8 +855,7 @@ private:
         << "\"fanProfile\":\"" << jsonEscape( profile.fan.fanProfile ) << "\","
         << "\"minimumFanspeed\":" << profile.fan.minimumFanspeed << ","
         << "\"maximumFanspeed\":" << profile.fan.maximumFanspeed << ","
-        << "\"offsetFanspeed\":" << profile.fan.offsetFanspeed << ","
-        << "\"customFanCurve\":" << fanProfileToJSON( profile.fan.customFanCurve )
+        << "\"offsetFanspeed\":" << profile.fan.offsetFanspeed
         << "},"
         << "\"odmProfile\":{"
         << "\"name\":\"" << jsonEscape( profile.odmProfile.name.value_or( "" ) ) << "\""
@@ -911,15 +881,7 @@ private:
   /**
    * @brief Serialize fan profile to JSON
    */
-  [[nodiscard]] static std::string fanProfileToJSON( const FanProfile &profile )
-  {
-    std::ostringstream oss;
-    oss << "{"
-        << "\"tableCPU\":" << fanTableToJSON( profile.tableCPU ) << ","
-        << "\"tableGPU\":" << fanTableToJSON( profile.tableGPU )
-        << "}";
-    return oss.str();
-  }
+
 
   /**
    * @brief Serialize fan table to JSON

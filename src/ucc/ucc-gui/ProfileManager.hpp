@@ -43,6 +43,7 @@ class ProfileManager : public QObject
   Q_PROPERTY( QString powerState READ powerState NOTIFY powerStateChanged )
   Q_PROPERTY( int activeProfileIndex READ activeProfileIndex NOTIFY activeProfileIndexChanged )
   Q_PROPERTY( bool connected READ isConnected NOTIFY connectedChanged )
+  Q_PROPERTY( bool sameSpeed READ sameSpeed NOTIFY sameSpeedChanged )
 
 public:
   explicit ProfileManager( QObject *parent = nullptr );
@@ -69,11 +70,19 @@ public slots:
   bool isCustomProfile( const QString &profileName ) const;
   QString getFanProfile( const QString &name );
   bool setFanProfile( const QString &name, const QString &json );
+  QStringList customFanProfiles() const { return m_customFanProfiles; }
+  bool deleteFanProfile( const QString &name );
   QString getSettingsJSON();
+
   bool setStateMap( const QString &state, const QString &profileId );
+  
+  // Same-speed control
+  Q_INVOKABLE bool sameSpeed() const;
+  Q_INVOKABLE bool setSameSpeed( bool same );
 
 signals:
   void defaultProfilesChanged();
+  void sameSpeedChanged();
   void customProfilesChanged();
   void allProfilesChanged();
   void activeProfileChanged();
@@ -92,12 +101,15 @@ private:
   void updateActiveProfileIndex();
   void loadCustomProfilesFromSettings();
   void saveCustomProfilesToSettings();
+  void loadCustomFanProfilesFromSettings();
+  void saveCustomFanProfilesToSettings();
 
   std::unique_ptr< TccdClient > m_client;
   std::unique_ptr< QSettings > m_settings;
   QStringList m_defaultProfiles;
   QStringList m_customProfiles;
   QStringList m_allProfiles;
+  QStringList m_customFanProfiles;
   QString m_activeProfile;
   QString m_powerState;
   int m_activeProfileIndex = -1;
@@ -106,6 +118,7 @@ private:
 
   QJsonArray m_defaultProfilesData;
   QJsonArray m_customProfilesData;
+  QJsonArray m_customFanProfilesData;
   QJsonObject m_stateMap;
 };
 

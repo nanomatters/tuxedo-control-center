@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <cmath>
 
 /**
  * @brief Fan table entry
@@ -86,24 +87,24 @@ public:
     if ( table.empty() )
       return -1;
 
+    // If temp is at or below first entry, return first speed
+    if ( temp <= table.front().temp )
+      return table.front().speed;
+
     // find exact match or interpolate
-    for ( const auto &entry : table )
+    for ( size_t i = 1; i < table.size(); ++i )
     {
-      if ( entry.temp == temp )
-        return entry.speed;
+      const auto &prev = table[i-1];
+      const auto &entry = table[i];
 
-      if ( entry.temp > temp and &entry != &table.front() )
+      if ( entry.temp == temp ) return entry.speed;
+
+      if ( temp > prev.temp && temp < entry.temp )
       {
-        // interpolate between previous and current entry
-        const auto &prev = *( &entry - 1 );
         int32_t tempDiff = entry.temp - prev.temp;
-
-        if ( tempDiff == 0 )
-          return prev.speed;
-
-        int32_t speedDiff = entry.speed - prev.speed;
-        int32_t offset = temp - prev.temp;
-        return prev.speed + ( speedDiff * offset ) / tempDiff;
+        if ( tempDiff == 0 ) return prev.speed;
+        double frac = static_cast<double>( temp - prev.temp ) / static_cast<double>( tempDiff );
+        return static_cast<int32_t>( std::lround( prev.speed + frac * ( entry.speed - prev.speed ) ) );
       }
     }
 
@@ -118,3 +119,6 @@ extern const FanProfile customFanPreset;
 
 std::string getFanProfileJson(const std::string &name);
 bool setFanProfileJson(const std::string &name, const std::string &json);
+
+// Return a FanProfile by name from the built-in presets. Falls back to Balanced or first profile.
+FanProfile getDefaultFanProfileByName( const std::string &name );

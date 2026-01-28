@@ -42,6 +42,9 @@ ProfileManager::ProfileManager( QObject *parent )
   fprintf( log, "Connected status: %d\n", m_connected );
   fflush( log );
 
+  // Load local custom fan profiles regardless of DBus connection
+  loadCustomFanProfilesFromSettings();
+
   if ( m_connected )
   {
     // Fetch hardware power limits immediately
@@ -83,11 +86,55 @@ ProfileManager::ProfileManager( QObject *parent )
   fclose( log );
   
   emit connectedChanged();
+
+  // initialize sameSpeed property from daemon if available
+  if ( m_client && m_client->isConnected() )
+  {
+    try {
+      auto val = m_client->getFanSameSpeed();
+      if ( val.has_value() )
+      {
+        emit sameSpeedChanged();
+      }
+    } catch ( const std::exception & ) { /* ignore */ }
+  }
+
+  // Connect profile change signal to emit sameSpeedChanged so QML updates
+  connect( m_client.get(), &TccdClient::profileChanged,
+           this, [this]( const QString & ) { emit sameSpeedChanged(); } );
+
+  // Implement sameSpeed accessors via TccdClient
+  // (declared in header)
 }
 
 void ProfileManager::refresh()
 {
   updateProfiles();
+}
+
+bool ProfileManager::sameSpeed() const
+{
+  if ( m_client )
+  {
+    try {
+      auto val = m_client->getFanSameSpeed();
+      if ( val.has_value() ) return *val;
+    } catch ( const std::exception & ) { }
+  }
+  return true; // default
+}
+
+bool ProfileManager::setSameSpeed( bool same )
+{
+  if ( !m_client ) return false;
+  try {
+    if ( m_client->setFanSameSpeed( same ) )
+    {
+      emit sameSpeedChanged();
+      return true;
+    }
+  } catch ( const std::exception & ) { }
+  return false;
 }
 
 void ProfileManager::updateProfiles()
@@ -126,9 +173,13 @@ void ProfileManager::updateProfiles()
   
   // Default profiles are cached
   emit defaultProfilesChanged();
+  emit sameSpeedChanged();
+  emit sameSpeedChanged();
 
   // Custom profiles are loaded from local storage, no need to fetch from server
   emit customProfilesChanged();
+  emit sameSpeedChanged();
+  emit sameSpeedChanged();
 
   // Ensure combined list is up-to-date before deciding which profile to activate
   updateAllProfiles();
@@ -146,6 +197,12 @@ void ProfileManager::updateProfiles()
       qWarning() << "Failed to query daemon power state:" << e.what();
     }
   }
+
+  // Refresh sameSpeed state
+  try {
+    emit sameSpeedChanged();
+  } catch ( const std::exception & ) { }
+
 
   QString desiredProfile;
   if ( !m_powerState.isEmpty() ) {
@@ -170,6 +227,11 @@ void ProfileManager::updateProfiles()
   fprintf( log, "updateProfiles() done\n" );
   fflush( log );
   fclose( log );
+
+  // Emit sameSpeedChanged so QML can refresh checkbox when profile changes
+  try {
+    if ( m_client && m_client->isConnected() ) { emit sameSpeedChanged(); }
+  } catch ( const std::exception & ) { }
 }
 
 
@@ -607,6 +669,45 @@ void ProfileManager::loadCustomProfilesFromSettings()
   qDebug() << "Loaded" << m_customProfiles.size() << "custom profiles from local storage";
 }
 
+
+void ProfileManager::loadCustomFanProfilesFromSettings()
+{
+  m_customFanProfilesData = QJsonArray();
+  m_customFanProfiles.clear();
+
+  QString fanJson = m_settings->value("customFanProfiles", "[]").toString();
+  qDebug() << "Loading custom fan profiles from settings, JSON:" << fanJson;
+  QJsonDocument doc = QJsonDocument::fromJson( fanJson.toUtf8() );
+
+  if ( doc.isArray() )
+  {
+    m_customFanProfilesData = doc.array();
+    for ( const auto &val : m_customFanProfilesData )
+    {
+      if ( val.isObject() )
+      {
+        QJsonObject o = val.toObject();
+        QString name = o.value( "name" ).toString();
+        if ( !name.isEmpty() )
+        {
+          m_customFanProfiles.append( name );
+          qDebug() << "Loaded custom fan profile:" << name;
+        }
+      }
+    }
+  }
+}
+
+void ProfileManager::saveCustomFanProfilesToSettings()
+{
+  QJsonDocument doc( m_customFanProfilesData );
+  QString jsonStr = doc.toJson( QJsonDocument::Compact );
+  qDebug() << "Saving custom fan profiles to settings file:" << m_settings->fileName();
+  qDebug() << "JSON:" << jsonStr;
+  m_settings->setValue( "customFanProfiles", jsonStr );
+  m_settings->sync();
+}
+
 void ProfileManager::saveCustomProfilesToSettings()
 {
   QJsonDocument doc(m_customProfilesData);
@@ -653,20 +754,152 @@ QString ProfileManager::resolveStateMapToProfileName( const QString &state )
 
 QString ProfileManager::getFanProfile( const QString &name )
 {
+  // If it's a custom fan profile stored locally, return it
+  for ( const auto &v : m_customFanProfilesData )
+  {
+    if ( v.isObject() )
+    {
+      QJsonObject o = v.toObject();
+      if ( o.value( "name" ).toString() == name )
+      {
+        QString jsonStr = o.value( "json" ).toString();
+
+        // Diagnostic: inspect temperatures and spacing
+        QJsonDocument doc = QJsonDocument::fromJson( jsonStr.toUtf8() );
+        if ( doc.isObject() ) {
+          QJsonObject obj = doc.object();
+          if ( obj.contains("tableCPU") && obj["tableCPU"].isArray() ) {
+            QJsonArray arr = obj["tableCPU"].toArray();
+            QStringList temps;
+            for ( int i = 0; i < arr.size() && i < 8; ++i ) {
+              if ( arr[i].isObject() ) temps << QString::number( arr[i].toObject()["temp"].toInt() );
+            }
+            qDebug() << "[ProfileManager] Returning CUSTOM fan profile" << name << "CPU points:" << arr.size() << "sample temps:" << temps;
+
+            // check spacing
+            if ( arr.size() > 1 ) {
+              int prev = arr[0].toObject()["temp"].toInt();
+              for ( int i = 1; i < arr.size(); ++i ) {
+                int t = arr[i].toObject()["temp"].toInt();
+                int diff = t - prev;
+                if ( diff % 5 != 0 || t < 20 || t > 100 ) {
+                  qWarning() << "[ProfileManager] CUSTOM fan profile" << name << "has non-5°C spacing or out-of-range temp:" << t << "(diff" << diff << ")";
+                  break;
+                }
+                prev = t;
+              }
+            }
+          }
+        }
+
+        return jsonStr;
+      }
+    }
+  }
+
+  // Otherwise, fall back to daemon-provided built-in profiles via DBus
   if ( auto json = m_client->getFanProfile( name.toStdString() ) )
   {
-    return QString::fromStdString( *json );
+    QString s = QString::fromStdString( *json );
+
+    // Diagnostics: inspect built-in JSON we got from daemon
+    QJsonDocument doc = QJsonDocument::fromJson( s.toUtf8() );
+    if ( doc.isObject() ) {
+      QJsonObject obj = doc.object();
+      if ( obj.contains("tableCPU") && obj["tableCPU"].isArray() ) {
+        QJsonArray arr = obj["tableCPU"].toArray();
+        QStringList temps;
+        for ( int i = 0; i < arr.size() && i < 8; ++i ) {
+          if ( arr[i].isObject() ) temps << QString::number( arr[i].toObject()["temp"].toInt() );
+        }
+        qDebug() << "[ProfileManager] Returning BUILT-IN fan profile" << name << "CPU points:" << arr.size() << "sample temps:" << temps;
+
+        // check spacing
+        if ( arr.size() > 1 ) {
+          int prev = arr[0].toObject()["temp"].toInt();
+          for ( int i = 1; i < arr.size(); ++i ) {
+            int t = arr[i].toObject()["temp"].toInt();
+            int diff = t - prev;
+            if ( diff % 5 != 0 || t < 20 || t > 100 ) {
+              qWarning() << "[ProfileManager] BUILT-IN fan profile" << name << "has non-5°C spacing or out-of-range temp:" << t << "(diff" << diff << ")";
+              break;
+            }
+            prev = t;
+          }
+        }
+      }
+    }
+
+    return s;
   }
   return "{}";
 }
 
 bool ProfileManager::setFanProfile( const QString &name, const QString &json )
 {
-  if ( auto result = m_client->setFanProfile( name.toStdString(), json.toStdString() ) )
+  // Do not allow overwriting built-in profiles
+  if ( m_defaultProfiles.contains( name ) )
   {
-    return result.value();
+    qWarning() << "Attempt to overwrite built-in fan profile:" << name;
+    return false;
   }
-  return false;
+
+  // Update existing entry or append new
+  bool found = false;
+  for ( int i = 0; i < m_customFanProfilesData.size(); ++i )
+  {
+    if ( m_customFanProfilesData[i].isObject() )
+    {
+      QJsonObject o = m_customFanProfilesData[i].toObject();
+      if ( o.value( "name" ).toString() == name )
+      {
+        o[ "json" ] = json;
+        m_customFanProfilesData[i] = o;
+        found = true;
+        break;
+      }
+    }
+  }
+
+  if ( !found )
+  {
+    QJsonObject o;
+    o[ "name" ] = name;
+    o[ "json" ] = json;
+    m_customFanProfilesData.append( o );
+    m_customFanProfiles.append( name );
+  }
+
+  saveCustomFanProfilesToSettings();
+  return true;
+}
+
+bool ProfileManager::deleteFanProfile( const QString &name )
+{
+  bool removed = false;
+  QJsonArray newArr;
+  for ( const auto &v : m_customFanProfilesData )
+  {
+    if ( v.isObject() )
+    {
+      QJsonObject o = v.toObject();
+      if ( o.value( "name" ).toString() == name )
+      {
+        removed = true;
+        continue;
+      }
+    }
+    newArr.append( v );
+  }
+
+  if ( removed )
+  {
+    m_customFanProfilesData = newArr;
+    m_customFanProfiles.removeAll( name );
+    saveCustomFanProfilesToSettings();
+  }
+
+  return removed;
 }
 
 QString ProfileManager::getSettingsJSON()

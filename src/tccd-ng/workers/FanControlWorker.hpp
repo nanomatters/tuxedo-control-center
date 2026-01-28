@@ -17,6 +17,7 @@
 
 #include "DaemonWorker.hpp"
 #include "../profiles/TccProfile.hpp"
+#include "../profiles/FanProfile.hpp"
 #include "../../native-lib/tuxedo_io_lib/tuxedo_io_api.hh"
 #include <vector>
 #include <algorithm>
@@ -220,6 +221,10 @@ private:
 
     int speed = table[entryIndex].speed;
 
+    // Debug: log filtered temp and table entry
+    printf( "FanLogic(%s): temp=%d entryTemp=%d entrySpeed=%d\n",
+            ( m_type == FanLogicType::CPU ? "CPU" : "GPU" ), temp, table[entryIndex].temp, speed );
+
     // Apply offset
     speed += m_offsetFanspeed;
 
@@ -279,6 +284,15 @@ public:
   }
 
   ~FanControlWorker() override = default;
+
+  // Allow external callers to change same-speed mode at runtime
+  void setSameSpeed( bool same )
+  {
+    m_modeSameSpeed = same;
+    syslog( LOG_INFO, "FanControlWorker: setSameSpeed = %d", m_modeSameSpeed ? 1 : 0 );
+  }
+
+  [[nodiscard]] bool getSameSpeed() const noexcept { return m_modeSameSpeed; }
 
   /**
    * @brief Clear temporary fan curves and revert to profile curves
@@ -342,7 +356,9 @@ protected:
         
         // Fan 0 is CPU, others are GPU
         FanLogicType type = ( i == 0 ) ? FanLogicType::CPU : FanLogicType::GPU;
-        m_fanLogics.emplace_back( profile.fan.customFanCurve, type );
+        // Resolve the named fan profile preset
+        FanProfile fp = getDefaultFanProfileByName( profile.fan.fanProfile );
+        m_fanLogics.emplace_back( fp, type );
       }
 
       // Get hardware fan limits
@@ -453,6 +469,10 @@ protected:
           fanSpeedsSet[fanIndex] = highestSpeed;
         }
 
+        // Log the temperature and speed we are about to set for debugging
+        syslog( LOG_INFO, "FanControlWorker: fan %d temp=%d calculated=%d set=%d sameSpeed=%d",
+                static_cast< int >( fanIndex ), fanTemps[fanIndex], fanSpeedsSet[fanIndex], speedToSet, m_modeSameSpeed ? 1 : 0 );
+
         m_io->setFanSpeedPercent( static_cast< int >( fanIndex ), speedToSet );
       }
     }
@@ -492,9 +512,24 @@ protected:
 private:
   void updateFanLogicsFromProfile( const TccProfile &profile )
   {
+    // Respect profile setting for same-speed mode
+    m_modeSameSpeed = profile.fan.sameSpeed;
+    syslog( LOG_INFO, "FanControlWorker: sameSpeed mode = %d", m_modeSameSpeed ? 1 : 0 );
+
     for ( size_t i = 0; i < m_fanLogics.size(); ++i )
     {
-      FanProfile fanProfile = profile.fan.customFanCurve;
+      // Resolve fan profile by name (built-in) instead of using embedded tables in profiles
+      FanProfile fanProfile;
+      for ( const auto &p : defaultFanProfiles )
+      {
+        if ( p.name == profile.fan.fanProfile ) { fanProfile = p; break; }
+      }
+      // Fallbacks
+      if ( !fanProfile.isValid() )
+      {
+        for ( const auto &p : defaultFanProfiles ) { if ( p.name == "Balanced" ) { fanProfile = p; break; } }
+      }
+      if ( !fanProfile.isValid() && !defaultFanProfiles.empty() ) fanProfile = defaultFanProfiles[0];
       
       // If temporary curves are active, use them instead of profile curves
       if ( m_hasTemporaryCurves )

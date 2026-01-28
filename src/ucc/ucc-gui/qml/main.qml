@@ -350,6 +350,26 @@
                                 font.pixelSize: 12
                                 color: "#666666"
                             }
+
+                            // Same-speed checkbox
+                            RowLayout {
+                                spacing: 10
+                                CheckBox {
+                                    id: sameSpeedCheckbox
+                                    text: qsTr("Same fan speed for all fans")
+                                    checked: profileManager.sameSpeed()
+                                    onCheckedChanged: {
+                                        profileManager.setSameSpeed( checked );
+                                    }
+                                    Layout.alignment: Qt.AlignLeft
+                                }
+                                Label {
+                                    text: qsTr("When enabled, all fans are set to the highest percent decided by any fan logic.")
+                                    font.pixelSize: 11
+                                    color: "#666666"
+                                    wrapMode: Text.Wrap
+                                }
+                            }
                         }
                     }
 

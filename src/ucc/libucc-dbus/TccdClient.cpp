@@ -299,7 +299,19 @@ bool TccdClient::applyProfile( const std::string &profileJSON )
 {
   return callVoidMethod( "ApplyProfile", QString::fromStdString( profileJSON ) );
 }
+bool TccdClient::setFanSameSpeed( bool same )
+{
+  return callVoidMethod( "SetFanSameSpeed", same );
+}
 
+std::optional< bool > TccdClient::getFanSameSpeed()
+{
+  if ( auto result = callMethod< bool >( "GetFanSameSpeed" ) )
+  {
+    return *result;
+  }
+  return std::nullopt;
+}
 bool TccdClient::saveCustomProfile( [[maybe_unused]] [[maybe_unused]] const std::string &profileJSON )
 {
   return callVoidMethod( "SaveCustomProfile", QString::fromStdString( profileJSON ) );
@@ -628,7 +640,16 @@ std::optional< int > readFanDataValue( QDBusInterface *iface, const QString &met
     {
       if ( innerMap.contains( "data" ) )
       {
-        int value = innerMap.value( "data" ).toInt();
+        int value = innerMap.value( "data" ).toInt();        // Treat entries with a zero timestamp as missing data (timestamp==0 means not available)
+        if ( innerMap.contains( "timestamp" ) )
+        {
+          qint64 ts = innerMap.value( "timestamp" ).toLongLong();
+          if ( ts == 0 )
+          {
+            qDebug() << "[TccdClient] readFanDataValue: key" << key << "has timestamp 0 - treating as missing";
+            return std::nullopt;
+          }
+        }
         if ( value >= 0 )
         {
           return value;
@@ -786,6 +807,32 @@ std::optional< int > TccdClient::getGpuFanSpeedRPM()
   }
   return std::nullopt;
 }
+
+// Return raw fan speed percentage (0-100) as reported by tccd-ng
+std::optional< int > TccdClient::getFanSpeedPercent()
+{
+  return readFanDataValue( m_interface.get(), "GetFanDataCPU", "speed" );
+}
+
+std::optional< int > TccdClient::getGpuFanSpeedPercent()
+{
+  auto gpu1 = readFanDataValue( m_interface.get(), "GetFanDataGPU1", "speed" );
+  auto gpu2 = readFanDataValue( m_interface.get(), "GetFanDataGPU2", "speed" );
+
+  if ( gpu1 && gpu2 )
+  {
+    return static_cast< int >( ( *gpu1 + *gpu2 ) / 2 );
+  }
+  if ( gpu1 )
+  {
+    return *gpu1;
+  }
+  if ( gpu2 )
+  {
+    return *gpu2;
+  }
+  return std::nullopt;
+} 
 
 void TccdClient::subscribeProfileChanged( [[maybe_unused]] ProfileChangedCallback callback )
 {
