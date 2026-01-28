@@ -35,31 +35,30 @@ public:
   void addValue( int value )
   {
     m_bufferData.push_back( value );
-    while ( m_bufferData.size() > m_bufferMaxSize )
-    {
+
+    if ( m_bufferData.size() > m_bufferMaxSize )
       m_bufferData.erase( m_bufferData.begin() );
-    }
   }
 
-  int getFilteredValue() const
+  int getFilteredValue( void ) const
   {
     if ( m_bufferData.empty() )
       return 0;
 
-    // Number of values to use for averaging (7 middle values)
+    // number of values to use for averaging (7 middle values)
     const size_t usedSize = 7;
 
     std::vector< int > copy = m_bufferData;
     std::sort( copy.begin(), copy.end() );
 
-    // Remove outliers from both ends
+    // remove outliers from both ends
     while ( copy.size() >= usedSize + 2 )
     {
       copy.erase( copy.begin() );
       copy.pop_back();
     }
 
-    // Calculate average
+    // calculate average
     int sum = std::accumulate( copy.begin(), copy.end(), 0 );
     return static_cast< int >( std::round( static_cast< double >( sum ) / static_cast< double >( copy.size() ) ) );
   }
@@ -87,29 +86,19 @@ public:
   }
 
   void setFansMinSpeedHWLimit( int speed )
-  {
-    m_fansMinSpeedHWLimit = std::clamp( speed, 0, 100 );
-  }
+  { m_fansMinSpeedHWLimit = std::clamp( speed, 0, 100 ); }
 
   void setFansOffAvailable( bool available )
-  {
-    m_fansOffAvailable = available;
-  }
+  { m_fansOffAvailable = available; }
 
   void setMinimumFanspeed( int speed )
-  {
-    m_minimumFanspeed = std::clamp( speed, 0, 100 );
-  }
+  { m_minimumFanspeed = std::clamp( speed, 0, 100 ); }
 
   void setMaximumFanspeed( int speed )
-  {
-    m_maximumFanspeed = std::clamp( speed, 0, 100 );
-  }
+  { m_maximumFanspeed = std::clamp( speed, 0, 100 ); }
 
   void setOffsetFanspeed( int speed )
-  {
-    m_offsetFanspeed = std::clamp( speed, -100, 100 );
-  }
+  { m_offsetFanspeed = std::clamp( speed, -100, 100 ); }
 
   void updateFanProfile( const FanProfile &fanProfile )
   {
@@ -130,14 +119,10 @@ public:
   }
 
   int getSpeedPercent() const
-  {
-    return m_latestSpeedPercent;
-  }
+  { return m_latestSpeedPercent; }
 
   const FanProfile &getFanProfile() const
-  {
-    return m_fanProfile;
-  }
+  { return m_fanProfile; }
 
 private:
   const std::vector< FanTableEntry > &getTable() const

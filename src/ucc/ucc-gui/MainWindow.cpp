@@ -242,6 +242,14 @@ void MainWindow::setupFanControlTab()
   connect( m_removeFanProfileButton, &QPushButton::clicked,
            this, &MainWindow::onRemoveFanProfileClicked );
 
+  // Fan profile action buttons
+  connect( m_applyFanProfilesButton, &QPushButton::clicked,
+           this, &MainWindow::onApplyFanProfilesClicked );
+  connect( m_saveFanProfilesButton, &QPushButton::clicked,
+           this, &MainWindow::onSaveFanProfilesClicked );
+  // Note: revert button may be added later; connect when created
+
+
   scrollArea->setWidget( scrollWidget );
   mainLayout->addWidget( scrollArea );
 
@@ -1874,7 +1882,7 @@ void MainWindow::updateButtonStates()
 
   if ( m_applyFanProfilesButton )
   {
-    m_applyFanProfilesButton->setEnabled( isFanCustom && isConnected );
+    m_applyFanProfilesButton->setEnabled( isConnected );
   }
 
   if ( m_saveFanProfilesButton )
@@ -2301,7 +2309,64 @@ void MainWindow::onCopyFanProfileClicked()
 
 void MainWindow::onApplyFanProfilesClicked()
 {
-  saveFanPoints();
+  // Build JSON payload with CPU and GPU tables and request tccd-ng to apply them temporarily
+  QJsonObject root;
+
+  QJsonArray cpuArr;
+  if ( m_cpuFanCurveEditor )
+  {
+    const auto &cpuPoints = m_cpuFanCurveEditor->points();
+    for ( const auto &p : cpuPoints )
+    {
+      QJsonObject o;
+      o["temp"] = p.temp;
+      o["speed"] = p.duty;
+      cpuArr.append( o );
+    }
+  }
+  root["cpu"] = cpuArr;
+
+  QJsonArray gpuArr;
+  if ( m_gpuFanCurveEditor )
+  {
+    const auto &gpuPoints = m_gpuFanCurveEditor->points();
+    for ( const auto &p : gpuPoints )
+    {
+      QJsonObject o;
+      o["temp"] = p.temp;
+      o["speed"] = p.duty;
+      gpuArr.append( o );
+    }
+  }
+  root["gpu"] = gpuArr;
+
+  QJsonDocument doc( root );
+  QString json = QString::fromUtf8( doc.toJson( QJsonDocument::Compact ) );
+
+  if ( !m_tccdClient || !m_tccdClient->isConnected() )
+  {
+    QMessageBox::warning( this, "Not connected", "Not connected to system service; cannot apply fan profiles." );
+    return;
+  }
+
+  bool ok = m_tccdClient->applyFanProfiles( json.toStdString() );
+  if ( ok )
+  {
+    statusBar()->showMessage( "Temporary fan profiles applied" );
+
+    // Keep an internal copy so UI actions like revert have the current values
+    m_cpuFanPoints.clear();
+    for ( const auto &p : m_cpuFanCurveEditor->points() )
+      m_cpuFanPoints.append( { static_cast< int >( p.temp ), static_cast< int >( p.duty ) } );
+
+    m_gpuFanPoints.clear();
+    for ( const auto &p : m_gpuFanCurveEditor->points() )
+      m_gpuFanPoints.append( { static_cast< int >( p.temp ), static_cast< int >( p.duty ) } );
+  }
+  else
+  {
+    QMessageBox::warning( this, "Apply Failed", "Failed to apply fan profiles. Check service logs or connection." );
+  }
 }
 
 void MainWindow::onRevertFanProfilesClicked()
