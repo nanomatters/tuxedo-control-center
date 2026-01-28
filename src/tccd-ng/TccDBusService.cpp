@@ -284,8 +284,7 @@ void TccDBusInterfaceAdaptor::registerAdaptor()
     registerMethod("SetTempProfileById").implementedAs([this](const std::string &id){ return this->SetTempProfileById(id); }),
     registerMethod("SetActiveProfile").implementedAs([this](const std::string &id){ return this->SetActiveProfile(id); }),
     registerMethod("ApplyProfile").implementedAs([this](const std::string &profileJSON){ return this->ApplyProfile(profileJSON); }),
-    registerMethod("SetFanSameSpeed").implementedAs([this](bool same){ return this->SetFanSameSpeed(same); }),
-    registerMethod("GetFanSameSpeed").implementedAs([this](){ bool same = false; this->GetFanSameSpeed(same); return same; }),
+
     registerMethod("GetProfilesJSON").implementedAs([this](){ return this->GetProfilesJSON(); }),
     registerMethod("GetDefaultProfilesJSON").implementedAs([this](){ return this->GetDefaultProfilesJSON(); }),
     registerMethod("GetDefaultValuesProfileJSON").implementedAs([this](){ return this->GetDefaultValuesProfileJSON(); }),
@@ -728,17 +727,7 @@ bool TccDBusInterfaceAdaptor::ApplyProfile( const std::string &profileJSON )
   return m_service->applyProfileJSON( profileJSON );
 }
 
-bool TccDBusInterfaceAdaptor::SetFanSameSpeed( bool same )
-{
-  if ( !m_service ) return false;
-  return m_service->SetFanSameSpeed( same );
-}
 
-bool TccDBusInterfaceAdaptor::GetFanSameSpeed( bool &same )
-{
-  if ( !m_service ) return false;
-  return m_service->GetFanSameSpeed( same );
-}
 
 std::string TccDBusInterfaceAdaptor::GetProfilesJSON()
 {
@@ -2180,31 +2169,6 @@ bool TccDBusService::applyProfileJSON( const std::string &profileJSON )
   }
 }
 
-bool TccDBusService::SetFanSameSpeed( bool same )
-{
-  syslog( LOG_INFO, "TccDBusService: SetFanSameSpeed called with %d", same ? 1 : 0 );
-
-  // Update active profile setting
-  m_activeProfile.fan.sameSpeed = same;
-  updateDBusActiveProfileData();
-
-  // Apply immediately
-  if ( m_fanControlWorker )
-  {
-    m_fanControlWorker->setSameSpeed( same );
-  }
-
-  // Notify DBus clients about the profile change
-  if ( m_adaptor ) m_adaptor->emitProfileChanged( m_activeProfile.id );
-
-  return true;
-}
-
-bool TccDBusService::GetFanSameSpeed( bool &same )
-{
-  same = m_activeProfile.fan.sameSpeed;
-  return true;
-}
 
 std::vector< TccProfile > TccDBusService::getAllProfiles() const
 {

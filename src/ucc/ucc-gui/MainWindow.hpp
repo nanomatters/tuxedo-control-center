@@ -92,6 +92,7 @@ namespace ucc
     void onWebcamToggled( bool checked );
     void onFnLockToggled( bool checked );
     void onTabChanged( int index );
+    void onSameSpeedToggled( bool checked );
 
   private:
     struct FanPoint {
@@ -128,7 +129,7 @@ namespace ucc
     QLabel *m_gpuFrequencyLabel = nullptr;
     QLabel *m_fanSpeedLabel = nullptr;
     QLabel *m_gpuFanSpeedLabel = nullptr;
-    QCheckBox *m_sameSpeedCheckbox = nullptr;
+
     QLabel *m_cpuPowerLabel = nullptr;
     QLabel *m_gpuPowerLabel = nullptr;
     QSlider *m_displayBrightnessSlider = nullptr;
@@ -160,6 +161,7 @@ namespace ucc
     QLabel *m_maxFanSpeedValue = nullptr;
     QSlider *m_offsetFanSpeedSlider = nullptr;
     QLabel *m_offsetFanSpeedValue = nullptr;
+    QCheckBox *m_sameFanSpeedCheckBox = nullptr;
     // Fan curve editor widgets
     QComboBox *m_fanProfileCombo = nullptr;
     QComboBox *m_profileFanProfileCombo = nullptr;

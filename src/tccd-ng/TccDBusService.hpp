@@ -254,8 +254,6 @@ public:
   bool SetTempProfileById( const std::string &id );
   bool SetActiveProfile( const std::string &id );
   bool ApplyProfile( const std::string &profileJSON );
-  bool SetFanSameSpeed( bool same );
-  bool GetFanSameSpeed( bool &same );
   std::string GetProfilesJSON();
   std::string GetCustomProfilesJSON();
   // Fan profile get/set for editable (custom) profiles only
@@ -386,9 +384,6 @@ public:
   bool setCurrentProfileByName( const std::string &profileName );
   bool setCurrentProfileById( const std::string &id );
   bool applyProfileJSON( const std::string &profileJSON );
-  // Allow toggling same-speed mode via API
-  bool SetFanSameSpeed( bool same );
-  bool GetFanSameSpeed( bool &same );
   std::vector< TccProfile > getAllProfiles() const;
   std::vector< TccProfile > getDefaultProfiles() const;
   std::vector< TccProfile > getCustomProfiles() const;

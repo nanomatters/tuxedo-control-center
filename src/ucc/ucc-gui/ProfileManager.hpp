@@ -43,7 +43,6 @@ class ProfileManager : public QObject
   Q_PROPERTY( QString powerState READ powerState NOTIFY powerStateChanged )
   Q_PROPERTY( int activeProfileIndex READ activeProfileIndex NOTIFY activeProfileIndexChanged )
   Q_PROPERTY( bool connected READ isConnected NOTIFY connectedChanged )
-  Q_PROPERTY( bool sameSpeed READ sameSpeed NOTIFY sameSpeedChanged )
 
 public:
   explicit ProfileManager( QObject *parent = nullptr );
@@ -76,13 +75,8 @@ public slots:
 
   bool setStateMap( const QString &state, const QString &profileId );
   
-  // Same-speed control
-  Q_INVOKABLE bool sameSpeed() const;
-  Q_INVOKABLE bool setSameSpeed( bool same );
-
 signals:
   void defaultProfilesChanged();
-  void sameSpeedChanged();
   void customProfilesChanged();
   void allProfilesChanged();
   void activeProfileChanged();

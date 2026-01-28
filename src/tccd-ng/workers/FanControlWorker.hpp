@@ -221,10 +221,6 @@ private:
 
     int speed = table[entryIndex].speed;
 
-    // Debug: log filtered temp and table entry
-    printf( "FanLogic(%s): temp=%d entryTemp=%d entrySpeed=%d\n",
-            ( m_type == FanLogicType::CPU ? "CPU" : "GPU" ), temp, table[entryIndex].temp, speed );
-
     // Apply offset
     speed += m_offsetFanspeed;
 

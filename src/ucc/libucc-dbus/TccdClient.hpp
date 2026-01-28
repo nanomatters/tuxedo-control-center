@@ -86,9 +86,6 @@ public:
   bool revertFanProfiles();
   std::optional< std::string > getCurrentFanSpeed();
   std::optional< std::string > getFanTemperatures();
-  // Same-speed control
-  bool setFanSameSpeed( bool same );
-  std::optional< bool > getFanSameSpeed();
 
   // Power Management
   bool setODMPowerLimits( const std::vector< int > &limits );

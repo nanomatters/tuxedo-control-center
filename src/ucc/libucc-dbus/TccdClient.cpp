@@ -299,19 +299,7 @@ bool TccdClient::applyProfile( const std::string &profileJSON )
 {
   return callVoidMethod( "ApplyProfile", QString::fromStdString( profileJSON ) );
 }
-bool TccdClient::setFanSameSpeed( bool same )
-{
-  return callVoidMethod( "SetFanSameSpeed", same );
-}
 
-std::optional< bool > TccdClient::getFanSameSpeed()
-{
-  if ( auto result = callMethod< bool >( "GetFanSameSpeed" ) )
-  {
-    return *result;
-  }
-  return std::nullopt;
-}
 bool TccdClient::saveCustomProfile( [[maybe_unused]] [[maybe_unused]] const std::string &profileJSON )
 {
   return callVoidMethod( "SaveCustomProfile", QString::fromStdString( profileJSON ) );

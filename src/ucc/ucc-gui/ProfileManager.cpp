@@ -87,24 +87,7 @@ ProfileManager::ProfileManager( QObject *parent )
   
   emit connectedChanged();
 
-  // initialize sameSpeed property from daemon if available
-  if ( m_client && m_client->isConnected() )
-  {
-    try {
-      auto val = m_client->getFanSameSpeed();
-      if ( val.has_value() )
-      {
-        emit sameSpeedChanged();
-      }
-    } catch ( const std::exception & ) { /* ignore */ }
-  }
 
-  // Connect profile change signal to emit sameSpeedChanged so QML updates
-  connect( m_client.get(), &TccdClient::profileChanged,
-           this, [this]( const QString & ) { emit sameSpeedChanged(); } );
-
-  // Implement sameSpeed accessors via TccdClient
-  // (declared in header)
 }
 
 void ProfileManager::refresh()
@@ -112,30 +95,6 @@ void ProfileManager::refresh()
   updateProfiles();
 }
 
-bool ProfileManager::sameSpeed() const
-{
-  if ( m_client )
-  {
-    try {
-      auto val = m_client->getFanSameSpeed();
-      if ( val.has_value() ) return *val;
-    } catch ( const std::exception & ) { }
-  }
-  return true; // default
-}
-
-bool ProfileManager::setSameSpeed( bool same )
-{
-  if ( !m_client ) return false;
-  try {
-    if ( m_client->setFanSameSpeed( same ) )
-    {
-      emit sameSpeedChanged();
-      return true;
-    }
-  } catch ( const std::exception & ) { }
-  return false;
-}
 
 void ProfileManager::updateProfiles()
 {
@@ -173,13 +132,9 @@ void ProfileManager::updateProfiles()
   
   // Default profiles are cached
   emit defaultProfilesChanged();
-  emit sameSpeedChanged();
-  emit sameSpeedChanged();
 
   // Custom profiles are loaded from local storage, no need to fetch from server
   emit customProfilesChanged();
-  emit sameSpeedChanged();
-  emit sameSpeedChanged();
 
   // Ensure combined list is up-to-date before deciding which profile to activate
   updateAllProfiles();
@@ -198,10 +153,6 @@ void ProfileManager::updateProfiles()
     }
   }
 
-  // Refresh sameSpeed state
-  try {
-    emit sameSpeedChanged();
-  } catch ( const std::exception & ) { }
 
 
   QString desiredProfile;
@@ -228,10 +179,6 @@ void ProfileManager::updateProfiles()
   fflush( log );
   fclose( log );
 
-  // Emit sameSpeedChanged so QML can refresh checkbox when profile changes
-  try {
-    if ( m_client && m_client->isConnected() ) { emit sameSpeedChanged(); }
-  } catch ( const std::exception & ) { }
 }
 
 

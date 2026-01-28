@@ -32,6 +32,8 @@
         "quit": true,
         "n": true,
         "y": true,
-        "ninja": true
+        "ninja": true,
+        "env": true,
+        "coredumpctl": true
     }
 }
