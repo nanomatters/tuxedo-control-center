@@ -21,7 +21,7 @@
 #include "tuxedo_io_lib/tuxedo_io_api.hh"
 
 // Forward declarations
-class TccDBusData;
+class UccDBusData;
 
 /**
  * @brief Webcam Worker
@@ -45,7 +45,7 @@ public:
    * @param dbusData Reference to shared DBus data container (includes mutex)
    * @param io Reference to TuxedoIOAPI instance
    */
-  WebcamWorker( TccDBusData &dbusData, TuxedoIOAPI &io );
+  WebcamWorker( UccDBusData &dbusData, TuxedoIOAPI &io );
 
   virtual ~WebcamWorker() = default;
 
@@ -75,7 +75,7 @@ protected:
   void onExit() override;
 
 private:
-  TccDBusData &m_dbusData;
+  UccDBusData &m_dbusData;
   TuxedoIOAPI &m_io;
   std::function< std::pair< bool, bool >() > m_profileCallback;
 

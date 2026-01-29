@@ -43,7 +43,7 @@ sudo cmake --install .
 2. Select "Add Widgets..."
 3. Search for "System Monitor" or "UCC"
 4. Click "UCC System Monitor"
-5. Widget will appear showing system metrics (mock data if tccd-ng methods not available)
+5. Widget will appear showing system metrics (mock data if uccd methods not available)
 
 ### Or via KDE Plasma Activities:
 - Open Plasma widget browser
@@ -67,14 +67,14 @@ dbus-send --system --print-reply --dest=com.uniwill.uccd \
 
 | Component | File | Status |
 |-----------|------|--------|
-| Backend Library | `ucc/libucc-dbus/TccdClient.cpp` | ✅ Implemented |
+| Backend Library | `ucc/libucc-dbus/UccdClient.cpp` | ✅ Implemented |
 | GUI Integration | `ucc/ucc-gui/SystemMonitor.cpp` | ✅ Implemented |
 | Plasma Widget | `ucc/ucc-widgets/system-monitor/package/contents/ui/main.qml` | ✅ Implemented |
 | uccd Methods | `uccd` daemon | ⏳ Pending implementation |
 
 ## Expected Behavior
 
-### With tccd-ng Methods Implemented:
+### With uccd Methods Implemented:
 - GUI shows live CPU/GPU temperatures, frequencies, power
 - Widget displays real system metrics
 - Updates every 2 seconds
@@ -87,7 +87,7 @@ dbus-send --system --print-reply --dest=com.uniwill.uccd \
 ## Troubleshooting
 
 **"Unknown method" errors:**
-- This is expected - tccd-ng doesn't implement these methods yet
+- This is expected - uccd doesn't implement these methods yet
 - Widget will show mock data instead
 - No action needed
 
@@ -103,7 +103,7 @@ dbus-send --system --print-reply --dest=com.uniwill.uccd \
 
 ## Next Steps
 
-1. **Implement DBus methods in tccd-ng:**
+1. **Implement DBus methods in uccd:**
    - `GetCpuTemperature()` - Read from `/sys/class/hwmon/`
    - `GetGpuTemperature()` - Read from GPU drivers
    - `GetCpuFrequency()` - Read from `/sys/devices/system/cpu/cpu*/cpufreq/`
@@ -123,4 +123,4 @@ dbus-send --system --print-reply --dest=com.uniwill.uccd \
 - [ ] DBus calls succeed (return temperature/frequency/power values)
 - [ ] Widget displays metrics in 2-second updates
 - [ ] Values match system reality
-- [ ] Graceful handling if tccd-ng unavailable
+- [ ] Graceful handling if uccd unavailable

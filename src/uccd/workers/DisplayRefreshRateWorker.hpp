@@ -70,7 +70,7 @@ public:
     std::function< bool() > getIsX11Callback,
     std::function< void( const std::string & ) > setDisplayModesCallback,
     std::function< void( bool ) > setIsX11Callback,
-    std::function< TccProfile() > getActiveProfileCallback )
+    std::function< UccProfile() > getActiveProfileCallback )
     : DaemonWorker( std::chrono::milliseconds( 5000 ), false ),
       m_getIsX11( getIsX11Callback ),
       m_setDisplayModes( setDisplayModesCallback ),
@@ -125,7 +125,7 @@ private:
   std::function< bool() > m_getIsX11;
   std::function< void( const std::string & ) > m_setDisplayModes;
   std::function< void( bool ) > m_setIsX11;
-  std::function< TccProfile() > m_getActiveProfile;
+  std::function< UccProfile() > m_getActiveProfile;
 
   DisplayInfo m_displayInfo;
   bool m_displayInfoFound;
@@ -427,7 +427,7 @@ private:
 
   void setActiveDisplayMode() noexcept
   {
-    const TccProfile activeProfile = m_getActiveProfile();
+    const UccProfile activeProfile = m_getActiveProfile();
 
     if ( not activeProfile.display.useRefRate )
       return;

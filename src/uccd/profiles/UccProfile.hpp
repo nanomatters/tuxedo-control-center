@@ -25,7 +25,7 @@
 /**
  * @brief Display settings for a profile
  */
-struct TccProfileDisplay
+struct UccProfileDisplay
 {
   int32_t brightness;
   bool useBrightness;
@@ -35,7 +35,7 @@ struct TccProfileDisplay
   int32_t yResolution;
   bool useResolution;
 
-  TccProfileDisplay()
+  UccProfileDisplay()
     : brightness( 100 ),
       useBrightness( false ),
       refreshRate( -1 ),
@@ -50,7 +50,7 @@ struct TccProfileDisplay
 /**
  * @brief CPU settings for a profile
  */
-struct TccProfileCpu
+struct UccProfileCpu
 {
   std::optional< int32_t > onlineCores;
   bool useMaxPerfGov;
@@ -60,7 +60,7 @@ struct TccProfileCpu
   std::string energyPerformancePreference;
   bool noTurbo;
 
-  TccProfileCpu()
+  UccProfileCpu()
     : useMaxPerfGov( false ),
       governor( "powersave" ),
       energyPerformancePreference( "balance_performance" ),
@@ -72,12 +72,12 @@ struct TccProfileCpu
 /**
  * @brief Webcam settings for a profile
  */
-struct TccProfileWebcam
+struct UccProfileWebcam
 {
   bool status;
   bool useStatus;
 
-  TccProfileWebcam()
+  UccProfileWebcam()
     : status( true ),
       useStatus( true )
   {
@@ -87,7 +87,7 @@ struct TccProfileWebcam
 /**
  * @brief Fan control settings for a profile
  */
-struct TccProfileFanControl
+struct UccProfileFanControl
 {
   bool useControl;
   std::string fanProfile;
@@ -96,7 +96,7 @@ struct TccProfileFanControl
   int32_t offsetFanspeed;
   bool sameSpeed; // when true, all fans are driven at the same percent (highest)
 
-  TccProfileFanControl()
+  UccProfileFanControl()
     : useControl( true ),
       fanProfile( "Balanced" ),
       minimumFanspeed( 0 ),
@@ -161,29 +161,29 @@ struct TccNVIDIAPowerCTRLProfile
  * Contains all settings for a system profile including CPU, display,
  * fan control, webcam, and ODM settings.
  */
-struct TccProfile
+struct UccProfile
 {
   std::string id;
   std::string name;
   std::string description;
-  TccProfileDisplay display;
-  TccProfileCpu cpu;
-  TccProfileWebcam webcam;
-  TccProfileFanControl fan;
+  UccProfileDisplay display;
+  UccProfileCpu cpu;
+  UccProfileWebcam webcam;
+  UccProfileFanControl fan;
   TccODMProfile odmProfile;
   TccODMPowerLimits odmPowerLimits;
   std::optional< TccNVIDIAPowerCTRLProfile > nvidiaPowerCTRLProfile;
 
-  TccProfile() = default;
+  UccProfile() = default;
 
-  TccProfile( const std::string &profileId, const std::string &profileName )
+  UccProfile( const std::string &profileId, const std::string &profileName )
     : id( profileId ),
       name( profileName )
   {
   }
 
   // deep copy constructor
-  TccProfile( const TccProfile &other )
+  UccProfile( const UccProfile &other )
     : id( other.id ),
       name( other.name ),
       description( other.description ),
@@ -198,7 +198,7 @@ struct TccProfile
   }
 
   // deep copy assignment
-  TccProfile &operator=( const TccProfile &other )
+  UccProfile &operator=( const UccProfile &other )
   {
     if ( this != &other )
     {

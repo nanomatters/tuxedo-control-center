@@ -16,7 +16,7 @@
 #pragma once
 
 #include "DaemonWorker.hpp"
-#include "../profiles/TccProfile.hpp"
+#include "../profiles/UccProfile.hpp"
 #include "../SysfsNode.hpp"
 #include <string>
 #include <vector>
@@ -45,7 +45,7 @@ class ODMProfileWorker : public DaemonWorker
 public:
   ODMProfileWorker(
     TuxedoIOAPI *ioApi,
-    std::function< TccProfile() > getActiveProfileCallback,
+    std::function< UccProfile() > getActiveProfileCallback,
     std::function< void( const std::vector< std::string > & ) > setOdmProfilesAvailableCallback )
     : DaemonWorker( std::chrono::milliseconds( 10000 ), false ),
       m_ioApi( ioApi ),
@@ -58,7 +58,7 @@ public:
   void onStart() override
   {
     detectProfileType();
-    const TccProfile profile = m_getActiveProfile();
+    const UccProfile profile = m_getActiveProfile();
     if ( !profile.id.empty() )
     {
       applyODMProfile();
@@ -96,7 +96,7 @@ private:
   };
 
   TuxedoIOAPI *m_ioApi;
-  std::function< TccProfile() > m_getActiveProfile;
+  std::function< UccProfile() > m_getActiveProfile;
   std::function< void( const std::vector< std::string > & ) > m_setOdmProfilesAvailable;
   ProfileType m_profileType;
 
@@ -198,7 +198,7 @@ private:
 
   void applyODMProfile()
   {
-    const TccProfile profile = m_getActiveProfile();
+    const UccProfile profile = m_getActiveProfile();
     const std::string chosenProfileName = profile.odmProfile.name.value_or( "" );
 
     switch ( m_profileType )

@@ -34,7 +34,7 @@ echo "╚═══════════════════════�
 echo ""
 
 echo "✅ IMPLEMENTATION STATUS:"
-echo "   • TccdClient methods:  Correctly parsing real tccd-ng data"
+echo "   • UccdClient methods:  Correctly parsing real uccd data"
 echo "   • SystemMonitor class: Publishing metrics via Qt signals"
 echo "   • GUI app: Successfully fetching and displaying data"
 echo "   • Widget: Ready with DBus integration + fallback"
@@ -57,5 +57,5 @@ fi
 echo ""
 echo "╔════════════════════════════════════════════════════════════════╗"
 echo "║                    ✅ SUCCESS!                                 ║"
-echo "║  Real system metrics are being fetched from tccd-ng daemon    ║"
+echo "║  Real system metrics are being fetched from uccd daemon    ║"
 echo "╚════════════════════════════════════════════════════════════════╝"

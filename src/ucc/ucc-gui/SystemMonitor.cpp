@@ -23,7 +23,7 @@ namespace ucc
 
 SystemMonitor::SystemMonitor( QObject *parent )
   : QObject( parent )
-  , m_client( std::make_unique< TccdClient >( this ) )
+  , m_client( std::make_unique< UccdClient >( this ) )
   , m_updateTimer( new QTimer( this ) )
 {
   // Update metrics every 500ms when active
@@ -276,7 +276,7 @@ void SystemMonitor::setMonitoringActive( bool active )
       m_fanSpeed = "";
       m_gpuFanSpeed = "";
       
-      // Start timer first - this gives tccd-ng time to collect initial sensor data
+      // Start timer first - this gives uccd time to collect initial sensor data
       // The first update will happen after 500ms
       m_updateTimer->start();
       qDebug() << "[SystemMonitor] Timer started, first update in 500ms. Timer active:" << m_updateTimer->isActive();

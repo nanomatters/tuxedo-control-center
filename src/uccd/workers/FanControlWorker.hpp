@@ -16,7 +16,7 @@
 #pragma once
 
 #include "DaemonWorker.hpp"
-#include "../profiles/TccProfile.hpp"
+#include "../profiles/UccProfile.hpp"
 #include "../profiles/FanProfile.hpp"
 #include "../../native-lib/tuxedo_io_lib/tuxedo_io_api.hh"
 #include <vector>
@@ -262,7 +262,7 @@ class FanControlWorker : public DaemonWorker
 public:
   FanControlWorker(
     TuxedoIOAPI *io,
-    std::function< TccProfile() > getActiveProfile,
+    std::function< UccProfile() > getActiveProfile,
     std::function< bool() > getFanControlEnabled,
     std::function< void( size_t, int64_t, int ) > updateFanSpeed,
     std::function< void( size_t, int64_t, int ) > updateFanTemp
@@ -506,7 +506,7 @@ protected:
   }
 
 private:
-  void updateFanLogicsFromProfile( const TccProfile &profile )
+  void updateFanLogicsFromProfile( const UccProfile &profile )
   {
     // Respect profile setting for same-speed mode
     m_modeSameSpeed = profile.fan.sameSpeed;
@@ -548,7 +548,7 @@ private:
   }
 
   TuxedoIOAPI *m_io;
-  std::function< TccProfile() > m_getActiveProfile;
+  std::function< UccProfile() > m_getActiveProfile;
   std::function< bool() > m_getFanControlEnabled;
   std::function< void( size_t, int64_t, int ) > m_updateFanSpeed;
   std::function< void( size_t, int64_t, int ) > m_updateFanTemp;

@@ -23,7 +23,7 @@
 #include <QJsonObject>
 #include <QSettings>
 #include <memory>
-#include "TccdClient.hpp"
+#include "UccdClient.hpp"
 
 namespace ucc
 {
@@ -98,7 +98,7 @@ private:
   void loadCustomFanProfilesFromSettings();
   void saveCustomFanProfilesToSettings();
 
-  std::unique_ptr< TccdClient > m_client;
+  std::unique_ptr< UccdClient > m_client;
   std::unique_ptr< QSettings > m_settings;
   QStringList m_defaultProfiles;
   QStringList m_customProfiles;

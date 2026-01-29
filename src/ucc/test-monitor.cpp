@@ -5,7 +5,7 @@
 #include <QCoreApplication>
 #include <QTimer>
 #include <iostream>
-#include "../libucc-dbus/TccdClient.hpp"
+#include "../libucc-dbus/UccdClient.hpp"
 
 using namespace std;
 
@@ -13,16 +13,16 @@ int main( int argc, char *argv[] )
 {
   QCoreApplication app( argc, argv );
 
-  ucc::TccdClient client;
+  ucc::UccdClient client;
 
   cout << "=== UCC SystemMonitor Test ===" << endl;
-  cout << "Testing DBus connection to tccd-ng daemon..." << endl;
+  cout << "Testing DBus connection to uccd daemon..." << endl;
   cout << "Connected: " << (client.isConnected() ? "YES" : "NO") << endl;
 
   if ( !client.isConnected() )
   {
-    cout << "ERROR: Cannot connect to tccd-ng daemon" << endl;
-    cout << "Make sure tccd-ng is running on system bus" << endl;
+    cout << "ERROR: Cannot connect to uccd daemon" << endl;
+    cout << "Make sure uccd is running on system bus" << endl;
     return 1;
   }
 

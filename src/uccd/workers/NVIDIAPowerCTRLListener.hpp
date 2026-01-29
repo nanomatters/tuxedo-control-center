@@ -16,7 +16,7 @@
 #pragma once
 
 #include "DaemonWorker.hpp"
-#include "../profiles/TccProfile.hpp"
+#include "../profiles/UccProfile.hpp"
 #include "../SysfsNode.hpp"
 #include <string>
 #include <filesystem>
@@ -39,7 +39,7 @@ class NVIDIAPowerCTRLListener : public DaemonWorker
 {
 public:
   NVIDIAPowerCTRLListener(
-    std::function< TccProfile() > getActiveProfile,
+    std::function< UccProfile() > getActiveProfile,
     int32_t &defaultPowerLimit,
     int32_t &maxPowerLimit,
     bool &available
@@ -109,7 +109,7 @@ protected:
   }
 
 private:
-  std::function< TccProfile() > m_getActiveProfile;
+  std::function< UccProfile() > m_getActiveProfile;
   std::string m_ctgpOffsetPath;
   int32_t m_lastAppliedOffset;
   int32_t &m_defaultPowerLimit;
@@ -124,7 +124,7 @@ private:
 
   int32_t getProfileOffset() const
   {
-    TccProfile profile = m_getActiveProfile();
+    UccProfile profile = m_getActiveProfile();
     
     if ( profile.nvidiaPowerCTRLProfile.has_value() )
     {

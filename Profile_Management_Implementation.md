@@ -2,11 +2,11 @@
 
 ## Overview
 
-Proper profile management has been implemented in UCC, correctly interfacing with tccd-ng's profile system.
+Proper profile management has been implemented in UCC, correctly interfacing with uccd's profile system.
 
 ## Architecture
 
-### tccd-ng Profile System
+### uccd Profile System
 - **Data Storage**: Profiles stored as JSON with structured data
 - **Profile Types**:
   - Default profiles (4 built-in): `__legacy_default__`, `__legacy_cool_and_breezy__`, `__legacy_powersave_extreme__`, `__default_custom_profile__`
@@ -30,7 +30,7 @@ Proper profile management has been implemented in UCC, correctly interfacing wit
 
 ## Implementation Details
 
-### TccdClient Methods
+### UccdClient Methods
 
 #### 1. `getActiveProfileJSON()`
 - **Purpose**: Fetch the currently active profile as JSON
@@ -67,7 +67,7 @@ Proper profile management has been implemented in UCC, correctly interfacing wit
 Location: `ucc-widgets/profile-switcher/package/contents/ui/main.qml`
 
 **Features Implemented**:
-- ✅ Loads all profiles from tccd-ng via `GetProfilesJSON()`
+- ✅ Loads all profiles from uccd via `GetProfilesJSON()`
 - ✅ Maintains mapping of profile names to IDs
 - ✅ Displays current active profile
 - ✅ Switches profiles using correct profile IDs
@@ -77,7 +77,7 @@ Location: `ucc-widgets/profile-switcher/package/contents/ui/main.qml`
 **Key Functions**:
 ```qml
 function loadProfiles()
-  - Fetches all profiles from tccd-ng
+  - Fetches all profiles from uccd
   - Builds profileMap[name] = id mapping
   - Updates UI list
 
@@ -116,7 +116,7 @@ CopyProfile(src, name)      → Duplicate profile
 tccdInterface.call("SetTempProfileById", ["__default_custom_profile__"])
 // ✅ Returns (true,)
 
-// INCORRECT: Use profile name (will fail in tccd-ng)
+// INCORRECT: Use profile name (will fail in uccd)
 tccdInterface.call("SetTempProfileById", ["TUXEDO Defaults"])
 // ❌ Returns error, falls back to default
 ```

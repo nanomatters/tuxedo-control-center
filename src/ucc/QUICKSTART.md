@@ -39,7 +39,7 @@ Modern Qt6/KDE native application suite for Uniwill laptop control:
 - **ucc-widgets**: Plasma desktop widgets
 - **libucc-dbus**: Shared DBus communication library
 
-All components communicate with tccd-ng daemon via DBus.
+All components communicate with uccd daemon via DBus.
 
 ---
 

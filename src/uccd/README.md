@@ -83,12 +83,12 @@ uccd --debug
 
 ### Show version
 ```bash
-tccd-ng --version
+uccd --version
 ```
 
 ### Show help
 ```bash
-tccd-ng --help
+uccd --help
 ```
 
 ## Architecture Overview

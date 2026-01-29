@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "profiles/TccProfile.hpp"
+#include "profiles/UccProfile.hpp"
 #include "profiles/DefaultProfiles.hpp"
 #include <string>
 #include <vector>
@@ -73,7 +73,7 @@ public:
    * @brief Read custom profiles from disk
    * @return Vector of custom profiles, or empty vector on error
    */
-  [[nodiscard]] std::vector< TccProfile > readProfiles() noexcept
+  [[nodiscard]] std::vector< UccProfile > readProfiles() noexcept
   {
     try
     {
@@ -93,7 +93,7 @@ public:
       auto profiles = parseProfilesJSON( content );
       
       // Get default profile template for filling missing fields
-      TccProfile defaultTemplate = getDefaultCustomProfile();
+      UccProfile defaultTemplate = getDefaultCustomProfile();
       
       // Generate missing IDs and fill defaults (matches TypeScript implementation)
       bool modified = false;
@@ -135,7 +135,7 @@ public:
    * @param profiles Vector of profiles to write
    * @return true on success, false on error
    */
-  [[nodiscard]] bool writeProfiles( const std::vector< TccProfile > &profiles ) noexcept
+  [[nodiscard]] bool writeProfiles( const std::vector< UccProfile > &profiles ) noexcept
   {
     try
     {
@@ -183,9 +183,9 @@ public:
    * @brief Get default custom profiles (template for new profiles)
    * @return Vector containing the default custom profile
    */
-  [[nodiscard]] std::vector< TccProfile > getDefaultCustomProfiles() const noexcept
+  [[nodiscard]] std::vector< UccProfile > getDefaultCustomProfiles() const noexcept
   {
-    std::vector< TccProfile > profiles;
+    std::vector< UccProfile > profiles;
     profiles.push_back( getDefaultCustomProfile() );
     return profiles;
   }
@@ -195,9 +195,9 @@ public:
    * @param device Optional device identifier for device-specific profiles
    * @return Vector of default profiles
    */
-  [[nodiscard]] std::vector< TccProfile > getDefaultProfiles( std::optional< TUXEDODevice > device = std::nullopt ) const noexcept
+  [[nodiscard]] std::vector< UccProfile > getDefaultProfiles( std::optional< TUXEDODevice > device = std::nullopt ) const noexcept
   {
-    std::vector< TccProfile > result;
+    std::vector< UccProfile > result;
     
     // If device is specified, check for device-specific profiles
     if ( device.has_value() )
@@ -237,7 +237,7 @@ public:
    * @brief Get custom profiles, returning defaults on error
    * @return Vector of custom profiles
    */
-  [[nodiscard]] std::vector< TccProfile > getCustomProfilesNoThrow() noexcept
+  [[nodiscard]] std::vector< UccProfile > getCustomProfilesNoThrow() noexcept
   {
     auto profiles = readProfiles();
     if ( profiles.empty() )
@@ -251,7 +251,7 @@ public:
    * @brief Get all profiles (default + custom)
    * @return Vector containing all profiles
    */
-  [[nodiscard]] std::vector< TccProfile > getAllProfiles() noexcept
+  [[nodiscard]] std::vector< UccProfile > getAllProfiles() noexcept
   {
     auto defaultProfiles = getDefaultProfiles();
     auto customProfiles = getCustomProfilesNoThrow();
@@ -268,8 +268,8 @@ public:
    * @param id Profile ID to find
    * @return Pointer to profile if found, nullptr otherwise
    */
-  [[nodiscard]] static const TccProfile *findProfileById( 
-    const std::vector< TccProfile > &profiles, 
+  [[nodiscard]] static const UccProfile *findProfileById( 
+    const std::vector< UccProfile > &profiles, 
     const std::string &id ) noexcept
   {
     for ( const auto &profile : profiles )
@@ -288,8 +288,8 @@ public:
    * @param name Profile name to find
    * @return Pointer to profile if found, nullptr otherwise
    */
-  [[nodiscard]] static const TccProfile *findProfileByName( 
-    const std::vector< TccProfile > &profiles, 
+  [[nodiscard]] static const UccProfile *findProfileByName( 
+    const std::vector< UccProfile > &profiles, 
     const std::string &name ) noexcept
   {
     for ( const auto &profile : profiles )
@@ -317,7 +317,7 @@ public:
    * @param profile Profile to add
    * @return true on success, false on error
    */
-  [[nodiscard]] bool addProfile( const TccProfile &profile ) noexcept
+  [[nodiscard]] bool addProfile( const UccProfile &profile ) noexcept
   {
     std::cout << "[ProfileManager] Adding profile '" << profile.name << "' (ID: " << profile.id << ")" << std::endl;
     auto profiles = getCustomProfilesNoThrow();
@@ -346,7 +346,7 @@ public:
   {
     auto profiles = getCustomProfilesNoThrow();
     auto it = std::remove_if( profiles.begin(), profiles.end(),
-      [&profileId]( const TccProfile &p ) { return p.id == profileId; } );
+      [&profileId]( const UccProfile &p ) { return p.id == profileId; } );
     
     if ( it == profiles.end() )
     {
@@ -362,7 +362,7 @@ public:
    * @param profile Updated profile (matched by ID)
    * @return true on success, false if not found or error
    */
-  [[nodiscard]] bool updateProfile( const TccProfile &profile ) noexcept
+  [[nodiscard]] bool updateProfile( const UccProfile &profile ) noexcept
   {
     auto profiles = getCustomProfilesNoThrow();
     bool found = false;
@@ -417,7 +417,7 @@ public:
    * @param newName Name for the new profile
    * @return Optional containing new profile on success
    */
-  [[nodiscard]] std::optional< TccProfile > copyProfile( 
+  [[nodiscard]] std::optional< UccProfile > copyProfile( 
     const std::string &sourceId, 
     const std::string &newName ) noexcept
   {
@@ -439,7 +439,7 @@ public:
     }
 
     std::cout << "[ProfileManager] Found source profile: " << source->name << std::endl;
-    TccProfile newProfile = *source;
+    UccProfile newProfile = *source;
     newProfile.id = generateProfileId();
     newProfile.name = newName;
     std::cout << "[ProfileManager] Generated new ID: " << newProfile.id << std::endl;
@@ -499,9 +499,9 @@ public:
    * @param json JSON object string
    * @return Parsed profile
    */
-  [[nodiscard]] static TccProfile parseProfileJSON( const std::string &json )
+  [[nodiscard]] static UccProfile parseProfileJSON( const std::string &json )
   {
-    TccProfile profile;
+    UccProfile profile;
     
     profile.id = extractString( json, "id" );
     profile.name = extractString( json, "name" );
@@ -610,9 +610,9 @@ public:
   /**
    * @brief Get the default custom profile template
    */
-  [[nodiscard]] static TccProfile getDefaultCustomProfile() noexcept
+  [[nodiscard]] static UccProfile getDefaultCustomProfile() noexcept
   {
-    TccProfile profile;
+    UccProfile profile;
     profile.id = "__default_custom_profile__";
     profile.name = "TUXEDO Defaults";
     profile.description = "Edit profile to change behaviour";
@@ -626,9 +626,9 @@ public:
    * @param json JSON string containing profile array
    * @return Vector of parsed profiles
    */
-  [[nodiscard]] static std::vector< TccProfile > parseProfilesJSON( const std::string &json )
+  [[nodiscard]] static std::vector< UccProfile > parseProfilesJSON( const std::string &json )
   {
-    std::vector< TccProfile > profiles;
+    std::vector< UccProfile > profiles;
     
     // Simple JSON array parser
     size_t pos = json.find( '[' );
@@ -685,7 +685,7 @@ private:
    * @param defaultProfile Default profile template to fill from
    * @return true if any field was filled
    */
-  [[nodiscard]] static bool fillMissingFields( TccProfile &profile, const TccProfile &defaultProfile ) noexcept
+  [[nodiscard]] static bool fillMissingFields( UccProfile &profile, const UccProfile &defaultProfile ) noexcept
   {
     bool modified = false;
     
@@ -799,7 +799,7 @@ private:
   /**
    * @brief Serialize profiles to JSON array
    */
-  [[nodiscard]] static std::string profilesToJSON( const std::vector< TccProfile > &profiles )
+  [[nodiscard]] static std::string profilesToJSON( const std::vector< UccProfile > &profiles )
   {
     std::ostringstream oss;
     oss << "[";
@@ -820,7 +820,7 @@ private:
   /**
    * @brief Serialize single profile to JSON (complete format for file storage)
    */
-  [[nodiscard]] static std::string profileToJSON( const TccProfile &profile )
+  [[nodiscard]] static std::string profileToJSON( const UccProfile &profile )
   {
     std::ostringstream oss;
     

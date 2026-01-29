@@ -33,7 +33,7 @@
 #include <memory>
 #include "ProfileManager.hpp"
 #include "SystemMonitor.hpp"
-#include "../libucc-dbus/TccdClient.hpp"
+#include "../libucc-dbus/UccdClient.hpp"
 #include "FanCurveEditorWidget.hpp"
 
 namespace ucc
@@ -116,7 +116,7 @@ namespace ucc
 
     std::unique_ptr< ProfileManager > m_profileManager;
     std::unique_ptr< SystemMonitor > m_systemMonitor;
-    std::unique_ptr< TccdClient > m_tccdClient;
+    std::unique_ptr< UccdClient > m_UccdClient;
 
     // Tab widget
     QTabWidget *m_tabs = nullptr;
@@ -149,6 +149,9 @@ namespace ucc
     QPushButton *m_mainsButton = nullptr;
     QPushButton *m_batteryButton = nullptr;
     
+    constexpr bool profileTopWidgetsAvailable() const
+    { return m_applyButton && m_saveButton && m_copyProfileButton && m_removeProfileButton && m_profileCombo; }
+
     // Display controls
     QCheckBox *m_setBrightnessCheckBox = nullptr;
     QSlider *m_brightnessSlider = nullptr;
@@ -172,12 +175,18 @@ namespace ucc
     QPushButton *m_revertFanProfilesButton = nullptr;
     QPushButton *m_addFanProfileButton = nullptr;
     QPushButton *m_copyFanProfileButton = nullptr;
-    // List of built-in fan profile names provided by tccd-ng
+    // List of built-in fan profile names provided by uccd
     QStringList m_builtinFanProfiles; 
     QPushButton *m_removeFanProfileButton = nullptr;
     QVector<FanPoint> m_cpuFanPoints;
     QVector<FanPoint> m_gpuFanPoints;
     
+    constexpr bool fanProfileTopWidgetsAvailable() const
+    {
+      return m_applyFanProfilesButton && m_saveFanProfilesButton && m_copyFanProfileButton &&
+             m_removeFanProfileButton && m_fanProfileCombo && m_revertFanProfilesButton;
+    }
+
     // Fan tab
     QWidget *m_fanTab = nullptr;
     

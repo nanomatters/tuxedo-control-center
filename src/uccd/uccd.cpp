@@ -34,7 +34,7 @@
 
 // C++20 features used
 constexpr std::string_view VERSION = "1.0.0-ng";
-constexpr std::string_view DAEMON_NAME = "tccd-ng";
+constexpr std::string_view DAEMON_NAME = "uccd";
 
 // Signal handling for graceful shutdown
 volatile bool g_shutdown_requested = false;
@@ -100,13 +100,13 @@ void daemonize()
 void init_syslog()
 {
   openlog( DAEMON_NAME.data(), LOG_PID, LOG_DAEMON );
-  syslog( LOG_INFO, "TuxedoControlCenterDaemon-NG (tccd-ng) starting - version %s", VERSION.data() );
+  syslog( LOG_INFO, "TuxedoControlCenterDaemon-NG (uccd) starting - version %s", VERSION.data() );
 }
 
 // Cleanup syslog
 void cleanup_syslog()
 {
-  syslog( LOG_INFO, "TuxedoControlCenterDaemon-NG (tccd-ng) shutting down" );
+  syslog( LOG_INFO, "TuxedoControlCenterDaemon-NG (uccd) shutting down" );
   closelog();
 }
 

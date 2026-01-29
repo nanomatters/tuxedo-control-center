@@ -16,7 +16,7 @@
 #pragma once
 
 #include "DaemonWorker.hpp"
-#include "../profiles/TccProfile.hpp"
+#include "../profiles/UccProfile.hpp"
 #include <functional>
 #include <vector>
 #include <string>
@@ -48,7 +48,7 @@ class ODMPowerLimitWorker : public DaemonWorker
 public:
   explicit ODMPowerLimitWorker(
     TuxedoIOAPI *ioApi,
-    std::function< TccProfile() > getActiveProfile,
+    std::function< UccProfile() > getActiveProfile,
     std::function< void( const std::string & ) > setOdmPowerLimitsJSON,
     std::function< void( const std::string & ) > logFunction )
     : DaemonWorker( std::chrono::milliseconds( 5000 ), false )
@@ -148,7 +148,7 @@ public:
 
 private:
   TuxedoIOAPI *m_ioApi;
-  std::function< TccProfile() > m_getActiveProfile;
+  std::function< UccProfile() > m_getActiveProfile;
   std::function< void( const std::string & ) > m_setOdmPowerLimitsJSON;
   std::function< void( const std::string & ) > m_logFunction;
 
@@ -169,7 +169,7 @@ private:
   {
     logLine( "ODMPowerLimitWorker: applyODMPowerLimits() called" );
     
-    const TccProfile profile = m_getActiveProfile();
+    const UccProfile profile = m_getActiveProfile();
     const auto &odmPowerLimits = profile.odmPowerLimits;
 
     auto tdpInfo = getTDPInfo();

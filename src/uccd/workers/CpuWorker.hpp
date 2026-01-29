@@ -17,7 +17,7 @@
 
 #include "DaemonWorker.hpp"
 #include "../CpuController.hpp"
-#include "../profiles/TccProfile.hpp"
+#include "../profiles/UccProfile.hpp"
 #include <functional>
 #include <vector>
 #include <string>
@@ -37,7 +37,7 @@ class CpuWorker : public DaemonWorker
 {
 public:
   explicit CpuWorker(
-    std::function< TccProfile() > getActiveProfile,
+    std::function< UccProfile() > getActiveProfile,
     std::function< bool() > getCpuSettingsEnabled,
     std::function< void( const std::string & ) > logFunction )
     : DaemonWorker( std::chrono::milliseconds( 10000 ), false )
@@ -87,7 +87,7 @@ public:
   }
 
 private:
-  std::function< TccProfile() > m_getActiveProfile;
+  std::function< UccProfile() > m_getActiveProfile;
   std::function< bool() > m_getCpuSettingsEnabled;
   std::function< void( const std::string & ) > m_logFunction;
   std::unique_ptr< CpuController > m_cpuCtrl;
@@ -190,7 +190,7 @@ private:
   /**
    * @brief Apply CPU settings from profile
    */
-  void applyCpuProfile( const TccProfile &profile )
+  void applyCpuProfile( const UccProfile &profile )
   {
     // reset everything to default before applying new settings
     setCpuDefaultConfig();
@@ -262,7 +262,7 @@ private:
    */
   bool validateCpuFreq()
   {
-    const TccProfile profile = m_getActiveProfile();
+    const UccProfile profile = m_getActiveProfile();
 
     if ( not profile.cpu.useMaxPerfGov )
     {

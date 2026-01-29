@@ -8,7 +8,7 @@ echo "1. Checking if service is registered..."
 dbus-send --system --print-reply \
   --dest=org.freedesktop.DBus \
   /org/freedesktop/DBus \
-  org.freedesktop.DBus.ListNames | grep -q "com.uniwill.uccd"
+  org.freedesktop.DBus.ListNames | grep -q "com.tuxedocomputers.tccd"
 
 if [ $? -eq 0 ]; then
     echo "✓ Service is registered"

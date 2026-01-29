@@ -18,7 +18,7 @@ add_executable(uccd
   UccDBusService.cpp
   workers/WebcamWorker.cpp
   profiles/FanProfiles.cpp
-  profiles/TccProfile.cpp
+  profiles/UccProfile.cpp
   profiles/DefaultProfiles.cpp
 )
 

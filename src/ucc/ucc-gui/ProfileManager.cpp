@@ -30,7 +30,7 @@ namespace ucc
 
 ProfileManager::ProfileManager( QObject *parent )
   : QObject( parent )
-  , m_client( std::make_unique< TccdClient >( this ) )
+  , m_client( std::make_unique< UccdClient >( this ) )
   , m_settings( std::make_unique< QSettings >( QDir::homePath() + "/.config/uccrc", QSettings::IniFormat, this ) )
 {
   FILE *log = fopen( "/tmp/ucc-debug.log", "a" );
@@ -53,13 +53,13 @@ ProfileManager::ProfileManager( QObject *parent )
     fflush( log );
     
     // Connect to profile changed signal
-    connect( m_client.get(), &TccdClient::profileChanged,
+    connect( m_client.get(), &UccdClient::profileChanged,
              this, [this]( const QString &profileId ) {
       onProfileChanged( profileId.toStdString() );
     } );
 
     // Connect to power state changed signal
-    connect( m_client.get(), &TccdClient::powerStateChanged,
+    connect( m_client.get(), &UccdClient::powerStateChanged,
              this, [this]( const QString &state ) {
       onPowerStateChanged( state );
     } );
@@ -868,7 +868,7 @@ bool ProfileManager::setStateMap( const QString &state, const QString &profileId
   m_stateMap[state] = profileId;
   saveCustomProfilesToSettings();
   
-  // Update tccd-ng
+  // Update uccd
   return m_client->setStateMap( state.toStdString(), profileId.toStdString() );
 }
 

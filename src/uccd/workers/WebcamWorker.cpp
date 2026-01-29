@@ -18,7 +18,7 @@
 #include <iostream>
 #include <syslog.h>
 
-WebcamWorker::WebcamWorker( TccDBusData &dbusData, TuxedoIOAPI &io )
+WebcamWorker::WebcamWorker( UccDBusData &dbusData, TuxedoIOAPI &io )
   : DaemonWorker( std::chrono::milliseconds( 2000 ), false ),
     m_dbusData( dbusData ),
     m_io( io ),

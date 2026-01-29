@@ -19,7 +19,7 @@
 
 
 #include "FanCurveEditorWidget.hpp"
-#include "../libucc-dbus/TccdClient.hpp"
+#include "../libucc-dbus/UccdClient.hpp"
 
 #include <QtWidgets/QTableWidget>
 #include <QtWidgets/QHeaderView>
@@ -93,7 +93,7 @@ MainWindow::MainWindow( QWidget *parent )
   , m_profileManager( std::make_unique< ProfileManager >( this ) )
   , m_systemMonitor( std::make_unique< SystemMonitor >( this ) )
 {
-  m_tccdClient = std::make_unique< TccdClient >( this );
+  m_UccdClient = std::make_unique< UccdClient >( this );
 
   setWindowTitle( "Uniwill Control Center" );
   setGeometry( 100, 100, 900, 700 );
@@ -173,7 +173,7 @@ void MainWindow::setupFanControlTab()
   profileLabel->setStyleSheet( "font-weight: bold;" );
   m_fanProfileCombo = new QComboBox();
 
-  if ( auto names = m_tccdClient->getFanProfileNames() )
+  if ( auto names = m_UccdClient->getFanProfileNames() )
   {
     m_builtinFanProfiles.clear();
     for ( const auto &name : *names ) {
@@ -441,7 +441,6 @@ void MainWindow::setupProfilesPage()
   m_selectedProfileIndex = m_profileManager->activeProfileIndex();
   m_applyButton = new QPushButton( "Activate" );
   m_applyButton->setMaximumWidth( 80 );
-  m_applyButton->setEnabled( false );
   
   m_saveButton = new QPushButton( "Save" );
   m_saveButton->setMaximumWidth( 80 );
@@ -558,7 +557,7 @@ void MainWindow::setupProfilesPage()
 
   QLabel *fanProfileLabel = new QLabel( "Fan profile" );
   m_profileFanProfileCombo = new QComboBox();
-  if ( auto names = m_tccdClient->getFanProfileNames() )
+  if ( auto names = m_UccdClient->getFanProfileNames() )
   {
     for ( const auto &name : *names )
       m_profileFanProfileCombo->addItem( QString::fromStdString( name ) );
@@ -1280,7 +1279,6 @@ void MainWindow::onProfileIndexChanged( int index )
     qDebug() << "Profile selected:" << profileName << "at index" << index;
     m_selectedProfileIndex = index;
     loadProfileDetails( profileName );
-    m_applyButton->setEnabled( true );
     m_removeProfileButton->setEnabled( m_profileManager->customProfiles().contains( profileName ) );
     m_copyProfileButton->setEnabled( true );
     statusBar()->showMessage( "Profile selected: " + profileName + " (click Apply to activate)" );
@@ -1362,7 +1360,6 @@ void MainWindow::onActiveProfileIndexChanged()
     m_profileCombo->blockSignals( false );
   }
   m_selectedProfileIndex = activeIndex;
-  m_applyButton->setEnabled( false );
 }
 
 // Profile detail control slot implementations
@@ -1742,131 +1739,6 @@ void MainWindow::loadProfileDetails( const QString &profileName )
            m_odmPowerLimit1Slider->maximum(), m_odmPowerLimit2Slider->maximum(), m_odmPowerLimit3Slider->maximum() );
   fflush( log );
   
-  // Fan profiles are now separate from TCC profiles, so no need to load fan curves here
-  /*
-  // Enable/disable and populate fan curve editors depending on whether profile is editable
-  const bool isCustom = m_profileManager ? m_profileManager->isCustomProfile( profileName ) : false;
-
-  // Helper function to parse fan points from JSON array, extracting or interpolating points at 5°C intervals
-  auto parseFanPoints = []( const QJsonArray &arr ) -> QVector< FanCurveEditorWidget::Point > {
-    QVector< FanCurveEditorWidget::Point > pts;
-    
-    // Collect all points from the array
-    QVector< FanCurveEditorWidget::Point > givenPts;
-    for ( int i = 0; i < arr.size(); ++i ) {
-      QJsonValue v = arr.at( i );
-      if ( v.isObject() ) {
-        QJsonObject o = v.toObject();
-        FanCurveEditorWidget::Point p;
-        p.temp = o.value( "temp" ).toDouble( -1 );
-        p.duty = o.value( "speed" ).toDouble( 0 );
-        if ( p.temp >= 0 ) {
-          givenPts.append( p );
-        }
-      }
-    }
-    
-    // Sort given points by temp
-    std::sort( givenPts.begin(), givenPts.end(), []( const FanCurveEditorWidget::Point &a, const FanCurveEditorWidget::Point &b ) {
-      return a.temp < b.temp;
-    } );
-    
-    // Generate 17 points at 5°C intervals from 20 to 100
-    for ( int i = 0; i < 17; ++i ) {
-      double targetTemp = 20.0 + i * 5.0;
-      double targetDuty = 0.0;
-      
-      // Find the interval in givenPts
-      if ( givenPts.size() == 0 ) {
-        targetDuty = 0.0;
-      } else if ( givenPts.size() == 1 ) {
-        targetDuty = givenPts[0].duty;
-      } else {
-        // Find the two points to interpolate between
-        FanCurveEditorWidget::Point left = givenPts[0];
-        FanCurveEditorWidget::Point right = givenPts[givenPts.size() - 1];
-        for ( int j = 0; j < givenPts.size() - 1; ++j ) {
-          if ( targetTemp >= givenPts[j].temp && targetTemp <= givenPts[j+1].temp ) {
-            left = givenPts[j];
-            right = givenPts[j+1];
-            break;
-          }
-        }
-        if ( left.temp == right.temp ) {
-          targetDuty = left.duty;
-        } else {
-          double ratio = (targetTemp - left.temp) / (right.temp - left.temp);
-          targetDuty = left.duty + ratio * (right.duty - left.duty);
-        }
-      }
-      
-      FanCurveEditorWidget::Point p;
-      p.temp = targetTemp;
-      p.duty = std::clamp( targetDuty, 0.0, 100.0 );
-      pts.append( p );
-    }
-    
-    return pts;
-  };
-
-  if ( m_cpuFanCurveEditor )
-  {
-    m_cpuFanCurveEditor->setEnabled( isCustom );
-
-    if ( obj.contains( "fan" ) && obj["fan"].isObject() )
-    {
-      QJsonObject fanObj = obj["fan"].toObject();
-
-      // Resolve fan table from named fanProfile (built-in or custom stored in UCC)
-      if ( fanObj.contains( "fanProfile" ) )
-      {
-        QString fanProfileName = fanObj["fanProfile"].toString();
-        QString fanProfileJson = m_profileManager->getFanProfile( fanProfileName );
-        QJsonDocument fanDoc = QJsonDocument::fromJson( fanProfileJson.toUtf8() );
-        if ( fanDoc.isObject() )
-        {
-          QJsonObject fanObj2 = fanDoc.object();
-          if ( fanObj2.contains( "tableCPU" ) && fanObj2["tableCPU"].isArray() )
-          {
-            QJsonArray cpuArray = fanObj2["tableCPU"].toArray();
-            QVector< FanCurveEditorWidget::Point > pts = parseFanPoints( cpuArray );
-            if ( pts.size() > 0 )
-              m_cpuFanCurveEditor->setPoints( pts );
-          }
-        }
-      }
-    }
-  }
-
-  if ( m_gpuFanCurveEditor )
-  {
-    m_gpuFanCurveEditor->setEnabled( isCustom );
-
-    if ( obj.contains( "fan" ) && obj["fan"].isObject() )
-    {
-      QJsonObject fanObj = obj["fan"].toObject();
-
-      if ( fanObj.contains( "fanProfile" ) )
-      {
-        QString fanProfileName = fanObj["fanProfile"].toString();
-        QString fanProfileJson = m_profileManager->getFanProfile( fanProfileName );
-        QJsonDocument fanDoc = QJsonDocument::fromJson( fanProfileJson.toUtf8() );
-        if ( fanDoc.isObject() )
-        {
-          QJsonObject fanObj2 = fanDoc.object();
-          if ( fanObj2.contains( "tableGPU" ) && fanObj2["tableGPU"].isArray() )
-          {
-            QJsonArray gpuArray = fanObj2["tableGPU"].toArray();
-            QVector< FanCurveEditorWidget::Point > pts = parseFanPoints( gpuArray );
-            if ( pts.size() > 0 )
-              m_gpuFanCurveEditor->setPoints( pts );
-          }
-        }
-      }
-    }
-  }
-  */
-
   // Enable/disable editing widgets based on whether profile is custom
   const bool isCustom = m_profileManager ? m_profileManager->isCustomProfile( profileName ) : false;
   updateProfileEditingWidgets( isCustom );
@@ -1926,52 +1798,22 @@ void MainWindow::markChanged()
   updateButtonStates();
 }
 
-void MainWindow::updateButtonStates()
+void MainWindow::updateButtonStates( void)
 {
-  const QString profileName = m_profileCombo ? m_profileCombo->currentText() : QString();
-  const bool isCustom = m_profileManager ? m_profileManager->isCustomProfile( profileName ) : false;
-  const bool isConnected = m_tccdClient && m_tccdClient->isConnected();
+  if ( not profileTopWidgetsAvailable() or not fanProfileTopWidgetsAvailable() )
+    return;
 
-  // Apply will be implemented later
-  // Note: updateButtonStates() may be invoked during setup (e.g., a checkbox
-  // toggled() can emit while other widgets are still being created). Guard
-  // accesses to optional widgets to avoid null dereferences during construction.
-  if ( m_applyButton )
-    m_applyButton->setEnabled( false );
+  m_removeProfileButton->setEnabled( m_profileManager->isCustomProfile( m_profileCombo->currentText() ) );
   
-  // Save button: enabled when there are unsaved profile changes, or built-in profile power-state changed
-  bool powerStateChanged = (m_mainsButton && m_mainsButton->isChecked() != m_loadedMainsAssignment) ||
-                           (m_batteryButton && m_batteryButton->isChecked() != m_loadedBatteryAssignment);
-  if ( m_saveButton )
-    m_saveButton->setEnabled( m_profileChanged || (!isCustom && powerStateChanged) );
-  
-  if ( m_removeProfileButton )
-    m_removeProfileButton->setEnabled( isCustom );  // Only allow removing custom profiles
-  
-  // Fan profile buttons
-  const QString fanProfileName = m_fanProfileCombo ? m_fanProfileCombo->currentText() : QString();
-  const bool isFanCustom = (!fanProfileName.isEmpty() && !m_builtinFanProfiles.contains(fanProfileName));
+  // fan profile buttons
+  const QString fanProfileName = m_fanProfileCombo->currentText();
+  const bool isCustomFanProfile = ( not fanProfileName.isEmpty() and not m_builtinFanProfiles.contains( fanProfileName ) );
 
-  if ( m_applyFanProfilesButton )
-  {
-    m_applyFanProfilesButton->setEnabled( isConnected );
-  }
+  m_applyFanProfilesButton->setEnabled( m_UccdClient->isConnected() );
+  m_saveFanProfilesButton->setEnabled( isCustomFanProfile );
 
-  if ( m_saveFanProfilesButton )
-  {
-    m_saveFanProfilesButton->setEnabled( isFanCustom );
-  }
-
-  if ( m_copyFanProfileButton )
-  {
-    // Allow copying any non-Custom profile into Custom
-    m_copyFanProfileButton->setEnabled( !fanProfileName.isEmpty() && !isFanCustom );
-  }
-
-  if ( m_revertFanProfilesButton )
-  {
-    m_revertFanProfilesButton->setEnabled( isFanCustom && isConnected );
-  }
+  m_copyFanProfileButton->setEnabled( not fanProfileName.isEmpty() and not isCustomFanProfile );
+  m_revertFanProfilesButton->setEnabled( isCustomFanProfile && m_UccdClient->isConnected() );
 }
 
 void MainWindow::onApplyClicked()
@@ -2413,7 +2255,7 @@ void MainWindow::onApplyFanProfilesClicked()
     return;
   }
 
-  if ( !m_tccdClient || !m_tccdClient->isConnected() )
+  if ( !m_UccdClient || !m_UccdClient->isConnected() )
   {
     QMessageBox::warning( this, "Not connected", "Not connected to system service; cannot apply fan profiles." );
     return;
@@ -2447,7 +2289,7 @@ void MainWindow::onApplyFanProfilesClicked()
   QJsonDocument doc( root );
   QString json = QString::fromUtf8( doc.toJson( QJsonDocument::Compact ) );
 
-  if ( m_tccdClient->applyFanProfiles( json.toStdString() ) )
+  if ( m_UccdClient->applyFanProfiles( json.toStdString() ) )
   {
     statusBar()->showMessage( "Temporary fan profiles applied" );
 

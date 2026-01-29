@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "TccProfile.hpp"
+#include "UccProfile.hpp"
 #include <string>
 #include <vector>
 #include <map>
@@ -65,25 +65,25 @@ enum class TUXEDODevice
 };
 
 // pre-defined profiles
-extern const TccProfile maxEnergySave;
-extern const TccProfile silent;
-extern const TccProfile office;
-extern const TccProfile highPerformance;
-extern const TccProfile highPerformance25WcTGP;
+extern const UccProfile maxEnergySave;
+extern const UccProfile silent;
+extern const UccProfile office;
+extern const UccProfile highPerformance;
+extern const UccProfile highPerformance25WcTGP;
 
 // legacy profiles (for unknown devices)
-extern const TccProfile legacyDefault;
-extern const TccProfile legacyCoolAndBreezy;
-extern const TccProfile legacyPowersaveExtreme;
-extern const std::vector< TccProfile > legacyProfiles;
+extern const UccProfile legacyDefault;
+extern const UccProfile legacyCoolAndBreezy;
+extern const UccProfile legacyPowersaveExtreme;
+extern const std::vector< UccProfile > legacyProfiles;
 
 // default custom profiles
-extern const TccProfile defaultCustomProfile;
-extern const TccProfile defaultMobileCustomProfileTDP;
-extern const TccProfile defaultMobileCustomProfileCl;
-extern const TccProfile defaultCustomProfile25WcTGP;
+extern const UccProfile defaultCustomProfile;
+extern const UccProfile defaultMobileCustomProfileTDP;
+extern const UccProfile defaultMobileCustomProfileCl;
+extern const UccProfile defaultCustomProfile25WcTGP;
 
 // device-specific profile mappings
-extern const std::map< TUXEDODevice, std::vector< TccProfile > > deviceProfiles;
-extern const std::map< TUXEDODevice, std::vector< TccProfile > > deviceCustomProfiles;
+extern const std::map< TUXEDODevice, std::vector< UccProfile > > deviceProfiles;
+extern const std::map< TUXEDODevice, std::vector< UccProfile > > deviceCustomProfiles;
 

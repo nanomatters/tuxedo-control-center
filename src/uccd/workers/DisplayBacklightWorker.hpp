@@ -18,7 +18,7 @@
 #include "DaemonWorker.hpp"
 #include "../SysfsNode.hpp"
 #include "../Utils.hpp"
-#include "../profiles/TccProfile.hpp"
+#include "../profiles/UccProfile.hpp"
 #include <string>
 #include <vector>
 #include <iostream>
@@ -100,7 +100,7 @@ class DisplayBacklightWorker : public DaemonWorker
 public:
   explicit DisplayBacklightWorker( 
     const std::string &autosavePath,
-    std::function< TccProfile() > getActiveProfile,
+    std::function< UccProfile() > getActiveProfile,
     std::function< int32_t() > getAutosaveBrightness,
     std::function< void( int32_t ) > setAutosaveBrightness )
     : DaemonWorker( std::chrono::milliseconds( 3000 ), false ),
@@ -116,7 +116,7 @@ protected:
   void onStart() override
   {
     // Figure out which brightness percentage to set
-    const TccProfile currentProfile = m_getActiveProfile();
+    const UccProfile currentProfile = m_getActiveProfile();
     
     if ( currentProfile.id.empty() )
       return;
@@ -203,7 +203,7 @@ private:
   std::string m_basePath;
   std::string m_autosavePath;
   std::vector< DisplayBacklightController > m_controllers;
-  std::function< TccProfile() > m_getActiveProfile;
+  std::function< UccProfile() > m_getActiveProfile;
   std::function< int32_t() > m_getAutosaveBrightness;
   std::function< void( int32_t ) > m_setAutosaveBrightness;
 

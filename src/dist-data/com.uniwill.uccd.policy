@@ -7,7 +7,7 @@
     <vendor>Uniwill</vendor>
     <vendor_url>https://www.uniwill.com/</vendor_url>
 
-    <action id="com.uniwill.uccd">
+    <action id="com.tuxedocomputers.tccd">
         <description>Run TUXEDO Control Center Daemon</description>
         <description xml:lang="de">TUXEDO Control Center Daemon ausführen</description>
         <message>Authentication is required to run/update the configuration of TUXEDO Control Center Daemon</message>

@@ -78,7 +78,7 @@ After installation, widgets can be added through Plasma's widget manager:
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   ucc-gui   │────▶│ libucc-dbus │────▶│   tccd-ng   │
+│   ucc-gui   │────▶│ libucc-dbus │────▶│   uccd   │
 └─────────────┘     └─────────────┘     └─────────────┘
                             ▲
                             │
@@ -91,7 +91,7 @@ After installation, widgets can be added through Plasma's widget manager:
 └─────────────┘
 ```
 
-All components communicate with the tccd-ng daemon through the shared libucc-dbus library.
+All components communicate with the uccd daemon through the shared libucc-dbus library.
 
 ## Development
 
@@ -101,8 +101,8 @@ src/ucc/
 ├── CMakeLists.txt              # Root build configuration
 ├── README.md                   # This file
 ├── libucc-dbus/               # Shared DBus client library
-│   ├── TccdClient.hpp
-│   ├── TccdClient.cpp
+│   ├── UccdClient.hpp
+│   ├── UccdClient.cpp
 │   └── CMakeLists.txt
 ├── ucc-gui/                   # Main GUI application
 │   ├── main.cpp
@@ -130,4 +130,4 @@ GPL-3.0-or-later
 
 ## Contributing
 
-This project follows the same guidelines as the parent tccd-ng project.
+This project follows the same guidelines as the parent uccd project.

@@ -38,8 +38,8 @@ src/ucc/
 ├── build-local.sh          # Build script with ~/tmp/ucc install prefix
 ├── run-ucc-gui.sh          # Run script with proper environment setup
 ├── libucc-dbus/            # DBus client library for uccd
-│   ├── TccdClient.hpp
-│   └── TccdClient.cpp
+│   ├── UccdClient.hpp
+│   └── UccdClient.cpp
 ├── ucc-gui/                # Main Qt/QML GUI application
 │   ├── main.cpp
 │   ├── MainWindow.{hpp,cpp}
@@ -55,7 +55,7 @@ src/ucc/
 
 ## Architecture
 
-UCC is a Qt6/KDE-based application suite that communicates with the tccd-ng daemon via DBus:
+UCC is a Qt6/KDE-based application suite that communicates with the uccd daemon via DBus:
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
@@ -136,6 +136,6 @@ When using the local installation:
 
 ## Notes
 
-- The tccd-ng daemon must be running for UCC to function
+- The uccd daemon must be running for UCC to function
 - The run script automatically sets `LD_LIBRARY_PATH` for local libraries
 - Build type defaults to `RelWithDebInfo` (optimized with debug symbols)

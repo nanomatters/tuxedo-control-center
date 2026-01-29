@@ -13,7 +13,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "TccdClient.hpp"
+#include "UccdClient.hpp"
 #include <QDBusMessage>
 #include <QDBusError>
 #include <QDBusArgument>
@@ -87,7 +87,7 @@ bool hasMethod( QDBusInterface *interface, const QString &method )
 }
 } // namespace
 
-TccdClient::TccdClient( QObject *parent )
+UccdClient::UccdClient( QObject *parent )
   : QObject( parent )
   , m_interface( std::make_unique< QDBusInterface >(
       DBUS_SERVICE,
@@ -128,25 +128,25 @@ TccdClient::TccdClient( QObject *parent )
   emit connectionStatusChanged( m_connected );
 }
 
-bool TccdClient::isConnected() const
+bool UccdClient::isConnected() const
 {
   return m_connected && m_interface->isValid();
 }
 
 // Signal handlers
-void TccdClient::onProfileChangedSignal( const QString &profileId )
+void UccdClient::onProfileChangedSignal( const QString &profileId )
 {
   emit profileChanged( profileId );
 }
 
-void TccdClient::onPowerStateChangedSignal( const QString &state )
+void UccdClient::onPowerStateChangedSignal( const QString &state )
 {
   emit powerStateChanged( state );
 }
 
 // Template implementations
 template< typename T >
-std::optional< T > TccdClient::callMethod( const QString &method ) const
+std::optional< T > UccdClient::callMethod( const QString &method ) const
 {
   if ( !isConnected() )
   {
@@ -166,7 +166,7 @@ std::optional< T > TccdClient::callMethod( const QString &method ) const
 }
 
 template< typename T, typename... Args >
-std::optional< T > TccdClient::callMethod( const QString &method, const Args &...args ) const
+std::optional< T > UccdClient::callMethod( const QString &method, const Args &...args ) const
 {
   if ( !isConnected() )
   {
@@ -185,7 +185,7 @@ std::optional< T > TccdClient::callMethod( const QString &method, const Args &..
   }
 }
 
-bool TccdClient::callVoidMethod( const QString &method ) const
+bool UccdClient::callVoidMethod( const QString &method ) const
 {
   if ( !isConnected() )
   {
@@ -202,7 +202,7 @@ bool TccdClient::callVoidMethod( const QString &method ) const
 }
 
 template< typename... Args >
-bool TccdClient::callVoidMethod( const QString &method, const Args &...args ) const
+bool UccdClient::callVoidMethod( const QString &method, const Args &...args ) const
 {
   if ( !isConnected() )
   {
@@ -219,7 +219,7 @@ bool TccdClient::callVoidMethod( const QString &method, const Args &...args ) co
 }
 
 // Profile Management
-std::optional< std::string > TccdClient::getDefaultProfilesJSON()
+std::optional< std::string > UccdClient::getDefaultProfilesJSON()
 {
   if ( auto result = callMethod< QString >( "GetDefaultProfilesJSON" ) )
   {
@@ -228,7 +228,7 @@ std::optional< std::string > TccdClient::getDefaultProfilesJSON()
   return std::nullopt;
 }
 
-std::optional< std::string > TccdClient::getDefaultValuesProfileJSON()
+std::optional< std::string > UccdClient::getDefaultValuesProfileJSON()
 {
   if ( auto result = callMethod< QString >( "GetDefaultValuesProfileJSON" ) )
   {
@@ -237,7 +237,7 @@ std::optional< std::string > TccdClient::getDefaultValuesProfileJSON()
   return std::nullopt;
 }
 
-std::optional< std::string > TccdClient::getCustomProfilesJSON()
+std::optional< std::string > UccdClient::getCustomProfilesJSON()
 {
   if ( auto result = callMethod< QString >( "GetCustomProfilesJSON" ) )
   {
@@ -246,7 +246,7 @@ std::optional< std::string > TccdClient::getCustomProfilesJSON()
   return std::nullopt;
 }
 
-std::optional< std::string > TccdClient::getActiveProfileJSON()
+std::optional< std::string > UccdClient::getActiveProfileJSON()
 {
   if ( auto result = callMethod< QString >( "GetActiveProfileJSON" ) )
   {
@@ -255,7 +255,7 @@ std::optional< std::string > TccdClient::getActiveProfileJSON()
   return std::nullopt;
 }
 
-std::optional< std::string > TccdClient::getSettingsJSON()
+std::optional< std::string > UccdClient::getSettingsJSON()
 {
   if ( auto result = callMethod< QString >( "GetSettingsJSON" ) )
   {
@@ -264,7 +264,7 @@ std::optional< std::string > TccdClient::getSettingsJSON()
   return std::nullopt;
 }
 
-std::optional< std::string > TccdClient::getPowerState()
+std::optional< std::string > UccdClient::getPowerState()
 {
   if ( auto result = callMethod< QString >( "GetPowerState" ) )
   {
@@ -273,14 +273,14 @@ std::optional< std::string > TccdClient::getPowerState()
   return std::nullopt;
 }
 
-bool TccdClient::setStateMap( const std::string &state, const std::string &profileId )
+bool UccdClient::setStateMap( const std::string &state, const std::string &profileId )
 {
   const QString qState = QString::fromStdString( state );
   const QString qProfileId = QString::fromStdString( profileId );
   return callVoidMethod( "SetStateMap", qState, qProfileId );
 }
 
-bool TccdClient::setActiveProfile( const std::string &profileId )
+bool UccdClient::setActiveProfile( const std::string &profileId )
 {
   const QString id = QString::fromStdString( profileId );
   if ( hasMethod( m_interface.get(), "SetActiveProfile" ) )
@@ -295,22 +295,22 @@ bool TccdClient::setActiveProfile( const std::string &profileId )
   return false;
 }
 
-bool TccdClient::applyProfile( const std::string &profileJSON )
+bool UccdClient::applyProfile( const std::string &profileJSON )
 {
   return callVoidMethod( "ApplyProfile", QString::fromStdString( profileJSON ) );
 }
 
-bool TccdClient::saveCustomProfile( [[maybe_unused]] [[maybe_unused]] const std::string &profileJSON )
+bool UccdClient::saveCustomProfile( [[maybe_unused]] [[maybe_unused]] const std::string &profileJSON )
 {
   return callVoidMethod( "SaveCustomProfile", QString::fromStdString( profileJSON ) );
 }
 
-bool TccdClient::deleteCustomProfile( [[maybe_unused]] const std::string &profileId )
+bool UccdClient::deleteCustomProfile( [[maybe_unused]] const std::string &profileId )
 {
   return callVoidMethod( "DeleteCustomProfile", QString::fromStdString( profileId ) );
 }
 
-std::optional< std::string > TccdClient::getFanProfile( const std::string &name )
+std::optional< std::string > UccdClient::getFanProfile( const std::string &name )
 {
   if ( auto result = callMethod< QString >( "GetFanProfile", QString::fromStdString( name ) ) )
   {
@@ -319,7 +319,7 @@ std::optional< std::string > TccdClient::getFanProfile( const std::string &name 
   return std::nullopt;
 }
 
-std::optional< std::vector< std::string > > TccdClient::getFanProfileNames()
+std::optional< std::vector< std::string > > UccdClient::getFanProfileNames()
 {
   if ( auto result = callMethod< QString >( "GetFanProfileNames" ) )
   {
@@ -341,7 +341,7 @@ std::optional< std::vector< std::string > > TccdClient::getFanProfileNames()
   return std::nullopt;
 }
 
-std::optional< bool > TccdClient::setFanProfile( const std::string &name, const std::string &json )
+std::optional< bool > UccdClient::setFanProfile( const std::string &name, const std::string &json )
 {
   if ( auto result = callMethod< bool >( "SetFanProfile", QString::fromStdString( name ), QString::fromStdString( json ) ) )
   {
@@ -351,7 +351,7 @@ std::optional< bool > TccdClient::setFanProfile( const std::string &name, const 
 }
 
 // Display Control
-bool TccdClient::setDisplayBrightness( int brightness )
+bool UccdClient::setDisplayBrightness( int brightness )
 {
   if ( hasMethod( m_interface.get(), "SetDisplayBrightness" ) )
   {
@@ -361,7 +361,7 @@ bool TccdClient::setDisplayBrightness( int brightness )
   return false;
 }
 
-std::optional< int > TccdClient::getDisplayBrightness()
+std::optional< int > UccdClient::getDisplayBrightness()
 {
   if ( hasMethod( m_interface.get(), "GetDisplayBrightness" ) )
   {
@@ -372,7 +372,7 @@ std::optional< int > TccdClient::getDisplayBrightness()
 }
 
 // Webcam Control
-bool TccdClient::setWebcamEnabled( bool enabled )
+bool UccdClient::setWebcamEnabled( bool enabled )
 {
   if ( hasMethod( m_interface.get(), "SetWebcam" ) )
   {
@@ -382,7 +382,7 @@ bool TccdClient::setWebcamEnabled( bool enabled )
   return false;
 }
 
-std::optional< bool > TccdClient::getWebcamEnabled()
+std::optional< bool > UccdClient::getWebcamEnabled()
 {
   if ( hasMethod( m_interface.get(), "GetWebcamSWStatus" ) )
   {
@@ -397,7 +397,7 @@ std::optional< bool > TccdClient::getWebcamEnabled()
 }
 
 // GPU Info
-std::optional< std::string > TccdClient::getGpuInfo()
+std::optional< std::string > UccdClient::getGpuInfo()
 {
   if ( auto result = callMethod< QString >( "GetGpuInfo" ) )
   {
@@ -407,7 +407,7 @@ std::optional< std::string > TccdClient::getGpuInfo()
 }
 
 // Fn Lock
-bool TccdClient::setFnLock( bool enabled )
+bool UccdClient::setFnLock( bool enabled )
 {
   if ( hasMethod( m_interface.get(), "SetFnLockStatus" ) )
   {
@@ -421,7 +421,7 @@ bool TccdClient::setFnLock( bool enabled )
   return false;
 }
 
-std::optional< bool > TccdClient::getFnLock()
+std::optional< bool > UccdClient::getFnLock()
 {
   if ( hasMethod( m_interface.get(), "GetFnLockStatus" ) )
   {
@@ -438,53 +438,53 @@ std::optional< bool > TccdClient::getFnLock()
 // Stub implementations for remaining methods
 // TODO: Implement these based on actual uccd DBus interface
 
-bool TccdClient::setYCbCr420Workaround( [[maybe_unused]] bool enabled )
+bool UccdClient::setYCbCr420Workaround( [[maybe_unused]] bool enabled )
 {
   // TODO: Implement when DBus method is available
   return false;
 }
 
-std::optional< bool > TccdClient::getYCbCr420Workaround()
+std::optional< bool > UccdClient::getYCbCr420Workaround()
 {
   return std::nullopt;
 }
 
-bool TccdClient::setDisplayRefreshRate( [[maybe_unused]] const std::string &display, [[maybe_unused]] int refreshRate )
+bool UccdClient::setDisplayRefreshRate( [[maybe_unused]] const std::string &display, [[maybe_unused]] int refreshRate )
 {
   return false;
 }
 
-bool TccdClient::setCpuScalingGovernor( [[maybe_unused]] const std::string &governor )
+bool UccdClient::setCpuScalingGovernor( [[maybe_unused]] const std::string &governor )
 {
   return false;
 }
 
-std::optional< std::string > TccdClient::getCpuScalingGovernor()
+std::optional< std::string > UccdClient::getCpuScalingGovernor()
 {
   return std::nullopt;
 }
 
-std::optional< std::vector< std::string > > TccdClient::getAvailableCpuGovernors()
+std::optional< std::vector< std::string > > UccdClient::getAvailableCpuGovernors()
 {
   return std::nullopt;
 }
 
-bool TccdClient::setCpuFrequency( [[maybe_unused]] int minFreq, [[maybe_unused]] int maxFreq )
+bool UccdClient::setCpuFrequency( [[maybe_unused]] int minFreq, [[maybe_unused]] int maxFreq )
 {
   return false;
 }
 
-bool TccdClient::setEnergyPerformancePreference( [[maybe_unused]] const std::string &preference )
+bool UccdClient::setEnergyPerformancePreference( [[maybe_unused]] const std::string &preference )
 {
   return false;
 }
 
-bool TccdClient::setFanProfile( [[maybe_unused]] [[maybe_unused]] const std::string &profileJSON )
+bool UccdClient::setFanProfile( [[maybe_unused]] [[maybe_unused]] const std::string &profileJSON )
 {
   return false;
 }
 
-bool TccdClient::setFanProfileCPU( const std::string &pointsJSON )
+bool UccdClient::setFanProfileCPU( const std::string &pointsJSON )
 {
   const QString js = QString::fromStdString( pointsJSON );
   if ( hasMethod( m_interface.get(), "SetFanProfileCPU" ) )
@@ -494,7 +494,7 @@ bool TccdClient::setFanProfileCPU( const std::string &pointsJSON )
   return false;
 }
 
-bool TccdClient::setFanProfileDGPU( const std::string &pointsJSON )
+bool UccdClient::setFanProfileDGPU( const std::string &pointsJSON )
 {
   const QString js = QString::fromStdString( pointsJSON );
   if ( hasMethod( m_interface.get(), "SetFanProfileDGPU" ) )
@@ -504,7 +504,7 @@ bool TccdClient::setFanProfileDGPU( const std::string &pointsJSON )
   return false;
 }
 
-bool TccdClient::applyFanProfiles( const std::string &fanProfilesJSON )
+bool UccdClient::applyFanProfiles( const std::string &fanProfilesJSON )
 {
   const QString js = QString::fromStdString( fanProfilesJSON );
   if ( hasMethod( m_interface.get(), "ApplyFanProfiles" ) )
@@ -514,7 +514,7 @@ bool TccdClient::applyFanProfiles( const std::string &fanProfilesJSON )
   return false;
 }
 
-bool TccdClient::revertFanProfiles()
+bool UccdClient::revertFanProfiles()
 {
   if ( hasMethod( m_interface.get(), "RevertFanProfiles" ) )
   {
@@ -523,77 +523,77 @@ bool TccdClient::revertFanProfiles()
   return false;
 }
 
-std::optional< std::string > TccdClient::getCurrentFanSpeed()
+std::optional< std::string > UccdClient::getCurrentFanSpeed()
 {
   return std::nullopt;
 }
 
-std::optional< std::string > TccdClient::getFanTemperatures()
+std::optional< std::string > UccdClient::getFanTemperatures()
 {
   return std::nullopt;
 }
 
-bool TccdClient::setODMPowerLimits( [[maybe_unused]] const std::vector< int > &limits )
+bool UccdClient::setODMPowerLimits( [[maybe_unused]] const std::vector< int > &limits )
 {
   return false;
 }
 
-std::optional< std::vector< int > > TccdClient::getODMPowerLimits()
+std::optional< std::vector< int > > UccdClient::getODMPowerLimits()
 {
   return std::nullopt;
 }
 
-bool TccdClient::setChargingProfile( [[maybe_unused]] int startThreshold, [[maybe_unused]] int endThreshold, [[maybe_unused]] int chargeType )
+bool UccdClient::setChargingProfile( [[maybe_unused]] int startThreshold, [[maybe_unused]] int endThreshold, [[maybe_unused]] int chargeType )
 {
   return false;
 }
 
-std::optional< std::string > TccdClient::getChargingState()
+std::optional< std::string > UccdClient::getChargingState()
 {
   return std::nullopt;
 }
 
-bool TccdClient::setNVIDIAPowerOffset( [[maybe_unused]] int offset )
+bool UccdClient::setNVIDIAPowerOffset( [[maybe_unused]] int offset )
 {
   return false;
 }
 
-std::optional< int > TccdClient::getNVIDIAPowerOffset()
+std::optional< int > UccdClient::getNVIDIAPowerOffset()
 {
   return std::nullopt;
 }
 
-bool TccdClient::setPrimeProfile( [[maybe_unused]] const std::string &profile )
+bool UccdClient::setPrimeProfile( [[maybe_unused]] const std::string &profile )
 {
   return false;
 }
 
-std::optional< std::string > TccdClient::getPrimeProfile()
+std::optional< std::string > UccdClient::getPrimeProfile()
 {
   return std::nullopt;
 }
 
-bool TccdClient::setKeyboardBacklight( [[maybe_unused]] const std::string &config )
+bool UccdClient::setKeyboardBacklight( [[maybe_unused]] const std::string &config )
 {
   return false;
 }
 
-std::optional< std::string > TccdClient::getKeyboardBacklightInfo()
+std::optional< std::string > UccdClient::getKeyboardBacklightInfo()
 {
   return std::nullopt;
 }
 
-bool TccdClient::setODMPerformanceProfile( [[maybe_unused]] const std::string &profile )
+bool UccdClient::setODMPerformanceProfile( [[maybe_unused]] const std::string &profile )
 {
   return false;
 }
 
-std::optional< std::string > TccdClient::getODMPerformanceProfile()
+std::optional< std::string > UccdClient::getODMPerformanceProfile()
 {
   return std::nullopt;
 }
 
-std::optional< std::vector< std::string > > TccdClient::getAvailableODMProfiles()
+std::optional< std::vector< std::string > > UccdClient::getAvailableODMProfiles()
 {
   return std::nullopt;
 }
@@ -634,7 +634,7 @@ std::optional< int > readFanDataValue( QDBusInterface *iface, const QString &met
           qint64 ts = innerMap.value( "timestamp" ).toLongLong();
           if ( ts == 0 )
           {
-            qDebug() << "[TccdClient] readFanDataValue: key" << key << "has timestamp 0 - treating as missing";
+            qDebug() << "[UccdClient] readFanDataValue: key" << key << "has timestamp 0 - treating as missing";
             return std::nullopt;
           }
         }
@@ -713,12 +713,12 @@ std::optional< double > readJsonDouble( QDBusInterface *iface, const QString &me
 } // namespace
 
 // System Monitoring implementations
-std::optional< int > TccdClient::getCpuTemperature()
+std::optional< int > UccdClient::getCpuTemperature()
 {
   return readFanDataValue( m_interface.get(), "GetFanDataCPU", "temp" );
 }
 
-std::optional< int > TccdClient::getGpuTemperature()
+std::optional< int > UccdClient::getGpuTemperature()
 {
   if ( auto temp = readJsonInt( m_interface.get(), "GetDGpuInfoValuesJSON", "temp" ) )
   {
@@ -728,7 +728,7 @@ std::optional< int > TccdClient::getGpuTemperature()
   return readJsonInt( m_interface.get(), "GetIGpuInfoValuesJSON", "temp" );
 }
 
-std::optional< int > TccdClient::getCpuFrequency()
+std::optional< int > UccdClient::getCpuFrequency()
 {
   QFile file( "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq" );
   if ( file.open( QIODevice::ReadOnly ) )
@@ -744,7 +744,7 @@ std::optional< int > TccdClient::getCpuFrequency()
   return std::nullopt;
 }
 
-std::optional< int > TccdClient::getGpuFrequency()
+std::optional< int > UccdClient::getGpuFrequency()
 {
   if ( auto freq = readJsonInt( m_interface.get(), "GetDGpuInfoValuesJSON", "coreFrequency" ) )
   {
@@ -753,12 +753,12 @@ std::optional< int > TccdClient::getGpuFrequency()
   return readJsonInt( m_interface.get(), "GetDGpuInfoValuesJSON", "coreFreq" );
 }
 
-std::optional< double > TccdClient::getCpuPower()
+std::optional< double > UccdClient::getCpuPower()
 {
   return readJsonDouble( m_interface.get(), "GetCpuPowerValuesJSON", "powerDraw" );
 }
 
-std::optional< double > TccdClient::getGpuPower()
+std::optional< double > UccdClient::getGpuPower()
 {
   if ( auto power = readJsonDouble( m_interface.get(), "GetDGpuInfoValuesJSON", "powerDraw" ) )
   {
@@ -767,7 +767,7 @@ std::optional< double > TccdClient::getGpuPower()
   return readJsonDouble( m_interface.get(), "GetIGpuInfoValuesJSON", "powerDraw" );
 }
 
-std::optional< int > TccdClient::getFanSpeedRPM()
+std::optional< int > UccdClient::getFanSpeedRPM()
 {
   if ( auto percentage = readFanDataValue( m_interface.get(), "GetFanDataCPU", "speed" ) )
   {
@@ -776,7 +776,7 @@ std::optional< int > TccdClient::getFanSpeedRPM()
   return std::nullopt;
 }
 
-std::optional< int > TccdClient::getGpuFanSpeedRPM()
+std::optional< int > UccdClient::getGpuFanSpeedRPM()
 {
   auto gpu1 = readFanDataValue( m_interface.get(), "GetFanDataGPU1", "speed" );
   auto gpu2 = readFanDataValue( m_interface.get(), "GetFanDataGPU2", "speed" );
@@ -797,12 +797,12 @@ std::optional< int > TccdClient::getGpuFanSpeedRPM()
 }
 
 // Return raw fan speed percentage (0-100) as reported by uccd
-std::optional< int > TccdClient::getFanSpeedPercent()
+std::optional< int > UccdClient::getFanSpeedPercent()
 {
   return readFanDataValue( m_interface.get(), "GetFanDataCPU", "speed" );
 }
 
-std::optional< int > TccdClient::getGpuFanSpeedPercent()
+std::optional< int > UccdClient::getGpuFanSpeedPercent()
 {
   auto gpu1 = readFanDataValue( m_interface.get(), "GetFanDataGPU1", "speed" );
   auto gpu2 = readFanDataValue( m_interface.get(), "GetFanDataGPU2", "speed" );
@@ -822,12 +822,12 @@ std::optional< int > TccdClient::getGpuFanSpeedPercent()
   return std::nullopt;
 } 
 
-void TccdClient::subscribeProfileChanged( [[maybe_unused]] ProfileChangedCallback callback )
+void UccdClient::subscribeProfileChanged( [[maybe_unused]] ProfileChangedCallback callback )
 {
   // Already handled via Qt signal connection
 }
 
-void TccdClient::subscribePowerStateChanged( [[maybe_unused]] PowerStateChangedCallback callback )
+void UccdClient::subscribePowerStateChanged( [[maybe_unused]] PowerStateChangedCallback callback )
 {
   // Already handled via Qt signal connection
 }

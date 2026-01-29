@@ -2,13 +2,13 @@
 
 ## What is UCC?
 
-**Uniwill Control Center (UCC)** is a modern Qt6/KDE C++20 application suite for Uniwill laptop control, designed as a native replacement for the Electron-based TCC GUI. It communicates with the tccd-ng daemon via DBus.
+**Uniwill Control Center (UCC)** is a modern Qt6/KDE C++20 application suite for Uniwill laptop control, designed as a native replacement for the Electron-based TCC GUI. It communicates with the uccd daemon via DBus.
 
 ## Architecture
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   ucc-gui   │────▶│ libucc-dbus │────▶│   tccd-ng   │
+│   ucc-gui   │────▶│ libucc-dbus │────▶│   uccd   │
 │  (Qt/QML)   │     │  (Qt DBus)  │     │   (daemon)  │
 └─────────────┘     └─────────────┘     └─────────────┘
        ▲                    ▲
@@ -60,7 +60,7 @@
 │   ├── libucc-dbus.so.0 → libucc-dbus.so.0.1.0
 │   └── libucc-dbus.so → libucc-dbus.so.0
 ├── include/src/ucc/
-│   └── TccdClient.hpp
+│   └── UccdClient.hpp
 └── share/
     ├── applications/
     │   └── ucc-tray.desktop
@@ -137,12 +137,12 @@ cd .. && ./run-ucc-gui.sh
 - KDE Frameworks 6
 
 **Runtime:**
-- tccd-ng daemon (must be running)
+- uccd daemon (must be running)
 - Qt6 runtime libraries
 
 ## Notes
 
-- tccd-ng daemon must be running for UCC to function
+- uccd daemon must be running for UCC to function
 - All DBus communication goes through libucc-dbus
 - The build script automatically handles CMakeLists.txt modification
 - Installation is fully local - no system directories modified

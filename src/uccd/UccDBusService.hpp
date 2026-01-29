@@ -37,7 +37,7 @@
 #include "workers/PrimeWorker.hpp"
 #include "workers/ODMProfileWorker.hpp"
 #include "FnLockController.hpp"
-#include "profiles/TccProfile.hpp"
+#include "profiles/UccProfile.hpp"
 #include "profiles/DefaultProfiles.hpp"
 #include "ProfileManager.hpp"
 #include "SettingsManager.hpp"
@@ -92,9 +92,9 @@ struct FanData
  * @brief DBus data container
  *
  * Contains all data that is exposed via the DBus interface.
- * This structure mirrors the TccDBusData TypeScript class.
+ * This structure mirrors the UccDBusData TypeScript class.
  */
-class TccDBusData
+class UccDBusData
 {
 public:
   std::string device;
@@ -146,7 +146,7 @@ public:
 
   std::mutex dataMutex;
 
-  explicit TccDBusData( int numberFans = 3 )
+  explicit UccDBusData( int numberFans = 3 )
     : device( "unknown" ),
       displayModes( "[]" ),
       isX11( false ),
@@ -200,10 +200,10 @@ public:
 /**
  * @brief TCC DBus Interface Adaptor
  *
- * Implements the com.tuxedocomputers.tccd DBus interface.
+ * Implements the com.uniwill.uccd DBus interface.
  * Handles all method calls from DBus clients and provides access to daemon data.
  */
-class TccDBusInterfaceAdaptor
+class UccDBusInterfaceAdaptor
 {
 public:
   static constexpr const char* INTERFACE_NAME = "com.tuxedocomputers.tccd";
@@ -214,11 +214,11 @@ public:
    * @param data Shared data structure (includes mutex)
    * @param service Reference to UccDBusService for profile operations
    */
-  explicit TccDBusInterfaceAdaptor( sdbus::IObject &object,
-                                    TccDBusData &data,
+  explicit UccDBusInterfaceAdaptor( sdbus::IObject &object,
+                                    UccDBusData &data,
                                     UccDBusService *service = nullptr );
 
-  ~TccDBusInterfaceAdaptor() = default;
+  ~UccDBusInterfaceAdaptor() = default;
 
   // device and system information
   std::string GetDeviceName();
@@ -332,7 +332,7 @@ public:
 
 private:
   sdbus::IObject &m_object;
-  TccDBusData &m_data;
+  UccDBusData &m_data;
   UccDBusService *m_service;
   std::chrono::steady_clock::time_point m_lastDataCollectionAccess;
 
@@ -366,7 +366,7 @@ public:
    * @brief Get the DBus interface adaptor
    * @return Pointer to adaptor or nullptr if not initialized
    */
-  TccDBusInterfaceAdaptor *getAdaptor() noexcept
+  UccDBusInterfaceAdaptor *getAdaptor() noexcept
   {
     return m_adaptor.get();
   }
@@ -374,31 +374,31 @@ public:
   /**
    * @brief Get the DBus data reference for testing
    */
-  const TccDBusData &getDbusData() const noexcept
+  const UccDBusData &getDbusData() const noexcept
   {
     return m_dbusData;
   }
 
   // profile management methods
-  TccProfile getCurrentProfile() const;
+  UccProfile getCurrentProfile() const;
   bool setCurrentProfileByName( const std::string &profileName );
   bool setCurrentProfileById( const std::string &id );
   bool applyProfileJSON( const std::string &profileJSON );
-  std::vector< TccProfile > getAllProfiles() const;
-  std::vector< TccProfile > getDefaultProfiles() const;
-  std::vector< TccProfile > getCustomProfiles() const;
-  TccProfile getDefaultProfile() const;
+  std::vector< UccProfile > getAllProfiles() const;
+  std::vector< UccProfile > getDefaultProfiles() const;
+  std::vector< UccProfile > getCustomProfiles() const;
+  UccProfile getDefaultProfile() const;
   void updateDBusActiveProfileData();
   void updateDBusSettingsData();
   
   // profile manipulation methods
-  bool addCustomProfile( const TccProfile &profile );
+  bool addCustomProfile( const UccProfile &profile );
   bool deleteCustomProfile( const std::string &profileId );
-  bool updateCustomProfile( const TccProfile &profile );
-  std::optional< TccProfile > copyProfile( const std::string &sourceId, const std::string &newName );
+  bool updateCustomProfile( const UccProfile &profile );
+  std::optional< UccProfile > copyProfile( const std::string &sourceId, const std::string &newName );
 
-  // Allow TccDBusInterfaceAdaptor to access private members
-  friend class TccDBusInterfaceAdaptor;
+  // Allow UccDBusInterfaceAdaptor to access private members
+  friend class UccDBusInterfaceAdaptor;
 
 protected:
   void onStart() override;
@@ -407,11 +407,11 @@ protected:
 
 private:
   static constexpr const char* INTERFACE_NAME = "com.tuxedocomputers.tccd";
-  TccDBusData m_dbusData;
+  UccDBusData m_dbusData;
   TuxedoIOAPI m_io;
   std::unique_ptr< sdbus::IConnection > m_connection;
   std::unique_ptr< sdbus::IObject > m_object;
-  std::unique_ptr< TccDBusInterfaceAdaptor > m_adaptor;
+  std::unique_ptr< UccDBusInterfaceAdaptor > m_adaptor;
   bool m_started;
 
   // profile management
@@ -420,9 +420,9 @@ private:
   AutosaveManager m_autosaveManager;
   TccSettings m_settings;
   TccAutosave m_autosave;
-  TccProfile m_activeProfile;
-  std::vector< TccProfile > m_defaultProfiles;
-  std::vector< TccProfile > m_customProfiles;
+  UccProfile m_activeProfile;
+  std::vector< UccProfile > m_defaultProfiles;
+  std::vector< UccProfile > m_customProfiles;
   
   // state switching
   ProfileState m_currentState;
@@ -437,7 +437,7 @@ private:
   void initializeProfiles();
   void initializeDisplayModes();
   void serializeProfilesJSON();
-  void fillDeviceSpecificDefaults( std::vector< TccProfile > &profiles );
+  void fillDeviceSpecificDefaults( std::vector< UccProfile > &profiles );
   std::optional< TUXEDODevice > identifyDevice();
   bool syncOutputPortsSetting();
   std::vector< std::vector< std::string > > getOutputPorts();

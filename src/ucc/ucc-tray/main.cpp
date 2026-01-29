@@ -14,7 +14,7 @@
 #include <QMessageBox>
 #include <QProcess>
 #include <memory>
-#include "TccdClient.hpp"
+#include "UccdClient.hpp"
 
 class TrayController : public QObject
 {
@@ -23,7 +23,7 @@ class TrayController : public QObject
 public:
   TrayController( QObject *parent = nullptr )
     : QObject( parent )
-    , m_client( std::make_unique< ucc::TccdClient >() )
+    , m_client( std::make_unique< ucc::UccdClient >() )
   {
     createTrayIcon();
     updateTrayStatus();
@@ -159,7 +159,7 @@ private:
     } );
   }
 
-  std::unique_ptr< ucc::TccdClient > m_client;
+  std::unique_ptr< ucc::UccdClient > m_client;
   QSystemTrayIcon *m_trayIcon = nullptr;
   QAction *m_webcamAction = nullptr;
   QAction *m_fnLockAction = nullptr;

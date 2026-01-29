@@ -40,7 +40,7 @@ Layer 1: System Daemon
       └─ GetCpuPowerValuesJSON()  → JSON(powerDraw)
 
 Layer 2: C++ DBus Client
-   └─ libucc-dbus/TccdClient
+   └─ libucc-dbus/UccdClient
       ├─ getCpuTemperature()  → int
       ├─ getGpuTemperature()  → int
       ├─ getCpuFrequency()    → int
@@ -51,7 +51,7 @@ Layer 2: C++ DBus Client
 
 Layer 3: Qt Application
    └─ ucc-gui/SystemMonitor
-      ├─ Fetches data via TccdClient
+      ├─ Fetches data via UccdClient
       ├─ Exposes Q_PROPERTY (cpuTemp, gpuTemp, etc.)
       ├─ Emits Qt signals on changes
       └─ Updates every 2 seconds
@@ -68,8 +68,8 @@ Layer 4: Plasma Widget
 ═══════════════════════════════════════════════════════════════════════════════
 
 Backend (C++):
-   ✅ ucc/libucc-dbus/TccdClient.hpp          - Added 7 monitoring methods
-   ✅ ucc/libucc-dbus/TccdClient.cpp          - Implemented data parsing
+   ✅ ucc/libucc-dbus/UccdClient.hpp          - Added 7 monitoring methods
+   ✅ ucc/libucc-dbus/UccdClient.cpp          - Implemented data parsing
    ✅ ucc/ucc-gui/SystemMonitor.hpp           - Added Q_PROPERTY bindings
    ✅ ucc/ucc-gui/SystemMonitor.cpp           - Implemented metric updates
 
@@ -164,7 +164,7 @@ For Development:
 
 2. Add more metrics:
    • Call additional uccd DBus methods
-   • Update TccdClient with new methods
+   • Update UccdClient with new methods
    • Add properties to SystemMonitor
    • Display in QML
 
@@ -200,7 +200,7 @@ For Development:
 ✨ FEATURES
 ═══════════════════════════════════════════════════════════════════════════════
 
-✅ Real-time metrics from tccd-ng
+✅ Real-time metrics from uccd
 ✅ Simple text display (no graphs needed)
 ✅ Updates every 2 seconds
 ✅ DBus integration with error handling
@@ -209,7 +209,7 @@ For Development:
 ✅ QML Plasma widget
 ✅ CPU and GPU monitoring
 ✅ Power and thermal data
-✅ Fully integrated with existing tccd-ng
+✅ Fully integrated with existing uccd
 
 ═══════════════════════════════════════════════════════════════════════════════
 🎉 COMPLETION STATUS

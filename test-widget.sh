@@ -32,8 +32,8 @@ echo ""
 # Test 2: Verify source files exist
 echo "✓ Test 2: Source Files"
 FILES=(
-    "$UCC_ROOT/libucc-dbus/TccdClient.hpp"
-    "$UCC_ROOT/libucc-dbus/TccdClient.cpp"
+    "$UCC_ROOT/libucc-dbus/UccdClient.hpp"
+    "$UCC_ROOT/libucc-dbus/UccdClient.cpp"
     "$UCC_ROOT/ucc-gui/SystemMonitor.hpp"
     "$UCC_ROOT/ucc-gui/SystemMonitor.cpp"
     "$UCC_ROOT/ucc-widgets/system-monitor/package/contents/ui/main.qml"
@@ -62,8 +62,8 @@ fi
 
 echo ""
 
-# Test 4: Verify implemented methods in TccdClient
-echo "✓ Test 4: TccdClient Methods"
+# Test 4: Verify implemented methods in UccdClient
+echo "✓ Test 4: UccdClient Methods"
 METHODS=(
     "getCpuTemperature"
     "getGpuTemperature"
@@ -75,7 +75,7 @@ METHODS=(
 )
 
 for method in "${METHODS[@]}"; do
-    if grep -q "std::optional< int > TccdClient::$method" "$UCC_ROOT/libucc-dbus/TccdClient.cpp"; then
+    if grep -q "std::optional< int > UccdClient::$method" "$UCC_ROOT/libucc-dbus/UccdClient.cpp"; then
         echo "  ✅ $method()"
     else
         echo "  ❌ $method() - NOT FOUND"

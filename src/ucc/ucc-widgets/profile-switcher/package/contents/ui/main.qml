@@ -21,7 +21,7 @@ PlasmoidItem {
     property var profiles: []
     property var profileMap: ({})  // Maps profile names to IDs
 
-    // DBus interface to tccd-ng
+    // DBus interface to uccd
     DBusInterface {
         id: tccdInterface
         service: "com.tuxedocomputers.tccd"

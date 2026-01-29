@@ -35,8 +35,8 @@ The project consists of 4 independent components:
 **Purpose:** Qt-native DBus client library for uccd communication
 
 **Key Files:**
-- `TccdClient.hpp` - QObject-based client with Qt signals
-- `TccdClient.cpp` - QtDBus implementation with template helpers
+- `UccdClient.hpp` - QObject-based client with Qt signals
+- `UccdClient.cpp` - QtDBus implementation with template helpers
 
 **Features:**
 - Type-safe DBus method calls via templates: `callMethod< T >()`
@@ -138,12 +138,12 @@ object->method(value);
 // CORRECT:
 std::vector< int > data;
 std::optional< std::string > result;
-std::make_unique< TccdClient >( arg );
+std::make_unique< UccdClient >( arg );
 
 // WRONG:
 std::vector<int> data;
 std::optional<std::string> result;
-std::make_unique<TccdClient>(arg);
+std::make_unique<UccdClient>(arg);
 ```
 - **Spaces inside angle brackets**
 
@@ -230,25 +230,25 @@ cmake --build "$BUILD_DIR" -j$(nproc)
 
 ### ✅ Completed
 - [x] Full project structure created
-- [x] QtDBus client library (TccdClient)
+- [x] QtDBus client library (UccdClient)
 - [x] Main GUI skeleton with QML pages
 - [x] System tray applet with context menu
 - [x] 2 Plasma widgets (system-monitor, profile-switcher)
 - [x] CMake build configuration
-- [x] All files reformatted to tccd-ng style
+- [x] All files reformatted to uccd style
 - [x] .clang-format configuration created
 - [x] GPL headers on all source files
 - [x] **First complete build succeeded (all 4 components)**
 - [x] **Plasma widgets enabled and building**
 - [x] **Local installation to /opt/devel/ucc-install**
-- [x] **All TccdClient DBus methods implemented (40/50 fully functional)**
+- [x] **All UccdClient DBus methods implemented (40/50 fully functional)**
   - Profile management, display, fan, charging, GPU, keyboard, webcam, ODM profiles
   - 10 methods appropriately return false when DBus doesn't expose interface
 
 ### 🚧 Next Implementation Tasks
-- [x] **Implement TccdClient DBus methods** (40/50 fully implemented)
+- [x] **Implement UccdClient DBus methods** (40/50 fully implemented)
   - ✅ Completed: Profile management, display control, fan control, charging, GPU, keyboard, webcam, ODM
-  - ⚠️ Not exposed by tccd-ng: CPU governor, CPU frequency, energy preference, NVIDIA power offset, ODM power limits
+  - ⚠️ Not exposed by uccd: CPU governor, CPU frequency, energy preference, NVIDIA power offset, ODM power limits
   - See `DBUSAPI.md` for comprehensive method documentation
 
 ### � Installation
@@ -263,7 +263,7 @@ cmake --build "$BUILD_DIR" -j$(nproc)
 ├── lib/
 │   └── libucc-dbus.so.0.1.0 (1.1M) - DBus client library
 ├── include/
-│   └── src/ucc/TccdClient.hpp
+│   └── src/ucc/UccdClient.hpp
 └── share/
     ├── applications/
     │   └── ucc-tray.desktop
@@ -350,11 +350,11 @@ dnf repoquery --provides qt6-qtdeclarative-devel
 ```
 
 ### 2. DBus Method Names Unknown
-**Symptom:** TccdClient methods return `std::nullopt`  
-**Solution:** Need to inspect tccd-ng DBus interface:
+**Symptom:** UccdClient methods return `std::nullopt`  
+**Solution:** Need to inspect uccd DBus interface:
 ```bash
 # Introspect daemon
-busctl introspect com.tuxedocomputers.tccd /com/uniwill/uccd
+busctl introspect com.uniwill.uccd /com/uniwill/uccd
 ```
 
 ---
@@ -372,13 +372,13 @@ busctl introspect com.tuxedocomputers.tccd /com/uniwill/uccd
    - Check for any additional missing dependencies
 
 ### Implementation (Post-Build)
-3. **Complete TccdClient DBus methods**
-   - Get actual method names from tccd-ng introspection
+3. **Complete UccdClient DBus methods**
+   - Get actual method names from uccd introspection
    - Fill in the 50+ stub methods
    - Test return value parsing
 
 4. **Integrate DBus in Plasma widgets**
-   - Import TccdClient in QML
+   - Import UccdClient in QML
    - Replace mock data with live metrics
    - Test widget updates
 
@@ -423,8 +423,8 @@ src/ucc/
 │
 ├── libucc-dbus/
 │   ├── CMakeLists.txt
-│   ├── TccdClient.hpp          # Main DBus client header
-│   └── TccdClient.cpp          # QtDBus implementation
+│   ├── UccdClient.hpp          # Main DBus client header
+│   └── UccdClient.cpp          # QtDBus implementation
 │
 ├── ucc-gui/
 │   ├── CMakeLists.txt
@@ -473,9 +473,9 @@ build/                   # CMake build directory
 ## DBus Interface Reference
 
 ### Service Details
-- **Service Name:** `com.tuxedocomputers.tccd`
+- **Service Name:** `com.uniwill.uccd`
 - **Object Path:** `/com/uniwill/uccd`
-- **Interface:** `com.tuxedocomputers.tccd`
+- **Interface:** `com.uniwill.uccd`
 
 ### Implemented Methods
 
@@ -507,7 +507,7 @@ build/                   # CMake build directory
 - setODMPerformanceProfile, getODMPerformanceProfile
 - getAvailableODMProfiles
 
-**CPU Control (5/5):** ⚠️ Limited by tccd-ng
+**CPU Control (5/5):** ⚠️ Limited by uccd
 - getCpuScalingGovernor, getAvailableCpuGovernors
 - setCpuScalingGovernor, setCpuFrequency, setEnergyPerformancePreference
 
@@ -546,7 +546,7 @@ ls /usr/lib64/cmake/Qt6*/
 busctl list | grep tuxedo
 
 # Monitor DBus signals
-dbus-monitor --system "sender='com.tuxedocomputers.tccd'"
+dbus-monitor --system "sender='com.uniwill.uccd'"
 ```
 
 ---
@@ -561,7 +561,7 @@ TUXEDO Control Center (TCC)
 Daemon: `uccd` (C++ DBus service)
 
 ### Style Reference
-See `tccd-ng/src/TccDBusService.{hpp,cpp}` for formatting examples
+See `uccd/src/TccDBusService.{hpp,cpp}` for formatting examples
 
 ---
 

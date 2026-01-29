@@ -16,9 +16,9 @@
 #include "DefaultProfiles.hpp"
 #include <iostream>
 
-const TccProfile maxEnergySave = []()
+const UccProfile maxEnergySave = []()
 {
-  TccProfile profile( DefaultProfileIDs::MaxEnergySave, DefaultProfileIDs::MaxEnergySave );
+  UccProfile profile( DefaultProfileIDs::MaxEnergySave, DefaultProfileIDs::MaxEnergySave );
 
   profile.display.brightness = 40;
   profile.display.useBrightness = true;
@@ -49,9 +49,9 @@ const TccProfile maxEnergySave = []()
   return profile;
 }();
 
-const TccProfile silent = []()
+const UccProfile silent = []()
 {
-  TccProfile profile( DefaultProfileIDs::Quiet, DefaultProfileIDs::Quiet );
+  UccProfile profile( DefaultProfileIDs::Quiet, DefaultProfileIDs::Quiet );
 
   profile.display.brightness = 50;
   profile.display.useBrightness = true;
@@ -79,9 +79,9 @@ const TccProfile silent = []()
   return profile;
 }();
 
-const TccProfile office = []()
+const UccProfile office = []()
 {
-  TccProfile profile( DefaultProfileIDs::Office, DefaultProfileIDs::Office );
+  UccProfile profile( DefaultProfileIDs::Office, DefaultProfileIDs::Office );
 
   profile.display.brightness = 60;
   profile.display.useBrightness = true;
@@ -109,9 +109,9 @@ const TccProfile office = []()
   return profile;
 }();
 
-const TccProfile highPerformance = []()
+const UccProfile highPerformance = []()
 {
-  TccProfile profile( DefaultProfileIDs::HighPerformance, DefaultProfileIDs::HighPerformance );
+  UccProfile profile( DefaultProfileIDs::HighPerformance, DefaultProfileIDs::HighPerformance );
 
   profile.display.brightness = 60;
   profile.display.useBrightness = true;
@@ -139,9 +139,9 @@ const TccProfile highPerformance = []()
   return profile;
 }();
 
-const TccProfile defaultCustomProfile = []()
+const UccProfile defaultCustomProfile = []()
 {
-  TccProfile profile( defaultCustomProfileID, "TUXEDO Defaults" );
+  UccProfile profile( defaultCustomProfileID, "TUXEDO Defaults" );
   profile.description = "Edit profile to change behaviour";
 
   profile.display.brightness = 100;
@@ -169,9 +169,9 @@ const TccProfile defaultCustomProfile = []()
   return profile;
 }();
 
-const TccProfile defaultMobileCustomProfileTDP = []()
+const UccProfile defaultMobileCustomProfileTDP = []()
 {
-  TccProfile profile( defaultMobileCustomProfileID, "TUXEDO Mobile Default" );
+  UccProfile profile( defaultMobileCustomProfileID, "TUXEDO Mobile Default" );
   profile.description = "Edit profile to change behaviour";
 
   profile.display.brightness = 100;
@@ -201,9 +201,9 @@ const TccProfile defaultMobileCustomProfileTDP = []()
   return profile;
 }();
 
-const TccProfile defaultMobileCustomProfileCl = []()
+const UccProfile defaultMobileCustomProfileCl = []()
 {
-  TccProfile profile( defaultMobileCustomProfileID, "TUXEDO Mobile Default" );
+  UccProfile profile( defaultMobileCustomProfileID, "TUXEDO Mobile Default" );
   profile.description = "Edit profile to change behaviour";
 
   profile.display.brightness = 100;
@@ -232,9 +232,9 @@ const TccProfile defaultMobileCustomProfileCl = []()
   return profile;
 }();
 
-const TccProfile highPerformance25WcTGP = []()
+const UccProfile highPerformance25WcTGP = []()
 {
-  TccProfile profile( DefaultProfileIDs::HighPerformance, DefaultProfileIDs::HighPerformance );
+  UccProfile profile( DefaultProfileIDs::HighPerformance, DefaultProfileIDs::HighPerformance );
 
   profile.display.brightness = 60;
   profile.display.useBrightness = true;
@@ -262,9 +262,9 @@ const TccProfile highPerformance25WcTGP = []()
   return profile;
 }();
 
-const TccProfile defaultCustomProfile25WcTGP = []()
+const UccProfile defaultCustomProfile25WcTGP = []()
 {
-  TccProfile profile( defaultCustomProfileID, "TUXEDO Defaults" );
+  UccProfile profile( defaultCustomProfileID, "TUXEDO Defaults" );
   profile.description = "Edit profile to change behaviour";
 
   profile.display.brightness = 100;
@@ -293,9 +293,9 @@ const TccProfile defaultCustomProfile25WcTGP = []()
 }();
 
 // Legacy default profiles (for devices not in deviceProfiles map)
-const TccProfile legacyDefault = []()
+const UccProfile legacyDefault = []()
 {
-  TccProfile profile( "__legacy_default__", "Default" );
+  UccProfile profile( "__legacy_default__", "Default" );
 
   profile.display.brightness = 100;
   profile.display.useBrightness = false;
@@ -323,9 +323,9 @@ const TccProfile legacyDefault = []()
   return profile;
 }();
 
-const TccProfile legacyCoolAndBreezy = []()
+const UccProfile legacyCoolAndBreezy = []()
 {
-  TccProfile profile( "__legacy_cool_and_breezy__", "Cool and breezy" );
+  UccProfile profile( "__legacy_cool_and_breezy__", "Cool and breezy" );
 
   profile.display.brightness = 50;
   profile.display.useBrightness = false;
@@ -353,9 +353,9 @@ const TccProfile legacyCoolAndBreezy = []()
   return profile;
 }();
 
-const TccProfile legacyPowersaveExtreme = []()
+const UccProfile legacyPowersaveExtreme = []()
 {
-  TccProfile profile( "__legacy_powersave_extreme__", "Powersave extreme" );
+  UccProfile profile( "__legacy_powersave_extreme__", "Powersave extreme" );
 
   profile.display.brightness = 30;
   profile.display.useBrightness = false;
@@ -383,10 +383,10 @@ const TccProfile legacyPowersaveExtreme = []()
   return profile;
 }();
 
-const std::vector< TccProfile > legacyProfiles = { legacyDefault, legacyCoolAndBreezy, legacyPowersaveExtreme };
+const std::vector< UccProfile > legacyProfiles = { legacyDefault, legacyCoolAndBreezy, legacyPowersaveExtreme };
 
 // device-specific default profiles
-const std::map< TUXEDODevice, std::vector< TccProfile > > deviceProfiles = 
+const std::map< TUXEDODevice, std::vector< UccProfile > > deviceProfiles = 
 {
   { TUXEDODevice::IBP14G6_TUX, { maxEnergySave, silent, office } },
   { TUXEDODevice::IBP14G6_TRX, { maxEnergySave, silent, office } },
@@ -415,7 +415,7 @@ const std::map< TUXEDODevice, std::vector< TccProfile > > deviceProfiles =
 };
 
 // device-specific custom profile defaults
-const std::map< TUXEDODevice, std::vector< TccProfile > > deviceCustomProfiles =
+const std::map< TUXEDODevice, std::vector< UccProfile > > deviceCustomProfiles =
 {
   // devices not listed here default to [ defaultCustomProfile ]
   // the first entry is used as the skeleton for new profiles created by the user

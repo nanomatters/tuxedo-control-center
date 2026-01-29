@@ -136,7 +136,7 @@ static int32_t optionalValueOr( const std::optional< int32_t > &value, int32_t f
   return value.has_value() ? value.value() : fallback;
 }
 
-static std::string profileToJSON( const TccProfile &profile,
+static std::string profileToJSON( const UccProfile &profile,
                                   int32_t defaultOnlineCores,
                                   int32_t defaultScalingMin,
                                   int32_t defaultScalingMax )
@@ -239,10 +239,10 @@ static std::string buildSettingsJSON( const std::string &keyboardBacklightStates
   return oss.str();
 }
 
-// TccDBusInterfaceAdaptor implementation
+// UccDBusInterfaceAdaptor implementation
 
-TccDBusInterfaceAdaptor::TccDBusInterfaceAdaptor( sdbus::IObject &object,
-                                                  TccDBusData &data,
+UccDBusInterfaceAdaptor::UccDBusInterfaceAdaptor( sdbus::IObject &object,
+                                                  UccDBusData &data,
                                                   UccDBusService *service )
   : m_object( object ),
     m_data( data ),
@@ -252,7 +252,7 @@ TccDBusInterfaceAdaptor::TccDBusInterfaceAdaptor( sdbus::IObject &object,
   registerAdaptor();
 }
 
-void TccDBusInterfaceAdaptor::registerAdaptor()
+void UccDBusInterfaceAdaptor::registerAdaptor()
 {
   using namespace sdbus;
   
@@ -328,11 +328,11 @@ void TccDBusInterfaceAdaptor::registerAdaptor()
     registerSignal("ProfileChanged").withParameters<std::string>(),
     registerSignal("ModeReapplyPendingChanged").withParameters<bool>(),
     registerSignal("PowerStateChanged").withParameters<std::string>()
-  ).forInterface(TccDBusInterfaceAdaptor::INTERFACE_NAME);
-  syslog( LOG_INFO, "TccDBusInterfaceAdaptor: registered interface %s", TccDBusInterfaceAdaptor::INTERFACE_NAME );
+  ).forInterface(UccDBusInterfaceAdaptor::INTERFACE_NAME);
+  syslog( LOG_INFO, "UccDBusInterfaceAdaptor: registered interface %s", UccDBusInterfaceAdaptor::INTERFACE_NAME );
 }
 
-void TccDBusInterfaceAdaptor::resetDataCollectionTimeout()
+void UccDBusInterfaceAdaptor::resetDataCollectionTimeout()
 {
   // Note: caller must hold m_data.dataMutex lock
   m_lastDataCollectionAccess = std::chrono::steady_clock::now();
@@ -340,7 +340,7 @@ void TccDBusInterfaceAdaptor::resetDataCollectionTimeout()
 }
 
 std::map< std::string, std::map< std::string, sdbus::Variant > >
-TccDBusInterfaceAdaptor::exportFanData( const FanData &fanData )
+UccDBusInterfaceAdaptor::exportFanData( const FanData &fanData )
 {
   std::map< std::string, std::map< std::string, sdbus::Variant > > result;
 
@@ -359,37 +359,37 @@ TccDBusInterfaceAdaptor::exportFanData( const FanData &fanData )
 
 // device and system information methods
 
-std::string TccDBusInterfaceAdaptor::GetDeviceName()
+std::string UccDBusInterfaceAdaptor::GetDeviceName()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.device;
 }
 
-std::string TccDBusInterfaceAdaptor::GetDisplayModesJSON()
+std::string UccDBusInterfaceAdaptor::GetDisplayModesJSON()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.displayModes;
 }
 
-bool TccDBusInterfaceAdaptor::GetIsX11()
+bool UccDBusInterfaceAdaptor::GetIsX11()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.isX11;
 }
 
-bool TccDBusInterfaceAdaptor::TuxedoWmiAvailable()
+bool UccDBusInterfaceAdaptor::TuxedoWmiAvailable()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.tuxedoWmiAvailable;
 }
 
-bool TccDBusInterfaceAdaptor::FanHwmonAvailable()
+bool UccDBusInterfaceAdaptor::FanHwmonAvailable()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.fanHwmonAvailable;
 }
 
-std::string TccDBusInterfaceAdaptor::TccdVersion()
+std::string UccDBusInterfaceAdaptor::TccdVersion()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.tccdVersion;
@@ -398,7 +398,7 @@ std::string TccDBusInterfaceAdaptor::TccdVersion()
 // fan data methods
 
 std::map< std::string, std::map< std::string, sdbus::Variant > >
-TccDBusInterfaceAdaptor::GetFanDataCPU()
+UccDBusInterfaceAdaptor::GetFanDataCPU()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   if ( m_data.fans.size() > 0 )
@@ -408,7 +408,7 @@ TccDBusInterfaceAdaptor::GetFanDataCPU()
 }
 
 std::map< std::string, std::map< std::string, sdbus::Variant > >
-TccDBusInterfaceAdaptor::GetFanDataGPU1()
+UccDBusInterfaceAdaptor::GetFanDataGPU1()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   if ( m_data.fans.size() > 1 )
@@ -418,7 +418,7 @@ TccDBusInterfaceAdaptor::GetFanDataGPU1()
 }
 
 std::map< std::string, std::map< std::string, sdbus::Variant > >
-TccDBusInterfaceAdaptor::GetFanDataGPU2()
+UccDBusInterfaceAdaptor::GetFanDataGPU2()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   if ( m_data.fans.size() > 2 )
@@ -429,19 +429,19 @@ TccDBusInterfaceAdaptor::GetFanDataGPU2()
 
 // webcam and display methods
 
-bool TccDBusInterfaceAdaptor::WebcamSWAvailable()
+bool UccDBusInterfaceAdaptor::WebcamSWAvailable()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.webcamSwitchAvailable;
 }
 
-bool TccDBusInterfaceAdaptor::GetWebcamSWStatus()
+bool UccDBusInterfaceAdaptor::GetWebcamSWStatus()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.webcamSwitchStatus;
 }
 
-bool TccDBusInterfaceAdaptor::GetForceYUV420OutputSwitchAvailable()
+bool UccDBusInterfaceAdaptor::GetForceYUV420OutputSwitchAvailable()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.forceYUV420OutputSwitchAvailable;
@@ -449,21 +449,21 @@ bool TccDBusInterfaceAdaptor::GetForceYUV420OutputSwitchAvailable()
 
 // gpu information methods
 
-std::string TccDBusInterfaceAdaptor::GetDGpuInfoValuesJSON()
+std::string UccDBusInterfaceAdaptor::GetDGpuInfoValuesJSON()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   resetDataCollectionTimeout();
   return m_data.dGpuInfoValuesJSON;
 }
 
-std::string TccDBusInterfaceAdaptor::GetIGpuInfoValuesJSON()
+std::string UccDBusInterfaceAdaptor::GetIGpuInfoValuesJSON()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   resetDataCollectionTimeout();
   return m_data.iGpuInfoValuesJSON;
 }
 
-std::string TccDBusInterfaceAdaptor::GetCpuPowerValuesJSON()
+std::string UccDBusInterfaceAdaptor::GetCpuPowerValuesJSON()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   resetDataCollectionTimeout();
@@ -472,13 +472,13 @@ std::string TccDBusInterfaceAdaptor::GetCpuPowerValuesJSON()
 
 // graphics methods
 
-std::string TccDBusInterfaceAdaptor::GetPrimeState()
+std::string UccDBusInterfaceAdaptor::GetPrimeState()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.primeState;
 }
 
-bool TccDBusInterfaceAdaptor::ConsumeModeReapplyPending()
+bool UccDBusInterfaceAdaptor::ConsumeModeReapplyPending()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   if ( m_data.modeReapplyPending )
@@ -491,13 +491,13 @@ bool TccDBusInterfaceAdaptor::ConsumeModeReapplyPending()
 
 // profile methods
 
-std::string TccDBusInterfaceAdaptor::GetActiveProfileJSON()
+std::string UccDBusInterfaceAdaptor::GetActiveProfileJSON()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.activeProfileJSON;
 }
 
-bool TccDBusInterfaceAdaptor::SetFanProfileCPU( const std::string &pointsJSON )
+bool UccDBusInterfaceAdaptor::SetFanProfileCPU( const std::string &pointsJSON )
 {
   if ( !m_service )
     return false;
@@ -511,7 +511,7 @@ bool TccDBusInterfaceAdaptor::SetFanProfileCPU( const std::string &pointsJSON )
     if ( table.size() != 17 )
       return false;
 
-    TccProfile profile = m_service->getCurrentProfile();
+    UccProfile profile = m_service->getCurrentProfile();
     std::cerr << "[DBus] Current profile ID: " << profile.id << std::endl;
     auto custom = m_service->getCustomProfiles();
     bool editable = false;
@@ -537,7 +537,7 @@ bool TccDBusInterfaceAdaptor::SetFanProfileCPU( const std::string &pointsJSON )
   }
 }
 
-bool TccDBusInterfaceAdaptor::SetFanProfileDGPU( const std::string &pointsJSON )
+bool UccDBusInterfaceAdaptor::SetFanProfileDGPU( const std::string &pointsJSON )
 {
   if ( !m_service )
     return false;
@@ -551,7 +551,7 @@ bool TccDBusInterfaceAdaptor::SetFanProfileDGPU( const std::string &pointsJSON )
     if ( table.size() != 17 )
       return false;
 
-    TccProfile profile = m_service->getCurrentProfile();
+    UccProfile profile = m_service->getCurrentProfile();
     std::cerr << "[DBus] Current profile ID: " << profile.id << std::endl;
     auto custom = m_service->getCustomProfiles();
     bool editable = false;
@@ -577,7 +577,7 @@ bool TccDBusInterfaceAdaptor::SetFanProfileDGPU( const std::string &pointsJSON )
   }
 }
 
-bool TccDBusInterfaceAdaptor::ApplyFanProfiles( const std::string &fanProfilesJSON )
+bool UccDBusInterfaceAdaptor::ApplyFanProfiles( const std::string &fanProfilesJSON )
 {
   if ( !m_service )
     return false;
@@ -673,7 +673,7 @@ bool TccDBusInterfaceAdaptor::ApplyFanProfiles( const std::string &fanProfilesJS
   }
 }
 
-bool TccDBusInterfaceAdaptor::RevertFanProfiles()
+bool UccDBusInterfaceAdaptor::RevertFanProfiles()
 {
   if ( !m_service )
     return false;
@@ -701,14 +701,14 @@ bool TccDBusInterfaceAdaptor::RevertFanProfiles()
   }
 }
 
-bool TccDBusInterfaceAdaptor::SetTempProfile( const std::string &profileName )
+bool UccDBusInterfaceAdaptor::SetTempProfile( const std::string &profileName )
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   m_data.tempProfileName = profileName;
   return true;
 }
 
-bool TccDBusInterfaceAdaptor::SetTempProfileById( const std::string &id )
+bool UccDBusInterfaceAdaptor::SetTempProfileById( const std::string &id )
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   m_data.tempProfileId = id;
@@ -716,13 +716,13 @@ bool TccDBusInterfaceAdaptor::SetTempProfileById( const std::string &id )
   return true;
 }
 
-bool TccDBusInterfaceAdaptor::SetActiveProfile( const std::string &id )
+bool UccDBusInterfaceAdaptor::SetActiveProfile( const std::string &id )
 {
   // Immediately set the active profile
   return m_service->setCurrentProfileById( id );
 }
 
-bool TccDBusInterfaceAdaptor::ApplyProfile( const std::string &profileJSON )
+bool UccDBusInterfaceAdaptor::ApplyProfile( const std::string &profileJSON )
 {
   // Apply the profile configuration sent by the GUI
   return m_service->applyProfileJSON( profileJSON );
@@ -730,13 +730,13 @@ bool TccDBusInterfaceAdaptor::ApplyProfile( const std::string &profileJSON )
 
 
 
-std::string TccDBusInterfaceAdaptor::GetProfilesJSON()
+std::string UccDBusInterfaceAdaptor::GetProfilesJSON()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.profilesJSON;
 }
 
-std::string TccDBusInterfaceAdaptor::GetCustomProfilesJSON()
+std::string UccDBusInterfaceAdaptor::GetCustomProfilesJSON()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   //std::cout << "[DBus] GetCustomProfilesJSON called, returning " 
@@ -744,19 +744,19 @@ std::string TccDBusInterfaceAdaptor::GetCustomProfilesJSON()
   return m_data.customProfilesJSON;
 }
 
-std::string TccDBusInterfaceAdaptor::GetDefaultProfilesJSON()
+std::string UccDBusInterfaceAdaptor::GetDefaultProfilesJSON()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.defaultProfilesJSON;
 }
 
-std::string TccDBusInterfaceAdaptor::GetDefaultValuesProfileJSON()
+std::string UccDBusInterfaceAdaptor::GetDefaultValuesProfileJSON()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.defaultValuesProfileJSON;
 }
 
-bool TccDBusInterfaceAdaptor::AddCustomProfile( const std::string &profileJSON )
+bool UccDBusInterfaceAdaptor::AddCustomProfile( const std::string &profileJSON )
 {
   if ( !m_service )
   {
@@ -803,7 +803,7 @@ bool TccDBusInterfaceAdaptor::AddCustomProfile( const std::string &profileJSON )
   }
 }
 
-bool TccDBusInterfaceAdaptor::DeleteCustomProfile( const std::string &profileId )
+bool UccDBusInterfaceAdaptor::DeleteCustomProfile( const std::string &profileId )
 {
   if ( !m_service )
   {
@@ -827,7 +827,7 @@ bool TccDBusInterfaceAdaptor::DeleteCustomProfile( const std::string &profileId 
   return result;
 }
 
-bool TccDBusInterfaceAdaptor::UpdateCustomProfile( const std::string &profileJSON )
+bool UccDBusInterfaceAdaptor::UpdateCustomProfile( const std::string &profileJSON )
 {
   if ( !m_service )
   {
@@ -883,7 +883,7 @@ bool TccDBusInterfaceAdaptor::UpdateCustomProfile( const std::string &profileJSO
   }
 }
 
-bool TccDBusInterfaceAdaptor::SaveCustomProfile( const std::string &profileJSON )
+bool UccDBusInterfaceAdaptor::SaveCustomProfile( const std::string &profileJSON )
 {
   if ( !m_service )
   {
@@ -932,7 +932,7 @@ bool TccDBusInterfaceAdaptor::SaveCustomProfile( const std::string &profileJSON 
   }
 }
 
-std::string TccDBusInterfaceAdaptor::CopyProfile( const std::string &sourceId, const std::string &newName )
+std::string UccDBusInterfaceAdaptor::CopyProfile( const std::string &sourceId, const std::string &newName )
 {
   if ( !m_service )
   {
@@ -956,12 +956,12 @@ std::string TccDBusInterfaceAdaptor::CopyProfile( const std::string &sourceId, c
   return "";
 }
 
-std::string TccDBusInterfaceAdaptor::GetFanProfile( const std::string &name )
+std::string UccDBusInterfaceAdaptor::GetFanProfile( const std::string &name )
 {
   return getFanProfileJson(name);
 }
 
-std::string TccDBusInterfaceAdaptor::GetFanProfileNames()
+std::string UccDBusInterfaceAdaptor::GetFanProfileNames()
 {
   std::vector< std::string > names;
   for (const auto &p : defaultFanProfiles) {
@@ -978,20 +978,20 @@ std::string TccDBusInterfaceAdaptor::GetFanProfileNames()
   return json;
 }
 
-bool TccDBusInterfaceAdaptor::SetFanProfile( const std::string &name, const std::string &json )
+bool UccDBusInterfaceAdaptor::SetFanProfile( const std::string &name, const std::string &json )
 {
   return setFanProfileJson(name, json);
 }
 
 // settings methods
 
-std::string TccDBusInterfaceAdaptor::GetSettingsJSON()
+std::string UccDBusInterfaceAdaptor::GetSettingsJSON()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.settingsJSON;
 }
 
-std::string TccDBusInterfaceAdaptor::GetPowerState()
+std::string UccDBusInterfaceAdaptor::GetPowerState()
 {
   // Return the current power state string (e.g. "power_ac" or "power_bat")
   try {
@@ -1008,7 +1008,7 @@ std::string TccDBusInterfaceAdaptor::GetPowerState()
   return std::string("power_ac");
 }
 
-bool TccDBusInterfaceAdaptor::SetStateMap( const std::string &state, const std::string &profileId )
+bool UccDBusInterfaceAdaptor::SetStateMap( const std::string &state, const std::string &profileId )
 {
   if ( !m_service )
   {
@@ -1030,13 +1030,13 @@ bool TccDBusInterfaceAdaptor::SetStateMap( const std::string &state, const std::
 
 // odm methods
 
-std::vector< std::string > TccDBusInterfaceAdaptor::ODMProfilesAvailable()
+std::vector< std::string > UccDBusInterfaceAdaptor::ODMProfilesAvailable()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.odmProfilesAvailable;
 }
 
-std::string TccDBusInterfaceAdaptor::ODMPowerLimitsJSON()
+std::string UccDBusInterfaceAdaptor::ODMPowerLimitsJSON()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.odmPowerLimitsJSON;
@@ -1044,19 +1044,19 @@ std::string TccDBusInterfaceAdaptor::ODMPowerLimitsJSON()
 
 // keyboard backlight methods
 
-std::string TccDBusInterfaceAdaptor::GetKeyboardBacklightCapabilitiesJSON()
+std::string UccDBusInterfaceAdaptor::GetKeyboardBacklightCapabilitiesJSON()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.keyboardBacklightCapabilitiesJSON;
 }
 
-std::string TccDBusInterfaceAdaptor::GetKeyboardBacklightStatesJSON()
+std::string UccDBusInterfaceAdaptor::GetKeyboardBacklightStatesJSON()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.keyboardBacklightStatesJSON;
 }
 
-bool TccDBusInterfaceAdaptor::SetKeyboardBacklightStatesJSON( const std::string &keyboardBacklightStatesJSON )
+bool UccDBusInterfaceAdaptor::SetKeyboardBacklightStatesJSON( const std::string &keyboardBacklightStatesJSON )
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   m_data.keyboardBacklightStatesNewJSON = keyboardBacklightStatesJSON;
@@ -1065,13 +1065,13 @@ bool TccDBusInterfaceAdaptor::SetKeyboardBacklightStatesJSON( const std::string 
 
 // fan control methods
 
-int32_t TccDBusInterfaceAdaptor::GetFansMinSpeed()
+int32_t UccDBusInterfaceAdaptor::GetFansMinSpeed()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.fansMinSpeed;
 }
 
-bool TccDBusInterfaceAdaptor::GetFansOffAvailable()
+bool UccDBusInterfaceAdaptor::GetFansOffAvailable()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.fansOffAvailable;
@@ -1079,19 +1079,19 @@ bool TccDBusInterfaceAdaptor::GetFansOffAvailable()
 
 // charging methods (stubs for now)
 
-std::string TccDBusInterfaceAdaptor::GetChargingProfilesAvailable()
+std::string UccDBusInterfaceAdaptor::GetChargingProfilesAvailable()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.chargingProfilesAvailable;
 }
 
-std::string TccDBusInterfaceAdaptor::GetCurrentChargingProfile()
+std::string UccDBusInterfaceAdaptor::GetCurrentChargingProfile()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.currentChargingProfile;
 }
 
-bool TccDBusInterfaceAdaptor::SetChargingProfile( const std::string &profileDescriptor )
+bool UccDBusInterfaceAdaptor::SetChargingProfile( const std::string &profileDescriptor )
 {
   bool result = m_service->m_chargingWorker->applyChargingProfile( profileDescriptor );
   
@@ -1104,19 +1104,19 @@ bool TccDBusInterfaceAdaptor::SetChargingProfile( const std::string &profileDesc
   return result;
 }
 
-std::string TccDBusInterfaceAdaptor::GetChargingPrioritiesAvailable()
+std::string UccDBusInterfaceAdaptor::GetChargingPrioritiesAvailable()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.chargingPrioritiesAvailable;
 }
 
-std::string TccDBusInterfaceAdaptor::GetCurrentChargingPriority()
+std::string UccDBusInterfaceAdaptor::GetCurrentChargingPriority()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.currentChargingPriority;
 }
 
-bool TccDBusInterfaceAdaptor::SetChargingPriority( const std::string &priorityDescriptor )
+bool UccDBusInterfaceAdaptor::SetChargingPriority( const std::string &priorityDescriptor )
 {
   bool result = m_service->m_chargingWorker->applyChargingPriority( priorityDescriptor );
   
@@ -1129,31 +1129,31 @@ bool TccDBusInterfaceAdaptor::SetChargingPriority( const std::string &priorityDe
   return result;
 }
 
-std::string TccDBusInterfaceAdaptor::GetChargeStartAvailableThresholds()
+std::string UccDBusInterfaceAdaptor::GetChargeStartAvailableThresholds()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.chargeStartAvailableThresholds;
 }
 
-std::string TccDBusInterfaceAdaptor::GetChargeEndAvailableThresholds()
+std::string UccDBusInterfaceAdaptor::GetChargeEndAvailableThresholds()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.chargeEndAvailableThresholds;
 }
 
-int32_t TccDBusInterfaceAdaptor::GetChargeStartThreshold()
+int32_t UccDBusInterfaceAdaptor::GetChargeStartThreshold()
 {
   // Read current value directly from hardware
   return m_service->m_chargingWorker->getChargeStartThreshold();
 }
 
-int32_t TccDBusInterfaceAdaptor::GetChargeEndThreshold()
+int32_t UccDBusInterfaceAdaptor::GetChargeEndThreshold()
 {
   // Read current value directly from hardware
   return m_service->m_chargingWorker->getChargeEndThreshold();
 }
 
-bool TccDBusInterfaceAdaptor::SetChargeStartThreshold( int32_t value )
+bool UccDBusInterfaceAdaptor::SetChargeStartThreshold( int32_t value )
 {
   bool result = m_service->m_chargingWorker->setChargeStartThreshold( value );
   
@@ -1166,7 +1166,7 @@ bool TccDBusInterfaceAdaptor::SetChargeStartThreshold( int32_t value )
   return result;
 }
 
-bool TccDBusInterfaceAdaptor::SetChargeEndThreshold( int32_t value )
+bool UccDBusInterfaceAdaptor::SetChargeEndThreshold( int32_t value )
 {
   bool result = m_service->m_chargingWorker->setChargeEndThreshold( value );
   
@@ -1179,13 +1179,13 @@ bool TccDBusInterfaceAdaptor::SetChargeEndThreshold( int32_t value )
   return result;
 }
 
-std::string TccDBusInterfaceAdaptor::GetChargeType()
+std::string UccDBusInterfaceAdaptor::GetChargeType()
 {
   // Read current value directly from hardware
   return m_service->m_chargingWorker->getChargeType();
 }
 
-bool TccDBusInterfaceAdaptor::SetChargeType( const std::string &type )
+bool UccDBusInterfaceAdaptor::SetChargeType( const std::string &type )
 {
   bool result = m_service->m_chargingWorker->setChargeType( type );
   
@@ -1200,36 +1200,36 @@ bool TccDBusInterfaceAdaptor::SetChargeType( const std::string &type )
 
 // fn lock methods (stubs for now)
 
-bool TccDBusInterfaceAdaptor::GetFnLockSupported()
+bool UccDBusInterfaceAdaptor::GetFnLockSupported()
 {
   return m_service->m_fnLockController.isSupported();
 }
 
-bool TccDBusInterfaceAdaptor::GetFnLockStatus()
+bool UccDBusInterfaceAdaptor::GetFnLockStatus()
 {
   return m_service->m_fnLockController.getStatus();
 }
 
-void TccDBusInterfaceAdaptor::SetFnLockStatus( bool status )
+void UccDBusInterfaceAdaptor::SetFnLockStatus( bool status )
 {
   m_service->m_fnLockController.setStatus( status );
 }
 
 // sensor data collection methods
 
-void TccDBusInterfaceAdaptor::SetSensorDataCollectionStatus( bool status )
+void UccDBusInterfaceAdaptor::SetSensorDataCollectionStatus( bool status )
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   m_data.sensorDataCollectionStatus = status;
 }
 
-bool TccDBusInterfaceAdaptor::GetSensorDataCollectionStatus()
+bool UccDBusInterfaceAdaptor::GetSensorDataCollectionStatus()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.sensorDataCollectionStatus;
 }
 
-void TccDBusInterfaceAdaptor::SetDGpuD0Metrics( bool status )
+void UccDBusInterfaceAdaptor::SetDGpuD0Metrics( bool status )
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   m_data.d0MetricsUsage = status;
@@ -1237,19 +1237,19 @@ void TccDBusInterfaceAdaptor::SetDGpuD0Metrics( bool status )
 
 // nvidia power control methods
 
-int32_t TccDBusInterfaceAdaptor::GetNVIDIAPowerCTRLDefaultPowerLimit()
+int32_t UccDBusInterfaceAdaptor::GetNVIDIAPowerCTRLDefaultPowerLimit()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.nvidiaPowerCTRLDefaultPowerLimit;
 }
 
-int32_t TccDBusInterfaceAdaptor::GetNVIDIAPowerCTRLMaxPowerLimit()
+int32_t UccDBusInterfaceAdaptor::GetNVIDIAPowerCTRLMaxPowerLimit()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.nvidiaPowerCTRLMaxPowerLimit;
 }
 
-bool TccDBusInterfaceAdaptor::GetNVIDIAPowerCTRLAvailable()
+bool UccDBusInterfaceAdaptor::GetNVIDIAPowerCTRLAvailable()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.nvidiaPowerCTRLAvailable;
@@ -1257,13 +1257,13 @@ bool TccDBusInterfaceAdaptor::GetNVIDIAPowerCTRLAvailable()
 
 // signal emitters
 
-void TccDBusInterfaceAdaptor::emitModeReapplyPendingChanged( bool pending )
+void UccDBusInterfaceAdaptor::emitModeReapplyPendingChanged( bool pending )
 {
   // signal emission to be implemented
   ( void ) pending;
 }
 
-void TccDBusInterfaceAdaptor::emitProfileChanged( const std::string &profileId )
+void UccDBusInterfaceAdaptor::emitProfileChanged( const std::string &profileId )
 {
   // Emit ProfileChanged signal
   m_object.emitSignal("ProfileChanged").onInterface("com.tuxedocomputers.tccd").withArguments(profileId);
@@ -1475,7 +1475,7 @@ UccDBusService::UccDBusService()
       std::lock_guard< std::mutex > lock( m_dbusData.dataMutex );
       m_dbusData.isX11 = isX11;
     },
-    [this]() -> TccProfile {
+    [this]() -> UccProfile {
       return m_activeProfile;
     }
   );
@@ -1491,7 +1491,7 @@ UccDBusService::UccDBusService()
   // Initialize ODM Profile worker
   m_odmProfileWorker = std::make_unique< ODMProfileWorker >(
     &m_io,
-    [this]() -> TccProfile {
+    [this]() -> UccProfile {
       return m_activeProfile;
     },
     [this]( const std::vector< std::string > &profiles ) {
@@ -1621,7 +1621,7 @@ void UccDBusService::onStart()
     {
       m_connection = sdbus::createSystemBusConnection();
       m_object = sdbus::createObject( *m_connection, sdbus::ObjectPath{ OBJECT_PATH } );
-      m_adaptor = std::make_unique< TccDBusInterfaceAdaptor >( *m_object, m_dbusData, this );
+      m_adaptor = std::make_unique< UccDBusInterfaceAdaptor >( *m_object, m_dbusData, this );
       syslog( LOG_INFO, "Requesting DBus name %s", SERVICE_NAME );
       m_connection->requestName( sdbus::ServiceName{ SERVICE_NAME } );
       syslog( LOG_INFO, "Requested DBus name %s", SERVICE_NAME );
@@ -1677,7 +1677,7 @@ void UccDBusService::onWork()
   }
 
   // STATE-BASED PROFILE SWITCHING (like TypeScript StateSwitcherWorker)
-  // Disabled: tccd-ng no longer saves or monitors settings file
+  // Disabled: uccd no longer saves or monitors settings file
   // UCC handles all profile decisions
   
   // Monitor power state and emit signals for UCC to handle
@@ -1889,7 +1889,7 @@ void UccDBusService::initializeProfiles()
     if ( !setCurrentProfileById( currentId ) )
     {
       // Profile no longer exists, clear it
-      m_activeProfile = TccProfile();
+      m_activeProfile = UccProfile();
     }
   }
 
@@ -1900,7 +1900,7 @@ void UccDBusService::initializeProfiles()
   const int32_t defaultScalingMin = getCpuMinFrequency();
   const int32_t defaultScalingMax = getCpuMaxFrequency();
   
-  TccProfile baseCustomProfile = m_profileManager.getDefaultCustomProfiles()[0];
+  UccProfile baseCustomProfile = m_profileManager.getDefaultCustomProfiles()[0];
   
   // serialize all profiles to JSON
   std::ostringstream allProfilesJSON;
@@ -1964,7 +1964,7 @@ void UccDBusService::initializeProfiles()
   
 }
 
-TccProfile UccDBusService::getCurrentProfile() const
+UccProfile UccDBusService::getCurrentProfile() const
 {
   return m_activeProfile;
 }
@@ -2173,9 +2173,9 @@ bool UccDBusService::applyProfileJSON( const std::string &profileJSON )
 }
 
 
-std::vector< TccProfile > UccDBusService::getAllProfiles() const
+std::vector< UccProfile > UccDBusService::getAllProfiles() const
 {
-  std::vector< TccProfile > allProfiles;
+  std::vector< UccProfile > allProfiles;
   allProfiles.reserve( m_defaultProfiles.size() + m_customProfiles.size() );
   
   allProfiles.insert( allProfiles.end(), m_defaultProfiles.begin(), m_defaultProfiles.end() );
@@ -2184,17 +2184,17 @@ std::vector< TccProfile > UccDBusService::getAllProfiles() const
   return allProfiles;
 }
 
-std::vector< TccProfile > UccDBusService::getDefaultProfiles() const
+std::vector< UccProfile > UccDBusService::getDefaultProfiles() const
 {
   return m_defaultProfiles;
 }
 
-std::vector< TccProfile > UccDBusService::getCustomProfiles() const
+std::vector< UccProfile > UccDBusService::getCustomProfiles() const
 {
   return m_customProfiles;
 }
 
-TccProfile UccDBusService::getDefaultProfile() const
+UccProfile UccDBusService::getDefaultProfile() const
 {
   if ( not m_defaultProfiles.empty() )
     return m_defaultProfiles[0];
@@ -2228,7 +2228,7 @@ void UccDBusService::updateDBusSettingsData()
                                                m_settings.stateMap );
 }
 
-bool UccDBusService::addCustomProfile( const TccProfile &profile )
+bool UccDBusService::addCustomProfile( const UccProfile &profile )
 {
   std::cout << "[ProfileManager] Adding profile '" << profile.name << "' to memory" << std::endl;
   
@@ -2248,7 +2248,7 @@ bool UccDBusService::deleteCustomProfile( const std::string &profileId )
   
   // Remove from in-memory profiles
   auto it = std::remove_if( m_customProfiles.begin(), m_customProfiles.end(),
-                           [&profileId]( const TccProfile &p ) { return p.id == profileId; } );
+                           [&profileId]( const UccProfile &p ) { return p.id == profileId; } );
   
   if ( it != m_customProfiles.end() )
   {
@@ -2265,7 +2265,7 @@ bool UccDBusService::deleteCustomProfile( const std::string &profileId )
   return false;
 }
 
-bool UccDBusService::updateCustomProfile( const TccProfile &profile )
+bool UccDBusService::updateCustomProfile( const UccProfile &profile )
 {
   std::cout << "[ProfileManager] Updating profile '" << profile.name << "' in memory" << std::endl;
   
@@ -2290,7 +2290,7 @@ bool UccDBusService::updateCustomProfile( const TccProfile &profile )
   
   // Update in-memory profile
   auto it = std::find_if( m_customProfiles.begin(), m_customProfiles.end(),
-                         [&profile]( const TccProfile &p ) { return p.id == profile.id; } );
+                         [&profile]( const UccProfile &p ) { return p.id == profile.id; } );
   
   if ( it != m_customProfiles.end() )
   {
@@ -2323,7 +2323,7 @@ bool UccDBusService::updateCustomProfile( const TccProfile &profile )
   return false;
 }
 
-std::optional< TccProfile > UccDBusService::copyProfile( const std::string &sourceId, const std::string &newName )
+std::optional< UccProfile > UccDBusService::copyProfile( const std::string &sourceId, const std::string &newName )
 {
   std::cout << "[ProfileManager] Copying profile '" << sourceId 
             << "' with new name '" << newName << "'" << std::endl;
@@ -2582,7 +2582,7 @@ void UccDBusService::serializeProfilesJSON()
   const int32_t defaultScalingMin = getCpuMinFrequency();
   const int32_t defaultScalingMax = getCpuMaxFrequency();
   
-  TccProfile defaultProfile = m_profileManager.getDefaultCustomProfiles()[0];
+  UccProfile defaultProfile = m_profileManager.getDefaultCustomProfiles()[0];
   
   // serialize all profiles to JSON
   std::ostringstream allProfilesJSON;
@@ -2641,7 +2641,7 @@ void UccDBusService::serializeProfilesJSON()
   std::cout << "[DBus] Re-serialized profile JSONs" << std::endl;
 }
 
-void UccDBusService::fillDeviceSpecificDefaults( std::vector< TccProfile > &profiles )
+void UccDBusService::fillDeviceSpecificDefaults( std::vector< UccProfile > &profiles )
 {
   const int32_t cpuMinFreq = getCpuMinFrequency();
   const int32_t cpuMaxFreq = getCpuMaxFrequency();

@@ -17,7 +17,7 @@ find_package( Qt6 REQUIRED COMPONENTS Core DBus )
 
 # Library sources
 add_library( ucc-dbus SHARED
-  TccdClient.cpp
+  UccdClient.cpp
 )
 
 target_include_directories( ucc-dbus
@@ -43,7 +43,7 @@ target_compile_options( ucc-dbus PRIVATE
 set_target_properties( ucc-dbus PROPERTIES
   VERSION ${PROJECT_VERSION}
   SOVERSION ${PROJECT_VERSION_MAJOR}
-  PUBLIC_HEADER "TccdClient.hpp"
+  PUBLIC_HEADER "UccdClient.hpp"
 )
 
 # Installation

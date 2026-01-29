@@ -22,15 +22,15 @@ sudo cmake --install .
 ```
 
 ### 3. **Verify DBus Integration**
-Test if tccd-ng is responding (mock data is used if service unavailable):
+Test if uccd is responding (mock data is used if service unavailable):
 
 ```bash
-# Test CPU Temperature method (will fail with "Unknown method" - expected, method not yet implemented in tccd-ng)
+# Test CPU Temperature method (will fail with "Unknown method" - expected, method not yet implemented in uccd)
 dbus-send --system --print-reply --dest=com.uniwill.uccd \
     /com/uniwill/uccd \
     com.uniwill.uccd.GetCpuTemperature
 
-# Verify tccd-ng is running
+# Verify uccd is running
 dbus-send --system --print-reply --dest=com.uniwill.uccd \
     /com/uniwill/uccd \
     org.freedesktop.DBus.Introspectable.Introspect | grep -E "method|interface" | head -20
@@ -44,12 +44,12 @@ cd /opt/devel/git/tuxedo/tuxedo-control-center/ucc/build
 ./ucc-gui/ucc-gui
 ```
 
-This will test the C++ backend integration with real tccd-ng DBus calls.
+This will test the C++ backend integration with real uccd DBus calls.
 
 ## What Was Implemented
 
 ### Backend (C++)
-- **TccdClient**: Added 7 new DBus methods:
+- **UccdClient**: Added 7 new DBus methods:
   - `getCpuTemperature()` - int (°C)
   - `getGpuTemperature()` - int (°C)
   - `getCpuFrequency()` - int (MHz)
@@ -81,12 +81,12 @@ This will test the C++ backend integration with real tccd-ng DBus calls.
 ✅ **Build**: Successful
 ✅ **DBus Interface**: Defined
 ✅ **QML Widget**: Complete with display and DBus integration
-✅ **C++ Backend**: Ready to call tccd-ng methods
-⏳ **tccd-ng Methods**: Need to be implemented in tccd-ng daemon to fetch real metrics
+✅ **C++ Backend**: Ready to call uccd methods
+⏳ **uccd Methods**: Need to be implemented in uccd daemon to fetch real metrics
 
 ## Next Steps
 
-1. Implement the methods in tccd-ng daemon:
+1. Implement the methods in uccd daemon:
    - `GetCpuTemperature()` → Read from /sys/class/hwmon/
    - `GetGpuTemperature()` → Read from GPU drivers
    - `GetCpuFrequency()` → Read from /sys/devices/system/cpu/
@@ -95,12 +95,12 @@ This will test the C++ backend integration with real tccd-ng DBus calls.
    - `GetGpuPower()` → Read from power ICs
    - `GetFanSpeed()` → Read from hwmon interface
 
-2. Once implemented in tccd-ng, widget will show real metrics
+2. Once implemented in uccd, widget will show real metrics
 
 ## Files Modified
 
-- `/opt/devel/git/tuxedo/tuxedo-control-center/ucc/libucc-dbus/TccdClient.hpp`
-- `/opt/devel/git/tuxedo/tuxedo-control-center/ucc/libucc-dbus/TccdClient.cpp`
+- `/opt/devel/git/tuxedo/tuxedo-control-center/ucc/libucc-dbus/UccdClient.hpp`
+- `/opt/devel/git/tuxedo/tuxedo-control-center/ucc/libucc-dbus/UccdClient.cpp`
 - `/opt/devel/git/tuxedo/tuxedo-control-center/ucc/ucc-gui/SystemMonitor.hpp`
 - `/opt/devel/git/tuxedo/tuxedo-control-center/ucc/ucc-gui/SystemMonitor.cpp`
 - `/opt/devel/git/tuxedo/tuxedo-control-center/ucc/ucc-widgets/system-monitor/package/contents/ui/main.qml`

@@ -19,7 +19,7 @@
 #include <QString>
 #include <QTimer>
 #include <memory>
-#include "TccdClient.hpp"
+#include "UccdClient.hpp"
 
 namespace ucc
 {
@@ -90,7 +90,7 @@ private slots:
   void updateMetrics();
 
 private:
-  std::unique_ptr< TccdClient > m_client;
+  std::unique_ptr< UccdClient > m_client;
   QTimer *m_updateTimer;
 
   QString m_cpuUsage = "0%";

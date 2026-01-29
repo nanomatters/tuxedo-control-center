@@ -34,7 +34,7 @@ namespace ucc
  *
  * Provides a Qt6-native interface to all uccd DBus methods.
  */
-class TccdClient : public QObject
+class UccdClient : public QObject
 {
   Q_OBJECT
 
@@ -42,9 +42,9 @@ public:
   /**
    * @brief Construct client connected to system bus
    */
-  explicit TccdClient( QObject *parent = nullptr );
+  explicit UccdClient( QObject *parent = nullptr );
 
-  ~TccdClient() override = default;
+  ~UccdClient() override = default;
 
   // Profile Management
   std::optional< std::string > getDefaultProfilesJSON();

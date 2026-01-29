@@ -13,7 +13,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "TccProfile.hpp"
+#include "UccProfile.hpp"
 #include <random>
 #include <chrono>
 #include <sstream>
