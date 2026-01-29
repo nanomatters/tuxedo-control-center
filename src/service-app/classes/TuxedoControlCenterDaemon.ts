@@ -37,7 +37,7 @@ import { WebcamWorker } from './WebcamWorker';
 import { FanControlWorker } from './FanControlWorker';
 import { YCbCr420WorkaroundWorker } from './YCbCr420WorkaroundWorker';
 import { ITccFanProfile, customFanPreset } from '../../common/models/TccFanTable';
-import { TccDBusService } from './TccDBusService';
+import { UccDBusService } from './UccDBusService';
 import { TccDBusData } from './TccDBusInterface';
 import { TuxedoIOAPI, ModuleInfo, TDPInfo } from '../../native-lib/TuxedoIOAPI';
 import { ODMProfileWorker } from './ODMProfileWorker';

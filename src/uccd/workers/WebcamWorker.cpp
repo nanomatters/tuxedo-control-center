@@ -14,7 +14,7 @@
  */
 
 #include "WebcamWorker.hpp"
-#include "../TccDBusService.hpp"
+#include "../UccDBusService.hpp"
 #include <iostream>
 #include <syslog.h>
 
