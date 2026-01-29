@@ -243,7 +243,7 @@ static std::string buildSettingsJSON( const std::string &keyboardBacklightStates
 
 TccDBusInterfaceAdaptor::TccDBusInterfaceAdaptor( sdbus::IObject &object,
                                                   TccDBusData &data,
-                                                  TccDBusService *service )
+                                                  UccDBusService *service )
   : m_object( object ),
     m_data( data ),
     m_service( service ),
@@ -1268,9 +1268,9 @@ void TccDBusInterfaceAdaptor::emitProfileChanged( const std::string &profileId )
   m_object.emitSignal("ProfileChanged").onInterface("com.tuxedocomputers.tccd").withArguments(profileId);
 }
 
-// TccDBusService implementation
+// UccDBusService implementation
 
-TccDBusService::TccDBusService()
+UccDBusService::UccDBusService()
   : DaemonWorker( std::chrono::milliseconds( 1000 ), false ),
     m_dbusData(),
     m_io(),
@@ -1530,7 +1530,7 @@ TccDBusService::TccDBusService()
   start();
 }
 
-void TccDBusService::setupGpuDataCallback()
+void UccDBusService::setupGpuDataCallback()
 {
   // Set up callback to update DBus data when GPU info is collected
   m_gpuWorker.setGpuDataCallback(
@@ -1560,7 +1560,7 @@ void TccDBusService::setupGpuDataCallback()
   );
 }
 
-void TccDBusService::updateFanData()
+void UccDBusService::updateFanData()
 {
   int numberFans = 0;
   bool fansAvailable = m_io.getNumberFans( numberFans ) && numberFans > 0;
@@ -1574,7 +1574,7 @@ void TccDBusService::updateFanData()
       // We can read from at least fan 0, assume fans are available
       fansAvailable = true;
       numberFans = 2; // Assume CPU and GPU fans
-      syslog( LOG_INFO, "TccDBusService: Detected fans by temperature reading (getNumberFans failed)" );
+      syslog( LOG_INFO, "UccDBusService: Detected fans by temperature reading (getNumberFans failed)" );
     }
   }
 
@@ -1612,7 +1612,7 @@ void TccDBusService::updateFanData()
   }
 }
 
-void TccDBusService::onStart()
+void UccDBusService::onStart()
 {
   if ( not m_started )
   {
@@ -1637,7 +1637,7 @@ void TccDBusService::onStart()
   }
 }
 
-void TccDBusService::onWork()
+void UccDBusService::onWork()
 {
   if ( not m_started )
     return;
@@ -1783,7 +1783,7 @@ void TccDBusService::onWork()
   }
 }
 
-void TccDBusService::onExit()
+void UccDBusService::onExit()
 {
   // Save autosave data
   saveAutosave();
@@ -1812,7 +1812,7 @@ void TccDBusService::onExit()
 
 // profile management implementation
 
-void TccDBusService::loadProfiles()
+void UccDBusService::loadProfiles()
 {
   std::cout << "[ProfileManager] Loading profiles..." << std::endl;
   
@@ -1872,7 +1872,7 @@ void TccDBusService::loadProfiles()
   }
 }
 
-void TccDBusService::initializeProfiles()
+void UccDBusService::initializeProfiles()
 {
   loadProfiles();
 
@@ -1961,12 +1961,12 @@ void TccDBusService::initializeProfiles()
   
 }
 
-TccProfile TccDBusService::getCurrentProfile() const
+TccProfile UccDBusService::getCurrentProfile() const
 {
   return m_activeProfile;
 }
 
-bool TccDBusService::setCurrentProfileByName( const std::string &profileName )
+bool UccDBusService::setCurrentProfileByName( const std::string &profileName )
 {
   auto allProfiles = getAllProfiles();
   
@@ -1986,7 +1986,7 @@ bool TccDBusService::setCurrentProfileByName( const std::string &profileName )
   return false;
 }
 
-bool TccDBusService::setCurrentProfileById( const std::string &id )
+bool UccDBusService::setCurrentProfileById( const std::string &id )
 {
   auto allProfiles = getAllProfiles();
   
@@ -2054,7 +2054,7 @@ bool TccDBusService::setCurrentProfileById( const std::string &id )
   return false;
 }
 
-bool TccDBusService::applyProfileJSON( const std::string &profileJSON )
+bool UccDBusService::applyProfileJSON( const std::string &profileJSON )
 {
   try
   {
@@ -2074,7 +2074,7 @@ bool TccDBusService::applyProfileJSON( const std::string &profileJSON )
       {
         bool same = m_activeProfile.fan.sameSpeed;
         m_fanControlWorker->setSameSpeed( same );
-        syslog( LOG_INFO, "TccDBusService: applied sameSpeed=%d from profile", same ? 1 : 0 );
+        syslog( LOG_INFO, "UccDBusService: applied sameSpeed=%d from profile", same ? 1 : 0 );
       }
     }
     catch ( ... ) { /* ignore */ }
@@ -2170,7 +2170,7 @@ bool TccDBusService::applyProfileJSON( const std::string &profileJSON )
 }
 
 
-std::vector< TccProfile > TccDBusService::getAllProfiles() const
+std::vector< TccProfile > UccDBusService::getAllProfiles() const
 {
   std::vector< TccProfile > allProfiles;
   allProfiles.reserve( m_defaultProfiles.size() + m_customProfiles.size() );
@@ -2181,17 +2181,17 @@ std::vector< TccProfile > TccDBusService::getAllProfiles() const
   return allProfiles;
 }
 
-std::vector< TccProfile > TccDBusService::getDefaultProfiles() const
+std::vector< TccProfile > UccDBusService::getDefaultProfiles() const
 {
   return m_defaultProfiles;
 }
 
-std::vector< TccProfile > TccDBusService::getCustomProfiles() const
+std::vector< TccProfile > UccDBusService::getCustomProfiles() const
 {
   return m_customProfiles;
 }
 
-TccProfile TccDBusService::getDefaultProfile() const
+TccProfile UccDBusService::getDefaultProfile() const
 {
   if ( not m_defaultProfiles.empty() )
     return m_defaultProfiles[0];
@@ -2203,7 +2203,7 @@ TccProfile TccDBusService::getDefaultProfile() const
   return defaultCustomProfile;
 }
 
-void TccDBusService::updateDBusActiveProfileData()
+void UccDBusService::updateDBusActiveProfileData()
 {
   const int32_t defaultOnlineCores = getDefaultOnlineCores();
   const int32_t defaultScalingMin = -1;
@@ -2217,7 +2217,7 @@ void TccDBusService::updateDBusActiveProfileData()
   m_dbusData.activeProfileJSON = profileJSON;
 }
 
-void TccDBusService::updateDBusSettingsData()
+void UccDBusService::updateDBusSettingsData()
 {
   std::lock_guard< std::mutex > lock( m_dbusData.dataMutex );
   m_dbusData.settingsJSON = buildSettingsJSON( m_dbusData.keyboardBacklightStatesJSON,
@@ -2225,7 +2225,7 @@ void TccDBusService::updateDBusSettingsData()
                                                m_settings.stateMap );
 }
 
-bool TccDBusService::addCustomProfile( const TccProfile &profile )
+bool UccDBusService::addCustomProfile( const TccProfile &profile )
 {
   std::cout << "[ProfileManager] Adding profile '" << profile.name << "' to memory" << std::endl;
   
@@ -2239,7 +2239,7 @@ bool TccDBusService::addCustomProfile( const TccProfile &profile )
   return true;
 }
 
-bool TccDBusService::deleteCustomProfile( const std::string &profileId )
+bool UccDBusService::deleteCustomProfile( const std::string &profileId )
 {
   std::cout << "[ProfileManager] Deleting profile '" << profileId << "' from memory" << std::endl;
   
@@ -2262,7 +2262,7 @@ bool TccDBusService::deleteCustomProfile( const std::string &profileId )
   return false;
 }
 
-bool TccDBusService::updateCustomProfile( const TccProfile &profile )
+bool UccDBusService::updateCustomProfile( const TccProfile &profile )
 {
   std::cout << "[ProfileManager] Updating profile '" << profile.name << "' in memory" << std::endl;
   
@@ -2320,7 +2320,7 @@ bool TccDBusService::updateCustomProfile( const TccProfile &profile )
   return false;
 }
 
-std::optional< TccProfile > TccDBusService::copyProfile( const std::string &sourceId, const std::string &newName )
+std::optional< TccProfile > UccDBusService::copyProfile( const std::string &sourceId, const std::string &newName )
 {
   std::cout << "[ProfileManager] Copying profile '" << sourceId 
             << "' with new name '" << newName << "'" << std::endl;
@@ -2342,7 +2342,7 @@ std::optional< TccProfile > TccDBusService::copyProfile( const std::string &sour
   return newProfile;
 }
 
-void TccDBusService::initializeDisplayModes()
+void UccDBusService::initializeDisplayModes()
 {
   // detect session type (x11 or wayland)
   std::string sessionType = TccUtils::executeCommand( 
@@ -2365,7 +2365,7 @@ void TccDBusService::initializeDisplayModes()
   m_dbusData.displayModes = "[]";
 }
 
-std::optional< TUXEDODevice > TccDBusService::identifyDevice()
+std::optional< TUXEDODevice > UccDBusService::identifyDevice()
 {
   // read dmi information from sysfs
   const std::string dmiBasePath = "/sys/class/dmi/id";
@@ -2447,7 +2447,7 @@ std::optional< TUXEDODevice > TccDBusService::identifyDevice()
   return std::nullopt;
 }
 
-void TccDBusService::loadSettings()
+void UccDBusService::loadSettings()
 {
   auto loadedSettings = m_settingsManager.readSettings();
   
@@ -2553,7 +2553,7 @@ void TccDBusService::loadSettings()
   }
 }
 
-void TccDBusService::serializeProfilesJSON()
+void UccDBusService::serializeProfilesJSON()
 {
   std::cout << "[serializeProfilesJSON] Starting profile serialization" << std::endl;
   std::cout << "[serializeProfilesJSON] Default profiles count: " << m_defaultProfiles.size() << std::endl;
@@ -2638,7 +2638,7 @@ void TccDBusService::serializeProfilesJSON()
   std::cout << "[DBus] Re-serialized profile JSONs" << std::endl;
 }
 
-void TccDBusService::fillDeviceSpecificDefaults( std::vector< TccProfile > &profiles )
+void UccDBusService::fillDeviceSpecificDefaults( std::vector< TccProfile > &profiles )
 {
   const int32_t cpuMinFreq = getCpuMinFrequency();
   const int32_t cpuMaxFreq = getCpuMaxFrequency();
@@ -2701,14 +2701,14 @@ void TccDBusService::fillDeviceSpecificDefaults( std::vector< TccProfile > &prof
   }
 }
 
-void TccDBusService::loadAutosave()
+void UccDBusService::loadAutosave()
 {
   m_autosave = m_autosaveManager.readAutosave();
   std::cout << "[Autosave] Loaded autosave (displayBrightness: " 
             << m_autosave.displayBrightness << "%)" << std::endl;
 }
 
-void TccDBusService::saveAutosave()
+void UccDBusService::saveAutosave()
 {
   if ( m_autosaveManager.writeAutosave( m_autosave ) )
   {
@@ -2720,7 +2720,7 @@ void TccDBusService::saveAutosave()
   }
 }
 
-std::vector< std::vector< std::string > > TccDBusService::getOutputPorts()
+std::vector< std::vector< std::string > > UccDBusService::getOutputPorts()
 {
   std::vector< std::vector< std::string > > result;
   
@@ -2788,7 +2788,7 @@ std::vector< std::vector< std::string > > TccDBusService::getOutputPorts()
   return result;
 }
 
-bool TccDBusService::syncOutputPortsSetting()
+bool UccDBusService::syncOutputPortsSetting()
 {
   bool settingsChanged = false;
   

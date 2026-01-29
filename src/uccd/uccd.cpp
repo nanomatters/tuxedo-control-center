@@ -148,7 +148,7 @@ int run_daemon()
     }
 
     // Initialize DBus service
-    TccDBusService dbusService;
+    UccDBusService dbusService;
     syslog( LOG_INFO, "DBus service initialized" );
 
     // Main event loop

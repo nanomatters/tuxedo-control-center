@@ -47,7 +47,7 @@
 
 // Forward declarations
 class GpuInfoWorker;
-class TccDBusService;
+class UccDBusService;
 
 // helper functions for JSON serialization
 std::string dgpuInfoToJSON( const DGpuInfo &info );
@@ -200,7 +200,7 @@ public:
 /**
  * @brief TCC DBus Interface Adaptor
  *
- * Implements the com.tuxedocomputers.tccd DBus interface.
+ * Implements the com.tuxedocomputers.uccd DBus interface.
  * Handles all method calls from DBus clients and provides access to daemon data.
  */
 class TccDBusInterfaceAdaptor
@@ -212,11 +212,11 @@ public:
    * @brief Constructor
    * @param object DBus object interface
    * @param data Shared data structure (includes mutex)
-   * @param service Reference to TccDBusService for profile operations
+   * @param service Reference to UccDBusService for profile operations
    */
   explicit TccDBusInterfaceAdaptor( sdbus::IObject &object,
                                     TccDBusData &data,
-                                    TccDBusService *service = nullptr );
+                                    UccDBusService *service = nullptr );
 
   ~TccDBusInterfaceAdaptor() = default;
 
@@ -324,8 +324,8 @@ public:
   void emitModeReapplyPendingChanged( bool pending );
   void emitProfileChanged( const std::string &profileId );
 
-  // allow TccDBusService to access timeout handling
-  friend class TccDBusService;
+  // allow UccDBusService to access timeout handling
+  friend class UccDBusService;
 
   // Required for manual vtable registration in sdbus-c++ 2.x
   void registerAdaptor();
@@ -333,7 +333,7 @@ public:
 private:
   sdbus::IObject &m_object;
   TccDBusData &m_data;
-  TccDBusService *m_service;
+  UccDBusService *m_service;
   std::chrono::steady_clock::time_point m_lastDataCollectionAccess;
 
   void resetDataCollectionTimeout();
@@ -346,21 +346,21 @@ private:
  * Manages the DBus service lifecycle as a daemon worker.
  * Exports the TCC interface on the system bus and handles periodic updates.
  */
-class TccDBusService : public DaemonWorker
+class UccDBusService : public DaemonWorker
 {
 public:
   /**
    * @brief Constructor
    */
-  TccDBusService();
+  UccDBusService();
 
-  virtual ~TccDBusService() = default;
+  virtual ~UccDBusService() = default;
 
   // Prevent copy and move
-  TccDBusService( const TccDBusService & ) = delete;
-  TccDBusService( TccDBusService && ) = delete;
-  TccDBusService &operator=( const TccDBusService & ) = delete;
-  TccDBusService &operator=( TccDBusService && ) = delete;
+  UccDBusService( const UccDBusService & ) = delete;
+  UccDBusService( UccDBusService && ) = delete;
+  UccDBusService &operator=( const UccDBusService & ) = delete;
+  UccDBusService &operator=( UccDBusService && ) = delete;
 
   /**
    * @brief Get the DBus interface adaptor
@@ -406,7 +406,7 @@ protected:
   void onExit() override;
 
 private:
-  static constexpr const char* INTERFACE_NAME = "com.tuxedocomputers.tccd";
+  static constexpr const char* INTERFACE_NAME = "com.tuxedocomputers.uccd";
   TccDBusData m_dbusData;
   TuxedoIOAPI m_io;
   std::unique_ptr< sdbus::IConnection > m_connection;
@@ -461,6 +461,6 @@ private:
   // controllers
   FnLockController m_fnLockController;
 
-  static constexpr const char *SERVICE_NAME = "com.tuxedocomputers.tccd";
-  static constexpr const char *OBJECT_PATH = "/com/tuxedocomputers/tccd";
+  static constexpr const char *SERVICE_NAME = "com.tuxedocomputers.uccd";
+  static constexpr const char *OBJECT_PATH = "/com/tuxedocomputers/uccd";
 };
