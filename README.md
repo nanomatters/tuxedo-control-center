@@ -48,7 +48,7 @@ tuxedo-control-center
    
    Manual instructions:
    1. Copy `tccd.service` and `tccd-sleep.service` (from src/dist-data) to `/etc/systemd/system/`
-   2. Edit the `tccd.service` (exec start/stop) to point to `<dev path>/dist/tuxedo-control-center/data/service/tccd`.
+   2. Edit the `uccd.service` (exec start/stop) to point to `<dev path>/dist/tuxedo-control-center/data/service/uccd`. (DBus activation uses `com.uniwill.uccd` service file)
    3. Copy `com.uniwill.uccd.conf` to `/usr/share/dbus-1/system.d/`
    4. Start service `systemctl start tccd`. (And enable for autostart `systemctl enable tccd tccd-sleep`)
 

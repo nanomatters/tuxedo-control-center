@@ -20,6 +20,7 @@ rm /usr/share/polkit-1/actions/com.uniwill.tomte.policy || true
 rm /usr/share/applications/tuxedo-control-center.desktop || true
 rm /etc/skel/.config/autostart/tuxedo-control-center-tray.desktop || true
 rm /usr/share/dbus-1/system.d/com.uniwill.uccd.conf || true
+rm /usr/share/dbus-1/system-services/com.uniwill.uccd.service || true
 
 # remove udev rule
 rm /etc/udev/rules.d/99-webcam.rules || true

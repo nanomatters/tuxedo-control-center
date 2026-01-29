@@ -328,7 +328,8 @@ void TccDBusInterfaceAdaptor::registerAdaptor()
     registerSignal("ProfileChanged").withParameters<std::string>(),
     registerSignal("ModeReapplyPendingChanged").withParameters<bool>(),
     registerSignal("PowerStateChanged").withParameters<std::string>()
-  ).forInterface("com.tuxedocomputers.tccd");
+  ).forInterface(TccDBusInterfaceAdaptor::INTERFACE_NAME);
+  syslog( LOG_INFO, "TccDBusInterfaceAdaptor: registered interface %s", TccDBusInterfaceAdaptor::INTERFACE_NAME );
 }
 
 void TccDBusInterfaceAdaptor::resetDataCollectionTimeout()
@@ -1621,7 +1622,9 @@ void UccDBusService::onStart()
       m_connection = sdbus::createSystemBusConnection();
       m_object = sdbus::createObject( *m_connection, sdbus::ObjectPath{ OBJECT_PATH } );
       m_adaptor = std::make_unique< TccDBusInterfaceAdaptor >( *m_object, m_dbusData, this );
+      syslog( LOG_INFO, "Requesting DBus name %s", SERVICE_NAME );
       m_connection->requestName( sdbus::ServiceName{ SERVICE_NAME } );
+      syslog( LOG_INFO, "Requested DBus name %s", SERVICE_NAME );
       
       // Enter event loop asynchronously to process incoming method calls
       m_connection->enterEventLoopAsync();

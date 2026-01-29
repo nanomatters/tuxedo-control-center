@@ -23,9 +23,9 @@ import { IDisplayFreqRes, IDisplayMode } from '../models/DisplayFreqRes';
 import { ChargeType } from './PowerSupplyController';
 
 export class TccDBusController {
-    private busName = 'com.uniwill.uccd';
+    private busName = 'com.tuxedocomputers.tccd';
     private path = '/com/uniwill/uccd';
-    private interfaceName = 'com.uniwill.uccd';
+    private interfaceName = 'com.tuxedocomputers.tccd';
     private bus: dbus.MessageBus;
     private interface: dbus.ClientInterface;
 
