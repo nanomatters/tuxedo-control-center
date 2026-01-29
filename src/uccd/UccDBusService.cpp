@@ -328,7 +328,7 @@ void TccDBusInterfaceAdaptor::registerAdaptor()
     registerSignal("ProfileChanged").withParameters<std::string>(),
     registerSignal("ModeReapplyPendingChanged").withParameters<bool>(),
     registerSignal("PowerStateChanged").withParameters<std::string>()
-  ).forInterface("com.uniwill.uccd");
+  ).forInterface("com.tuxedocomputers.tccd");
 }
 
 void TccDBusInterfaceAdaptor::resetDataCollectionTimeout()
@@ -1265,7 +1265,7 @@ void TccDBusInterfaceAdaptor::emitModeReapplyPendingChanged( bool pending )
 void TccDBusInterfaceAdaptor::emitProfileChanged( const std::string &profileId )
 {
   // Emit ProfileChanged signal
-  m_object.emitSignal("ProfileChanged").onInterface("com.uniwill.uccd").withArguments(profileId);
+  m_object.emitSignal("ProfileChanged").onInterface("com.tuxedocomputers.tccd").withArguments(profileId);
 }
 
 // UccDBusService implementation
@@ -1690,7 +1690,7 @@ void UccDBusService::onWork()
       std::cout << "[State] Power state changed to " << stateKey << std::endl;
       
       // Emit signal for UCC to handle profile switching
-      m_object->emitSignal("PowerStateChanged").onInterface("com.uniwill.uccd").withArguments(stateKey);
+      m_object->emitSignal("PowerStateChanged").onInterface("com.tuxedocomputers.tccd").withArguments(stateKey);
     }
   }
   
@@ -1707,7 +1707,7 @@ void UccDBusService::onWork()
       std::cout << "[State] Power state changed to " << stateKey << std::endl;
       
       // Emit signal for UCC to handle profile switching
-      m_object->emitSignal("PowerStateChanged").onInterface("com.uniwill.uccd").withArguments(stateKey);
+      m_object->emitSignal("PowerStateChanged").onInterface("com.tuxedocomputers.tccd").withArguments(stateKey);
     }
   }
   

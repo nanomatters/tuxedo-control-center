@@ -150,9 +150,9 @@ private:
   std::unique_ptr< QDBusInterface > m_interface;
   bool m_connected = false;
 
-  static constexpr const char *DBUS_SERVICE = "com.uniwill.uccd";
+  static constexpr const char *DBUS_SERVICE = "com.tuxedocomputers.tccd";
   static constexpr const char *DBUS_PATH = "/com/uniwill/uccd";
-  static constexpr const char *DBUS_INTERFACE = "com.uniwill.uccd";
+  static constexpr const char *DBUS_INTERFACE = "com.tuxedocomputers.tccd";
 
   // Helper for DBus calls
   template< typename T >

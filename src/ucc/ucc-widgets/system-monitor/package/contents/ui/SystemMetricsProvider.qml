@@ -16,9 +16,9 @@ QtObject {
     property int fanSpeed: 0
 
     // DBus service details
-    readonly property string dbusService: "com.uniwill.uccd"
+    readonly property string dbusService: "com.tuxedocomputers.tccd"
     readonly property string dbusPath: "/com/uniwill/uccd"
-    readonly property string dbusInterface: "com.uniwill.uccd"
+    readonly property string dbusInterface: "com.tuxedocomputers.tccd"
 
     signal metricsUpdated()
 

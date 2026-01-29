@@ -354,7 +354,7 @@ dnf repoquery --provides qt6-qtdeclarative-devel
 **Solution:** Need to inspect tccd-ng DBus interface:
 ```bash
 # Introspect daemon
-busctl introspect com.uniwill.uccd /com/uniwill/uccd
+busctl introspect com.tuxedocomputers.tccd /com/uniwill/uccd
 ```
 
 ---
@@ -473,9 +473,9 @@ build/                   # CMake build directory
 ## DBus Interface Reference
 
 ### Service Details
-- **Service Name:** `com.uniwill.uccd`
+- **Service Name:** `com.tuxedocomputers.tccd`
 - **Object Path:** `/com/uniwill/uccd`
-- **Interface:** `com.uniwill.uccd`
+- **Interface:** `com.tuxedocomputers.tccd`
 
 ### Implemented Methods
 
@@ -546,7 +546,7 @@ ls /usr/lib64/cmake/Qt6*/
 busctl list | grep tuxedo
 
 # Monitor DBus signals
-dbus-monitor --system "sender='com.uniwill.uccd'"
+dbus-monitor --system "sender='com.tuxedocomputers.tccd'"
 ```
 
 ---

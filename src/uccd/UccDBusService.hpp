@@ -200,13 +200,13 @@ public:
 /**
  * @brief TCC DBus Interface Adaptor
  *
- * Implements the com.tuxedocomputers.uccd DBus interface.
+ * Implements the com.tuxedocomputers.tccd DBus interface.
  * Handles all method calls from DBus clients and provides access to daemon data.
  */
 class TccDBusInterfaceAdaptor
 {
 public:
-  static constexpr const char* INTERFACE_NAME = "com.uniwill.uccd";
+  static constexpr const char* INTERFACE_NAME = "com.tuxedocomputers.tccd";
 
   /**
    * @brief Constructor
@@ -406,7 +406,7 @@ protected:
   void onExit() override;
 
 private:
-  static constexpr const char* INTERFACE_NAME = "com.tuxedocomputers.uccd";
+  static constexpr const char* INTERFACE_NAME = "com.tuxedocomputers.tccd";
   TccDBusData m_dbusData;
   TuxedoIOAPI m_io;
   std::unique_ptr< sdbus::IConnection > m_connection;
@@ -461,6 +461,6 @@ private:
   // controllers
   FnLockController m_fnLockController;
 
-  static constexpr const char *SERVICE_NAME = "com.uniwill.uccd";
+  static constexpr const char *SERVICE_NAME = "com.tuxedocomputers.tccd";
   static constexpr const char *OBJECT_PATH = "/com/uniwill/uccd";
 };
