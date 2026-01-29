@@ -4,10 +4,10 @@
     "https://specifications.freedesktop.org/PolicyKit/1.0/policyconfig.dtd">
 <policyconfig>
 
-    <vendor>TUXEDO Computers GmbH</vendor>
-    <vendor_url>https://www.tuxedocomputers.com/</vendor_url>
+    <vendor>Uniwill</vendor>
+    <vendor_url>https://www.uniwill.com/</vendor_url>
 
-    <action id="com.tuxedocomputers.tccd">
+    <action id="com.uniwill.uccd">
         <description>Run TUXEDO Control Center Daemon</description>
         <description xml:lang="de">TUXEDO Control Center Daemon ausführen</description>
         <message>Authentication is required to run/update the configuration of TUXEDO Control Center Daemon</message>
@@ -21,7 +21,7 @@
             <allow_active>auth_admin_keep</allow_active>
         </defaults>
 
-        <annotate key="org.freedesktop.policykit.exec.path">/opt/tuxedo-control-center/resources/dist/tuxedo-control-center/data/service/tccd</annotate>
+        <annotate key="org.freedesktop.policykit.exec.path">/opt/tuxedo-control-center/resources/dist/tuxedo-control-center/data/service/uccd</annotate>
         <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
     </action>
 

@@ -328,7 +328,7 @@ void TccDBusInterfaceAdaptor::registerAdaptor()
     registerSignal("ProfileChanged").withParameters<std::string>(),
     registerSignal("ModeReapplyPendingChanged").withParameters<bool>(),
     registerSignal("PowerStateChanged").withParameters<std::string>()
-  ).forInterface("com.tuxedocomputers.tccd");
+  ).forInterface("com.uniwill.uccd");
 }
 
 void TccDBusInterfaceAdaptor::resetDataCollectionTimeout()
@@ -1265,7 +1265,7 @@ void TccDBusInterfaceAdaptor::emitModeReapplyPendingChanged( bool pending )
 void TccDBusInterfaceAdaptor::emitProfileChanged( const std::string &profileId )
 {
   // Emit ProfileChanged signal
-  m_object.emitSignal("ProfileChanged").onInterface("com.tuxedocomputers.tccd").withArguments(profileId);
+  m_object.emitSignal("ProfileChanged").onInterface("com.uniwill.uccd").withArguments(profileId);
 }
 
 // UccDBusService implementation

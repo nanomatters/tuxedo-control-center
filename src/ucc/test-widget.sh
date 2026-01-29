@@ -16,7 +16,7 @@ else
     echo "QML testers not available, using DBus introspection instead..."
     
     # Test DBus interface introspection
-    echo "Available DBus methods in com.tuxedocomputers.tccd:"
+    echo "Available DBus methods in com.uniwill.uccd:"
     dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd \
         /com/tuxedocomputers/tccd \
         org.freedesktop.DBus.Introspectable.Introspect | grep -E "<method|<property" | head -20

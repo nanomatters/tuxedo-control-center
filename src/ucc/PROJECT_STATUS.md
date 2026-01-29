@@ -354,7 +354,7 @@ dnf repoquery --provides qt6-qtdeclarative-devel
 **Solution:** Need to inspect tccd-ng DBus interface:
 ```bash
 # Introspect daemon
-busctl introspect com.tuxedocomputers.tccd /com/tuxedocomputers/tccd
+busctl introspect com.uniwill.uccd /com/uniwill/uccd
 ```
 
 ---

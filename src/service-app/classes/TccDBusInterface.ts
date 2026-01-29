@@ -120,7 +120,7 @@ export class TccDBusInterface extends dbus.interface.Interface {
     private dataCollectionTimeout: NodeJS.Timeout | null = null;
 
     constructor(private data: TccDBusData, options: TccDBusOptions = {}) {
-        super('com.tuxedocomputers.tccd');
+        super('com.uniwill.uccd');
 
         this.interfaceOptions = options;
         if (this.interfaceOptions.triggerStateCheck === undefined) {

@@ -6,8 +6,8 @@ echo ""
 
 # 1. Check available ODM profiles
 echo "1. Available ODM Profiles (DBus):"
-PROFILES=$(dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd \
-  /com/tuxedocomputers/tccd com.tuxedocomputers.tccd.ODMProfilesAvailable 2>&1 | \
+PROFILES=$(dbus-send --system --print-reply --dest=com.uniwill.uccd \
+  /com/uniwill/uccd com.uniwill.uccd.ODMProfilesAvailable 2>&1 | \
   grep -oP '(?<=string ").*(?=")')
 
 if [ -z "$PROFILES" ]; then

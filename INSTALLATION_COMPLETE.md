@@ -34,7 +34,7 @@ live CPU/GPU metrics from uccd daemon and displays them as simple text.
 ═══════════════════════════════════════════════════════════════════════════════
 
 Layer 1: System Daemon
-   └─ uccd (DBus service: com.tuxedocomputers.tccd)
+   └─ uccd (DBus service: com.uniwill.uccd)
       ├─ GetFanDataCPU()          → {temp, speed, timestamp}
       ├─ GetIGpuInfoValuesJSON()  → JSON(temp, coreFrequency, powerDraw)
       └─ GetCpuPowerValuesJSON()  → JSON(powerDraw)
@@ -163,7 +163,7 @@ For Development:
    • Customize layout and styling
 
 2. Add more metrics:
-   • Call additional tccd-ng DBus methods
+   • Call additional uccd DBus methods
    • Update TccdClient with new methods
    • Add properties to SystemMonitor
    • Display in QML
@@ -187,7 +187,7 @@ For Development:
    • Formatted as 1 decimal place in UI (23.5 W)
 
 3. Fan Speed Conversion:
-   • tccd-ng returns percentage (0-100%)
+   • uccd returns percentage (0-100%)
    • Converted to RPM estimate (× 60)
    • Actual max RPM depends on hardware
 

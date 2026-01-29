@@ -206,7 +206,7 @@ public:
 class TccDBusInterfaceAdaptor
 {
 public:
-  static constexpr const char* INTERFACE_NAME = "com.tuxedocomputers.tccd";
+  static constexpr const char* INTERFACE_NAME = "com.uniwill.uccd";
 
   /**
    * @brief Constructor
@@ -461,6 +461,6 @@ private:
   // controllers
   FnLockController m_fnLockController;
 
-  static constexpr const char *SERVICE_NAME = "com.tuxedocomputers.uccd";
-  static constexpr const char *OBJECT_PATH = "/com/tuxedocomputers/uccd";
+  static constexpr const char *SERVICE_NAME = "com.uniwill.uccd";
+  static constexpr const char *OBJECT_PATH = "/com/uniwill/uccd";
 };

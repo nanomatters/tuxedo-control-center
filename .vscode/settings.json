@@ -35,7 +35,13 @@
         "ninja": true,
         "env": true,
         "coredumpctl": true,
-        "git mv": true
+        "git mv": true,
+        "git add": true,
+        "git commit": true,
+        "/^for f in \\$\\(git grep -l \"com\\.tuxedocomputers\\.tccd\\\\\\|/com/tuxedocomputers/tccd\\\\\\|com\\.tuxedocomputers\\.uccd\" --null \\| tr '\\\\0' '\\\\n'\\); do perl -0777 -pe 's/com\\\\\\.tuxedocomputers\\\\\\.tccd/com\\.uniwill\\.uccd/g; s/\\\\/com\\\\/tuxedocomputers\\\\/tccd/\\\\/com\\\\/uniwill\\\\/uccd/g; s/com\\\\\\.tuxedocomputers\\\\\\.uccd/com\\.uniwill\\.uccd/g;' -i \"\\$f\"; done && git add -A && git commit -m \"chore\\(dbus\\): update DBus service/interface and object paths to com\\.uniwill\\.uccd and /com/uniwill/uccd\" \\|\\| true$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     },
     "editor.fontFamily": "'Source Code Pro', Menlo, Monaco, 'Courier New', monospace",
     "editor.fontSize": 14,

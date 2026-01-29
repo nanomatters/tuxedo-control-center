@@ -53,14 +53,14 @@ sudo cmake --install .
 ## Option 3: Test DBus Interface Directly
 ```bash
 # Check if uccd service is running
-dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd \
-    /com/tuxedocomputers/tccd \
+dbus-send --system --print-reply --dest=com.uniwill.uccd \
+    /com/uniwill/uccd \
     org.freedesktop.DBus.Introspectable.Introspect
 
 # Try calling a method (will fail until implemented in uccd)
-dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd \
-    /com/tuxedocomputers/tccd \
-    com.tuxedocomputers.tccd.GetCpuTemperature
+dbus-send --system --print-reply --dest=com.uniwill.uccd \
+    /com/uniwill/uccd \
+    com.uniwill.uccd.GetCpuTemperature
 ```
 
 ## Files Being Tested

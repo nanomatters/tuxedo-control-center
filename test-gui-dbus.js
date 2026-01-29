@@ -10,11 +10,11 @@ async function testConnection() {
         console.log('✓ Connected to system bus');
         
         console.log('2. Getting proxy object...');
-        const proxyObject = await bus.getProxyObject('com.tuxedocomputers.tccd', '/com/tuxedocomputers/tccd');
+        const proxyObject = await bus.getProxyObject('com.uniwill.uccd', '/com/uniwill/uccd');
         console.log('✓ Got proxy object');
         
         console.log('3. Getting interface...');
-        const iface = proxyObject.getInterface('com.tuxedocomputers.tccd');
+        const iface = proxyObject.getInterface('com.uniwill.uccd');
         console.log('✓ Got interface');
         
         console.log('4. Calling GetDeviceName...');
