@@ -29,7 +29,7 @@
 // Hardware abstraction layer
 #include "tuxedo_io_lib/tuxedo_io_api.hh"
 #include "workers/GpuInfoWorker.hpp"
-#include "TccDBusService.hpp"
+#include "UccDBusService.hpp"
 #include "SettingsManager.hpp"
 
 // C++20 features used

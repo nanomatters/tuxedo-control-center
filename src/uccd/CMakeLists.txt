@@ -15,7 +15,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 # Main executable
 add_executable(uccd
   uccd.cpp
-  TccDBusService.cpp
+  UccDBusService.cpp
   workers/WebcamWorker.cpp
   profiles/FanProfiles.cpp
   profiles/TccProfile.cpp

@@ -13,7 +13,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "TccDBusService.hpp"
+#include "UccDBusService.hpp"
 #include "profiles/DefaultProfiles.hpp"
 #include "profiles/FanProfile.hpp"
 #include "StateUtils.hpp"

@@ -23,7 +23,7 @@ import * as dbus from 'dbus-next';
 
 import { TuxedoIOAPI } from '../../native-lib/TuxedoIOAPI';
 
-export class TccDBusService extends DaemonWorker {
+export class UccDBusService extends DaemonWorker {
 
     private interface: TccDBusInterface;
     private readonly path = '/com/tuxedocomputers/tccd';

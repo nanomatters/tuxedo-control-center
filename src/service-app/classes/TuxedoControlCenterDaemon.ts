@@ -128,7 +128,7 @@ export class TuxedoControlCenterDaemon extends SingleProcess {
         this.workers.push(new GpuInfoWorker(this, new AvailabilityService()));
         this.workers.push(new CpuPowerWorker(this));
         this.workers.push(new PrimeWorker(this));
-        this.workers.push(new TccDBusService(this, this.dbusData));
+        this.workers.push(new UccDBusService(this, this.dbusData));
         this.workers.push(new ODMProfileWorker(this));
         this.workers.push(new ODMPowerLimitWorker(this));
         this.workers.push(this.displayWorker);
