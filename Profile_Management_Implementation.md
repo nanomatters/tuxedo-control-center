@@ -143,20 +143,20 @@ Profiles contain configuration for:
 ### Manual Test via DBus
 ```bash
 # Get all profiles
-gdbus call --system --dest com.tuxedocomputers.tccd \
-  --object-path /com/tuxedocomputers/tccd \
-  --method com.tuxedocomputers.tccd.GetProfilesJSON
+gdbus call --system --dest com.uniwill.uccd \
+  --object-path /com/uniwill/uccd \
+  --method com.uniwill.uccd.GetProfilesJSON
 
 # Switch to TUXEDO Defaults (using correct ID)
-gdbus call --system --dest com.tuxedocomputers.tccd \
-  --object-path /com/tuxedocomputers/tccd \
-  --method com.tuxedocomputers.tccd.SetTempProfileById \
+gdbus call --system --dest com.uniwill.uccd \
+  --object-path /com/uniwill/uccd \
+  --method com.uniwill.uccd.SetTempProfileById \
   "__default_custom_profile__"
 
 # Get active profile
-gdbus call --system --dest com.tuxedocomputers.tccd \
-  --object-path /com/tuxedocomputers/tccd \
-  --method com.tuxedocomputers.tccd.GetActiveProfileJSON
+gdbus call --system --dest com.uniwill.uccd \
+  --object-path /com/uniwill/uccd \
+  --method com.uniwill.uccd.GetActiveProfileJSON
 ```
 
 ### Expected Output

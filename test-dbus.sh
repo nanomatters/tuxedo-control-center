@@ -8,7 +8,7 @@ echo "1. Checking if service is registered..."
 dbus-send --system --print-reply \
   --dest=org.freedesktop.DBus \
   /org/freedesktop/DBus \
-  org.freedesktop.DBus.ListNames | grep -q "com.tuxedocomputers.tccd"
+  org.freedesktop.DBus.ListNames | grep -q "com.uniwill.uccd"
 
 if [ $? -eq 0 ]; then
     echo "✓ Service is registered"
@@ -20,34 +20,34 @@ fi
 echo ""
 echo "2. Testing GetDeviceName..."
 dbus-send --system --print-reply \
-  --dest=com.tuxedocomputers.tccd \
-  /com/tuxedocomputers/tccd \
-  com.tuxedocomputers.tccd.GetDeviceName
+  --dest=com.uniwill.uccd \
+  /com/uniwill/uccd \
+  com.uniwill.uccd.GetDeviceName
 
 echo ""
 echo "3. Testing TuxedoWmiAvailable..."
 dbus-send --system --print-reply \
-  --dest=com.tuxedocomputers.tccd \
-  /com/tuxedocomputers/tccd \
-  com.tuxedocomputers.tccd.TuxedoWmiAvailable
+  --dest=com.uniwill.uccd \
+  /com/uniwill/uccd \
+  com.uniwill.uccd.TuxedoWmiAvailable
 
 echo ""
 echo "4. Testing GetProfilesJSON..."
 dbus-send --system --print-reply \
-  --dest=com.tuxedocomputers.tccd \
-  /com/tuxedocomputers/tccd \
-  com.tuxedocomputers.tccd.GetProfilesJSON
+  --dest=com.uniwill.uccd \
+  /com/uniwill/uccd \
+  com.uniwill.uccd.GetProfilesJSON
 
 echo ""
 echo "5. Testing GetDisplayModesJSON..."
 dbus-send --system --print-reply \
-  --dest=com.tuxedocomputers.tccd \
-  /com/tuxedocomputers/tccd \
-  com.tuxedocomputers.tccd.GetDisplayModesJSON
+  --dest=com.uniwill.uccd \
+  /com/uniwill/uccd \
+  com.uniwill.uccd.GetDisplayModesJSON
 
 echo ""
 echo "6. Introspecting interface..."
 dbus-send --system --print-reply \
-  --dest=com.tuxedocomputers.tccd \
-  /com/tuxedocomputers/tccd \
+  --dest=com.uniwill.uccd \
+  /com/uniwill/uccd \
   org.freedesktop.DBus.Introspectable.Introspect

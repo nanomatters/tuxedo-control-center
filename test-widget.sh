@@ -51,8 +51,8 @@ echo ""
 
 # Test 3: Verify DBus interface is accessible
 echo "✓ Test 3: DBus Interface"
-if dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd \
-    /com/tuxedocomputers/tccd \
+if dbus-send --system --print-reply --dest=com.uniwill.uccd \
+    /com/uniwill/uccd \
     org.freedesktop.DBus.Introspectable.Introspect > /dev/null 2>&1; then
     echo "  ✅ uccd DBus service is accessible"
 else
@@ -126,13 +126,13 @@ echo ""
 
 for method_name in "GetCpuTemperature" "GetGpuTemperature" "GetFanSpeed"; do
     echo "  Testing: $method_name"
-    if dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd \
-        /com/tuxedocomputers/tccd \
-        com.tuxedocomputers.tccd.$method_name 2>&1 | grep -q "Unknown method"; then
+    if dbus-send --system --print-reply --dest=com.uniwill.uccd \
+        /com/uniwill/uccd \
+        com.uniwill.uccd.$method_name 2>&1 | grep -q "Unknown method"; then
         echo "    ⚠️  Method not yet implemented (expected)"
-    elif dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd \
-        /com/tuxedocomputers/tccd \
-        com.tuxedocomputers.tccd.$method_name 2>&1 | grep -q "method return"; then
+    elif dbus-send --system --print-reply --dest=com.uniwill.uccd \
+        /com/uniwill/uccd \
+        com.uniwill.uccd.$method_name 2>&1 | grep -q "method return"; then
         echo "    ✅ Method implemented and working!"
     fi
 done

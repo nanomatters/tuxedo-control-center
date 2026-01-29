@@ -29,9 +29,9 @@ PlasmoidItem {
     // DBus interface for metrics
     DBusInterface {
         id: tccdInterface
-        service: "com.tuxedocomputers.tccd"
-        path: "/com/tuxedocomputers/tccd"
-        interface: "com.tuxedocomputers.tccd"
+        service: "com.uniwill.uccd"
+        path: "/com/uniwill/uccd"
+        interface: "com.uniwill.uccd"
 
         onPropertiesChanged: updateMetrics()
     }

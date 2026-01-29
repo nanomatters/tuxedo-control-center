@@ -43,8 +43,8 @@ echo ""
 
 # 3. Check active profile ODM settings
 echo "3. Active Profile ODM Configuration:"
-PROFILE=$(dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd \
-  /com/tuxedocomputers/tccd com.tuxedocomputers.tccd.GetActiveProfileJSON 2>&1 | \
+PROFILE=$(dbus-send --system --print-reply --dest=com.uniwill.uccd \
+  /com/uniwill/uccd com.uniwill.uccd.GetActiveProfileJSON 2>&1 | \
   grep -oP '(?<=string ").*(?="$)')
 
 if [ -n "$PROFILE" ]; then

@@ -6,8 +6,8 @@ echo ""
 
 # 1. Check Prime state
 echo "1. Current Prime State:"
-PRIME_STATE=$(dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd \
-  /com/tuxedocomputers/tccd com.tuxedocomputers.tccd.GetPrimeState 2>&1 | \
+PRIME_STATE=$(dbus-send --system --print-reply --dest=com.uniwill.uccd \
+  /com/uniwill/uccd com.uniwill.uccd.GetPrimeState 2>&1 | \
   grep -oP '(?<=string ").*(?="$)')
 echo "   Prime State: $PRIME_STATE"
 case "$PRIME_STATE" in
@@ -70,8 +70,8 @@ else
   echo "   Current mode: $PRIME_STATE"
   echo ""
   echo "   To test switching (requires reboot):"
-  echo "   - dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd \\"
-  echo "       /com/tuxedocomputers/tccd com.tuxedocomputers.tccd.SetPrimeState int32:0"
+  echo "   - dbus-send --system --print-reply --dest=com.uniwill.uccd \\"
+  echo "       /com/uniwill/uccd com.uniwill.uccd.SetPrimeState int32:0"
   echo "   - Check syslog for prime-select execution"
   echo "   - Reboot and verify GPU mode changed"
 fi

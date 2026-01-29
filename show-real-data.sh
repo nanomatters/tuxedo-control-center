@@ -6,15 +6,15 @@ echo "╚═══════════════════════�
 echo ""
 
 echo "✅ CPU TEMPERATURE & FAN DATA (from GetFanDataCPU):"
-dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd /com/tuxedocomputers/tccd com.tuxedocomputers.tccd.GetFanDataCPU 2>&1 | grep -E "int32|int64" | head -4
+dbus-send --system --print-reply --dest=com.uniwill.uccd /com/uniwill/uccd com.uniwill.uccd.GetFanDataCPU 2>&1 | grep -E "int32|int64" | head -4
 
 echo ""
 echo "✅ GPU INFORMATION (from GetIGpuInfoValuesJSON):"
-dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd /com/tuxedocomputers/tccd com.tuxedocomputers.tccd.GetIGpuInfoValuesJSON 2>&1 | tail -1
+dbus-send --system --print-reply --dest=com.uniwill.uccd /com/uniwill/uccd com.uniwill.uccd.GetIGpuInfoValuesJSON 2>&1 | tail -1
 
 echo ""
 echo "✅ CPU POWER (from GetCpuPowerValuesJSON):"
-dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd /com/tuxedocomputers/tccd com.tuxedocomputers.tccd.GetCpuPowerValuesJSON 2>&1 | tail -1
+dbus-send --system --print-reply --dest=com.uniwill.uccd /com/uniwill/uccd com.uniwill.uccd.GetCpuPowerValuesJSON 2>&1 | tail -1
 
 echo ""
 echo "╔════════════════════════════════════════════════════════════════╗"

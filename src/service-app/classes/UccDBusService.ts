@@ -26,7 +26,7 @@ import { TuxedoIOAPI } from '../../native-lib/TuxedoIOAPI';
 export class UccDBusService extends DaemonWorker {
 
     private interface: TccDBusInterface;
-    private readonly path = '/com/tuxedocomputers/tccd';
+    private readonly path = '/com/uniwill/uccd';
 
     private bus: dbus.MessageBus;
 

@@ -26,13 +26,13 @@ Test if tccd-ng is responding (mock data is used if service unavailable):
 
 ```bash
 # Test CPU Temperature method (will fail with "Unknown method" - expected, method not yet implemented in tccd-ng)
-dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd \
-    /com/tuxedocomputers/tccd \
-    com.tuxedocomputers.tccd.GetCpuTemperature
+dbus-send --system --print-reply --dest=com.uniwill.uccd \
+    /com/uniwill/uccd \
+    com.uniwill.uccd.GetCpuTemperature
 
 # Verify tccd-ng is running
-dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd \
-    /com/tuxedocomputers/tccd \
+dbus-send --system --print-reply --dest=com.uniwill.uccd \
+    /com/uniwill/uccd \
     org.freedesktop.DBus.Introspectable.Introspect | grep -E "method|interface" | head -20
 ```
 

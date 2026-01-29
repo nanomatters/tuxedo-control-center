@@ -38,7 +38,16 @@
         "git mv": true,
         "git add": true,
         "git commit": true,
-        "/^for f in \\$\\(git grep -l \"com\\.tuxedocomputers\\.tccd\\\\\\|/com/tuxedocomputers/tccd\\\\\\|com\\.tuxedocomputers\\.uccd\" --null \\| tr '\\\\0' '\\\\n'\\); do perl -0777 -pe 's/com\\\\\\.tuxedocomputers\\\\\\.tccd/com\\.uniwill\\.uccd/g; s/\\\\/com\\\\/tuxedocomputers\\\\/tccd/\\\\/com\\\\/uniwill\\\\/uccd/g; s/com\\\\\\.tuxedocomputers\\\\\\.uccd/com\\.uniwill\\.uccd/g;' -i \"\\$f\"; done && git add -A && git commit -m \"chore\\(dbus\\): update DBus service/interface and object paths to com\\.uniwill\\.uccd and /com/uniwill/uccd\" \\|\\| true$/": {
+        "/^for f in \\$\\(git grep -l \"com\\.tuxedocomputers\\.tccd\\\\\\|/com/uniwill/uccd\\\\\\|com\\.tuxedocomputers\\.uccd\" --null \\| tr '\\\\0' '\\\\n'\\); do perl -0777 -pe 's/com\\\\\\.tuxedocomputers\\\\\\.tccd/com\\.uniwill\\.uccd/g; s/\\\\/com\\\\/tuxedocomputers\\\\/tccd/\\\\/com\\\\/uniwill\\\\/uccd/g; s/com\\\\\\.tuxedocomputers\\\\\\.uccd/com\\.uniwill\\.uccd/g;' -i \"\\$f\"; done && git add -A && git commit -m \"chore\\(dbus\\): update DBus service/interface and object paths to com\\.uniwill\\.uccd and /com/uniwill/uccd\" \\|\\| true$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^perl -0777 -pe \"s/com\\\\\\.tuxedocomputers\\\\\\.tccd/com\\.uniwill\\.uccd/g;\" -i src/uccd/TccDBusService\\.cpp src/uccd/UccDBusService\\.cpp && git add src/uccd/TccDBusService\\.cpp src/uccd/UccDBusService\\.cpp && git commit -m \"chore\\(dbus\\): replace remaining com\\.tuxedocomputers\\.tccd occurrences with com\\.uniwill\\.uccd\" \\|\\| true$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "git rev-parse": true,
+        "/^files=\"\\.vscode/settings\\.json Profile_Management_Implementation\\.md TESTING_WIDGET\\.md show-real-data\\.sh src/service-app/classes/TccDBusService\\.ts src/service-app/classes/UccDBusService\\.ts src/ucc/PROJECT_STATUS\\.md src/ucc/test-widget\\.sh src/ucc/ucc-widgets/profile-switcher/package/contents/ui/main\\.qml src/ucc/ucc-widgets/system-monitor/package/contents/ui/SystemMetricsProvider\\.qml src/ucc/ucc-widgets/system-monitor/package/contents/ui/main\\.qml test-dbus\\.sh test-display-refresh\\.sh test-prime-worker\\.sh test-widget\\.sh\"; for f in \\$files; do perl -0777 -pe 's/com\\\\\\.tuxedocomputers\\\\\\.tccd/com\\.uniwill\\.uccd/g; s/\\\\/com\\\\/tuxedocomputers\\\\/tccd/\\\\/com\\\\/uniwill\\\\/uccd/g;' -i \"\\$f\"; done && git add -A && git commit -m \"chore\\(dbus\\): update remaining DBus references in tests, QML and docs to com\\.uniwill\\.uccd\" \\|\\| true$/": {
             "approve": true,
             "matchCommandLine": true
         }

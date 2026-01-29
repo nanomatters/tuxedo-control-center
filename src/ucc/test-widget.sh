@@ -17,7 +17,7 @@ else
     
     # Test DBus interface introspection
     echo "Available DBus methods in com.uniwill.uccd:"
-    dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd \
-        /com/tuxedocomputers/tccd \
+    dbus-send --system --print-reply --dest=com.uniwill.uccd \
+        /com/uniwill/uccd \
         org.freedesktop.DBus.Introspectable.Introspect | grep -E "<method|<property" | head -20
 fi

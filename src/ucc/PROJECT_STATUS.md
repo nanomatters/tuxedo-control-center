@@ -473,9 +473,9 @@ build/                   # CMake build directory
 ## DBus Interface Reference
 
 ### Service Details
-- **Service Name:** `com.tuxedocomputers.tccd`
-- **Object Path:** `/com/tuxedocomputers/tccd`
-- **Interface:** `com.tuxedocomputers.tccd`
+- **Service Name:** `com.uniwill.uccd`
+- **Object Path:** `/com/uniwill/uccd`
+- **Interface:** `com.uniwill.uccd`
 
 ### Implemented Methods
 
@@ -546,7 +546,7 @@ ls /usr/lib64/cmake/Qt6*/
 busctl list | grep tuxedo
 
 # Monitor DBus signals
-dbus-monitor --system "sender='com.tuxedocomputers.tccd'"
+dbus-monitor --system "sender='com.uniwill.uccd'"
 ```
 
 ---

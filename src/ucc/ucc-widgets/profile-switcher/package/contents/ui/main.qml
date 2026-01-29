@@ -24,9 +24,9 @@ PlasmoidItem {
     // DBus interface to tccd-ng
     DBusInterface {
         id: tccdInterface
-        service: "com.tuxedocomputers.tccd"
-        path: "/com/tuxedocomputers/tccd"
-        iface: "com.tuxedocomputers.tccd"
+        service: "com.uniwill.uccd"
+        path: "/com/uniwill/uccd"
+        iface: "com.uniwill.uccd"
     }
 
     Timer {

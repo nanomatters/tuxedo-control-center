@@ -1690,7 +1690,7 @@ void UccDBusService::onWork()
       std::cout << "[State] Power state changed to " << stateKey << std::endl;
       
       // Emit signal for UCC to handle profile switching
-      m_object->emitSignal("PowerStateChanged").onInterface("com.tuxedocomputers.tccd").withArguments(stateKey);
+      m_object->emitSignal("PowerStateChanged").onInterface("com.uniwill.uccd").withArguments(stateKey);
     }
   }
   
@@ -1707,7 +1707,7 @@ void UccDBusService::onWork()
       std::cout << "[State] Power state changed to " << stateKey << std::endl;
       
       // Emit signal for UCC to handle profile switching
-      m_object->emitSignal("PowerStateChanged").onInterface("com.tuxedocomputers.tccd").withArguments(stateKey);
+      m_object->emitSignal("PowerStateChanged").onInterface("com.uniwill.uccd").withArguments(stateKey);
     }
   }
   
