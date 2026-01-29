@@ -66,7 +66,7 @@ async function buildDeb(filenameAddition: string): Promise<void> {
             distSrc + '/data/dist-data/com.uniwill.uccd.conf',
             distSrc + '/data/camera/cameractrls.py',
             distSrc + '/data/dist-data/99-webcam.rules',
-            distSrc + '/data/dist-data/com.tuxedocomputers.tomte.policy',
+            distSrc + '/data/dist-data/com.uniwill.tomte.policy',
             distSrc + '/data/camera/v4l2_kernel_names.json'
         ],
         linux: {

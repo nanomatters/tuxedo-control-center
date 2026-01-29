@@ -1,11 +1,11 @@
 # TUXEDO Control Center
 
 The TUXEDO Control Center (short: TCC) gives TUXEDO laptop users full control over their hardware like CPU cores, fan speed and more. \
-To get a more detailed description of features, plans and the ideas behind please check our press release ([english](https://www.tuxedocomputers.com/en/Infos/News/Everything-under-control-with-the-TUXEDO-Control-Center.tuxedo) | [german](https://www.tuxedocomputers.com/de/Infos/News/Alles-unter-Kontrolle-mit-dem-TUXEDO-Control-Center_1.tuxedo)) and info pages ([english](https://www.tuxedocomputers.com/en/TUXEDO-Control-Center.tuxedo#) | [german](https://www.tuxedocomputers.com/de/TUXEDO-Control-Center.tuxedo)).
+To get a more detailed description of features, plans and the ideas behind please check our press release ([english](https://www.uniwill.com/en/Infos/News/Everything-under-control-with-the-TUXEDO-Control-Center.tuxedo) | [german](https://www.uniwill.com/de/Infos/News/Alles-unter-Kontrolle-mit-dem-TUXEDO-Control-Center_1.tuxedo)) and info pages ([english](https://www.uniwill.com/en/TUXEDO-Control-Center.tuxedo#) | [german](https://www.uniwill.com/de/TUXEDO-Control-Center.tuxedo)).
 
 ## Using it
 
-There are pre-build packages for Ubuntu 16.04/18.04/20.04 as well as openSUSE Leap 15.x and Tumbleweed available at our repositories. For details please have a look [over here](https://www.tuxedocomputers.com/en/Add-TUXEDO-software-package-sources.tuxedo).
+There are pre-build packages for Ubuntu 16.04/18.04/20.04 as well as openSUSE Leap 15.x and Tumbleweed available at our repositories. For details please have a look [over here](https://www.uniwill.com/en/Add-TUXEDO-software-package-sources.tuxedo).
 
 Note: TCC depends on the `tuxedo-io` module from the `tuxedo-keyboard` package for some core functionality like fan control.
 
@@ -36,7 +36,7 @@ tuxedo-control-center
    ```
 2. Clone & install libraries
     ```
-    git clone https://github.com/tuxedocomputers/tuxedo-control-center
+    git clone https://github.com/uniwill/tuxedo-control-center
 
     cd tuxedo-control-center
 

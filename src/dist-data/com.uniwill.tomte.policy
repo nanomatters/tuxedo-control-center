@@ -4,10 +4,10 @@
     "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
 <policyconfig>
 
-    <vendor>TUXEDO Computers GmbH</vendor>
-    <vendor_url>https://www.tuxedocomputers.com/</vendor_url>
+    <vendor>Uniwill</vendor>
+    <vendor_url>https://www.uniwill.com/</vendor_url>
 
-    <action id="com.tuxedocomputers.tuxedo-tomte">
+    <action id="com.uniwill.tuxedo-tomte">
         <description>Run TUXEDO tomte</description>
         <description xml:lang="de">TUXEDO tomte ausführen</description>
         <message>Authentication is required to run TUXEDO tomte</message>

@@ -4,12 +4,12 @@
   "version": "2.1.21",
   "main": "./dist/tuxedo-control-center/e-app/e-app/main.js",
   "author": {
-    "name": "TUXEDO Computers GmbH",
-    "email": "tux@tuxedocomputers.com",
-    "url": "https://tuxedocomputers.com"
+    "name": "Uniwill",
+    "email": "info@uniwill.com",
+    "url": "https://uniwill.com"
   },
   "license": "GPL-3.0",
-  "homepage": "https://tuxedocomputers.com",
+  "homepage": "https://uniwill.com",
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
     "ver": "sh build-src/inc-version.sh",
@@ -43,7 +43,7 @@
     "test-service-app": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' ts-node node_modules/jasmine/bin/jasmine --config=./src/service-app/jasmine.json",
     "test-ng": "ng test --watch=false",
     "test-ng-e2e": "ng e2e",
-    "test-appstream": "appstreamcli validate ./src/dist-data/com.tuxedocomputers.tcc.metainfo.xml",
+    "test-appstream": "appstreamcli validate ./src/dist-data/com.uniwill.tcc.metainfo.xml",
     "install-build-dep": "curl -sL https://deb.nodesource.com/setup_11.x | sudo -E bash - && sudo apt install nodejs autoconf automake build-essential gcc g++ make rpm",
     "start-watch": "run-s clean build-electron build-native build-service copy-files && npm run watch-ng-and-electron",
     "watch-ng-and-electron": "run-p start-ng-watch start-electron-watch",
