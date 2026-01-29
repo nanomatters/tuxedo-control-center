@@ -28,6 +28,7 @@
 #include <QListWidget>
 #include <QLineEdit>
 #include <QInputDialog>
+#include <QColorDialog>
 #include <QStackedWidget>
 #include <QtWidgets/QTableWidget>
 #include <memory>
@@ -35,6 +36,7 @@
 #include "SystemMonitor.hpp"
 #include "../libucc-dbus/UccdClient.hpp"
 #include "FanCurveEditorWidget.hpp"
+#include "KeyboardVisualizerWidget.hpp"
 
 namespace ucc
 {
@@ -93,6 +95,9 @@ namespace ucc
     void onFnLockToggled( bool checked );
     void onTabChanged( int index );
     void onSameSpeedToggled( bool checked );
+    void onKeyboardBrightnessChanged( int value );
+    void onKeyboardColorClicked();
+    void onKeyboardVisualizerColorsChanged();
 
   private:
     struct FanPoint {
@@ -104,9 +109,16 @@ namespace ucc
     void setupDashboardPage();
     void setupProfilesPage();
     void setupHardwarePage();
+    void setupKeyboardBacklightPage();
     void loadFanPoints();
     void saveFanPoints();
     void connectSignals();
+
+    // Update fan profile combo from daemon and custom store
+    void reloadFanProfiles();
+
+    // Slot: called when DBus connection status changes
+    void onUccdConnectionChanged( bool connected );
     void loadProfileDetails( const QString &profileName );
     void markChanged();
     void updateButtonStates();
@@ -210,6 +222,12 @@ namespace ucc
     // GPU power control
     QSlider *m_gpuPowerSlider = nullptr;
     QLabel *m_gpuPowerValue = nullptr;
+    
+    // Keyboard backlight widgets
+    QSlider *m_keyboardBrightnessSlider = nullptr;
+    QLabel *m_keyboardBrightnessValueLabel = nullptr;
+    QPushButton *m_keyboardColorButton = nullptr;
+    KeyboardVisualizerWidget *m_keyboardVisualizer = nullptr;
     
     // Change tracking
     bool m_profileChanged = false;

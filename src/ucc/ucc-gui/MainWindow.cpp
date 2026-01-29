@@ -24,6 +24,9 @@
 #include <QtWidgets/QTableWidget>
 #include <QtWidgets/QHeaderView>
 #include <QUuid>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 
 // Helper widget for rotated y-axis label
@@ -148,6 +151,7 @@ void MainWindow::setupUI()
   qDebug() << "Calling updateFanTabVisibility during setupUI";
   updateFanTabVisibility(); // Set initial visibility based on current profile
   setupHardwarePage();
+  setupKeyboardBacklightPage();
 }
 
 void MainWindow::setupFanControlTab()
@@ -279,24 +283,16 @@ void MainWindow::setupFanControlTab()
 
 void MainWindow::updateFanTabVisibility()
 {
-  qDebug() << "=== updateFanTabVisibility called ===";
-  bool isCustom = m_profileManager->isCustomProfile(m_profileManager->activeProfile());
+  qDebug() << "=== updateFanTabVisibility called (modified: always show fan tab) ===";
   bool currentlyVisible = (m_tabs->indexOf(m_fanTab) != -1);
 
-  qDebug() << "updateFanTabVisibility: activeProfile=" << m_profileManager->activeProfile()
-           << ", isCustom=" << isCustom << ", currentlyVisible=" << currentlyVisible;
+  qDebug() << "updateFanTabVisibility: currentlyVisible=" << currentlyVisible;
 
-  if (isCustom && !currentlyVisible)
+  // Always ensure the fan tab is available; do not hide it for built-in profiles
+  if ( !currentlyVisible )
   {
-    // Add the fan tab at the end
-    qDebug() << "Adding fan tab";
+    qDebug() << "Adding fan tab (always visible now)";
     m_tabs->addTab(m_fanTab, "Profile Fan Control");
-  }
-  else if (!isCustom && currentlyVisible)
-  {
-    // Remove the fan tab
-    qDebug() << "Removing fan tab";
-    m_tabs->removeTab(m_tabs->indexOf(m_fanTab));
   }
 }
 
@@ -830,6 +826,105 @@ void MainWindow::setupHardwarePage()
   m_tabs->addTab( hardwareWidget, "Hardware" );
 }
 
+void MainWindow::setupKeyboardBacklightPage()
+{
+  QWidget *keyboardWidget = new QWidget();
+  keyboardWidget->setStyleSheet( "background-color: #242424; color: #e6e6e6;" );
+  QVBoxLayout *layout = new QVBoxLayout( keyboardWidget );
+  layout->setContentsMargins( 20, 20, 20, 20 );
+  layout->setSpacing( 16 );
+
+  QLabel *titleLabel = new QLabel( "Keyboard Backlight" );
+  titleLabel->setStyleSheet( "font-size: 24px; font-weight: bold;" );
+  layout->addWidget( titleLabel );
+
+  // Check if keyboard backlight is supported
+  if ( auto info = m_UccdClient->getKeyboardBacklightInfo() )
+  {
+    // Parse the JSON to get capabilities
+    QJsonDocument doc = QJsonDocument::fromJson( QString::fromStdString( *info ).toUtf8() );
+    if ( doc.isObject() )
+    {
+      QJsonObject caps = doc.object();
+      int zones = caps["zones"].toInt();
+      int maxBrightness = caps["maxBrightness"].toInt();
+      int maxRed = caps["maxRed"].toInt();
+      int maxGreen = caps["maxGreen"].toInt();
+      int maxBlue = caps["maxBlue"].toInt();
+
+      if ( zones > 0 )
+      {
+        // Global brightness control
+        QGroupBox *brightnessGroup = new QGroupBox( "Global Brightness" );
+        QHBoxLayout *brightnessLayout = new QHBoxLayout( brightnessGroup );
+
+        QLabel *brightnessLabel = new QLabel( "Brightness:" );
+        m_keyboardBrightnessSlider = new QSlider( Qt::Horizontal );
+        m_keyboardBrightnessSlider->setMinimum( 0 );
+        m_keyboardBrightnessSlider->setMaximum( maxBrightness );
+        m_keyboardBrightnessSlider->setValue( maxBrightness / 2 );
+        m_keyboardBrightnessValueLabel = new QLabel( QString::number( maxBrightness / 2 ) );
+        m_keyboardBrightnessValueLabel->setMinimumWidth( 40 );
+
+        brightnessLayout->addWidget( brightnessLabel );
+        brightnessLayout->addWidget( m_keyboardBrightnessSlider );
+        brightnessLayout->addWidget( m_keyboardBrightnessValueLabel );
+
+        layout->addWidget( brightnessGroup );
+
+        // Global color controls for RGB keyboards
+        if ( maxRed > 0 && maxGreen > 0 && maxBlue > 0 )
+        {
+          QGroupBox *colorGroup = new QGroupBox( "Global Color" );
+          QHBoxLayout *colorLayout = new QHBoxLayout( colorGroup );
+
+          QLabel *colorLabel = new QLabel( "Color:" );
+          m_keyboardColorButton = new QPushButton( "Choose Color" );
+          m_keyboardColorButton->setStyleSheet( "background-color: #ffffff;" );
+
+          colorLayout->addWidget( colorLabel );
+          colorLayout->addWidget( m_keyboardColorButton );
+          colorLayout->addStretch();
+
+          layout->addWidget( colorGroup );
+        }
+
+        // Keyboard visualizer
+        if ( zones > 1 )
+        {
+          QLabel *visualizerLabel = new QLabel( "Per-Key Control:" );
+          visualizerLabel->setStyleSheet( "font-weight: bold; margin-top: 10px;" );
+          layout->addWidget( visualizerLabel );
+
+          m_keyboardVisualizer = new KeyboardVisualizerWidget( zones, keyboardWidget );
+          layout->addWidget( m_keyboardVisualizer );
+
+          // Connect visualizer signals
+          connect( m_keyboardVisualizer, &KeyboardVisualizerWidget::colorsChanged,
+                   this, &MainWindow::onKeyboardVisualizerColorsChanged );
+        }
+
+        // Zone info
+        QLabel *infoLabel = new QLabel( QString( "Detected %1 zone(s)" ).arg( zones ) );
+        layout->addWidget( infoLabel );
+      }
+      else
+      {
+        QLabel *noSupportLabel = new QLabel( "Keyboard backlight not supported on this device." );
+        layout->addWidget( noSupportLabel );
+      }
+    }
+  }
+  else
+  {
+    QLabel *noSupportLabel = new QLabel( "Keyboard backlight not available." );
+    layout->addWidget( noSupportLabel );
+  }
+
+  layout->addStretch();
+  m_tabs->addTab( keyboardWidget, "Keyboard" );
+}
+
 void MainWindow::connectSignals()
 {
   // Profile page connections
@@ -1029,6 +1124,32 @@ void MainWindow::connectSignals()
     m_saveInProgress = false;
     updateButtonStates();
   } );
+
+  // React to DBus client connection status so we can (re)load built-in fan profiles
+  connect( m_UccdClient.get(), &UccdClient::connectionStatusChanged,
+           this, &MainWindow::onUccdConnectionChanged );
+
+  // Keyboard backlight connections
+  if ( m_keyboardBrightnessSlider )
+  {
+    connect( m_keyboardBrightnessSlider, &QSlider::valueChanged,
+             this, &MainWindow::onKeyboardBrightnessChanged );
+  }
+  
+  if ( m_keyboardColorButton )
+  {
+    connect( m_keyboardColorButton, &QPushButton::clicked,
+             this, &MainWindow::onKeyboardColorClicked );
+  }
+
+  if ( m_keyboardVisualizer )
+  {
+    connect( m_keyboardVisualizer, &KeyboardVisualizerWidget::colorsChanged,
+             this, &MainWindow::onKeyboardVisualizerColorsChanged );
+  }
+
+  // Initial load of fan profiles (may be empty if service not yet available)
+  reloadFanProfiles();
 }
 
 // Dashboard slots
@@ -1268,6 +1389,16 @@ void MainWindow::onTabChanged( int index )
   bool isDashboard = ( index == 0 );
   qDebug() << "Tab changed to" << index << "- Monitoring active:" << isDashboard;
   m_systemMonitor->setMonitoringActive( isDashboard );
+
+  // Load current keyboard backlight states when keyboard tab (index 4) is activated
+  if ( index == 4 && m_keyboardVisualizer )
+  {
+    if ( auto states = m_UccdClient->getKeyboardBacklightStates() )
+    {
+      m_keyboardVisualizer->loadCurrentStates( *states );
+      qDebug() << "Loaded current keyboard backlight states";
+    }
+  }
 }
 
 // Profile page slots
@@ -1332,6 +1463,11 @@ void MainWindow::onAllProfilesChanged()
     fprintf( log2, "ERROR: Active profile is empty!\n" );
     fflush( log2 );
   }
+
+  // Custom profiles may have changed; reload fan profiles (adds custom entries to the fan combo)
+  reloadFanProfiles();
+  fprintf( log2, "Reloaded fan profiles from ProfileManager\n" );
+  fflush( log2 );
 
   // If we were in the middle of saving, mark as complete
   if ( m_saveInProgress )
@@ -1800,20 +1936,32 @@ void MainWindow::markChanged()
 
 void MainWindow::updateButtonStates( void)
 {
-  if ( not profileTopWidgetsAvailable() or not fanProfileTopWidgetsAvailable() )
-    return;
+  // Update profile page buttons if available
+  if ( profileTopWidgetsAvailable() )
+  {
+    m_removeProfileButton->setEnabled( m_profileManager->isCustomProfile( m_profileCombo->currentText() ) );
+  }
 
-  m_removeProfileButton->setEnabled( m_profileManager->isCustomProfile( m_profileCombo->currentText() ) );
-  
-  // fan profile buttons
-  const QString fanProfileName = m_fanProfileCombo->currentText();
-  const bool isCustomFanProfile = ( not fanProfileName.isEmpty() and not m_builtinFanProfiles.contains( fanProfileName ) );
+  // Update fan profile controls individually so the Copy button can be updated
+  // even if optional buttons (like Revert) are not added.
+  if ( m_fanProfileCombo )
+  {
+    const QString fanProfileName = m_fanProfileCombo->currentText();
+    const bool isCustomFanProfile = ( not fanProfileName.isEmpty() and not m_builtinFanProfiles.contains( fanProfileName ) );
 
-  m_applyFanProfilesButton->setEnabled( m_UccdClient->isConnected() );
-  m_saveFanProfilesButton->setEnabled( isCustomFanProfile );
+    if ( m_applyFanProfilesButton )
+      m_applyFanProfilesButton->setEnabled( m_UccdClient->isConnected() );
 
-  m_copyFanProfileButton->setEnabled( not fanProfileName.isEmpty() and not isCustomFanProfile );
-  m_revertFanProfilesButton->setEnabled( isCustomFanProfile && m_UccdClient->isConnected() );
+    if ( m_saveFanProfilesButton )
+      m_saveFanProfilesButton->setEnabled( isCustomFanProfile );
+
+    // Allow copying any saved profile (built-in or custom) — enable when a profile is selected
+    if ( m_copyFanProfileButton )
+      m_copyFanProfileButton->setEnabled( not fanProfileName.isEmpty() );
+
+    if ( m_revertFanProfilesButton )
+      m_revertFanProfilesButton->setEnabled( isCustomFanProfile && m_UccdClient->isConnected() );
+  }
 }
 
 void MainWindow::onApplyClicked()
@@ -2137,6 +2285,8 @@ void MainWindow::onRemoveFanProfileClicked()
 
 void MainWindow::onFanProfileChanged(const QString& profileName)
 {
+  Q_UNUSED(profileName);
+
   QString json = m_profileManager->getFanProfile(profileName);
   QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8());
   if (doc.isObject()) {
@@ -2184,7 +2334,7 @@ void MainWindow::onFanProfileChanged(const QString& profileName)
   }
   m_profileFanProfileCombo->blockSignals(false);
   
-  // Set editors as editable only for custom profiles (those not in built-ins)
+  // Set editors editable only for custom profiles (those not in built-ins)
   bool isEditable = !m_builtinFanProfiles.contains( profileName );
   if (m_cpuFanCurveEditor) {
     m_cpuFanCurveEditor->setEditable(isEditable);
@@ -2203,6 +2353,79 @@ void MainWindow::onCpuFanPointsChanged(const QVector<FanCurveEditorWidget::Point
   for (const auto& p : points) {
     m_cpuFanPoints.append({static_cast<int>(p.temp), static_cast<int>(p.duty)});
   }
+}
+
+void MainWindow::reloadFanProfiles()
+{
+  qDebug() << "Reloading fan profiles from daemon and custom profiles";
+  qDebug() << "UccdClient connected:" << (m_UccdClient ? m_UccdClient->isConnected() : false);
+
+  // Preserve current selection
+  QString prev = m_fanProfileCombo ? m_fanProfileCombo->currentText() : QString();
+
+  if ( m_fanProfileCombo )
+    m_fanProfileCombo->clear();
+
+  m_builtinFanProfiles.clear();
+
+  // Load built-in names from daemon (if available)
+  if ( m_UccdClient )
+  {
+    if ( auto names = m_UccdClient->getFanProfileNames() )
+    {
+      FILE *log = fopen("/tmp/ucc-debug.log","a");
+      fprintf(log, "Found %zu built-in fan profiles from daemon:\n", names->size());
+      for ( const auto &n : *names ) {
+        QString qn = QString::fromStdString( n );
+        m_fanProfileCombo->addItem( qn );
+        m_builtinFanProfiles.append( qn );
+        fprintf(log, "  %s\n", n.c_str());
+      }
+      fclose(log);
+    }
+    else
+    {
+      FILE *log = fopen("/tmp/ucc-debug.log","a");
+      fprintf(log, "No built-in fan profiles found from daemon at this time\n");
+      fclose(log);
+    }
+  }
+
+  // Append persisted custom fan profiles
+  for ( const auto &name : m_profileManager->customFanProfiles() )
+  {
+    if ( m_fanProfileCombo->findText( name ) == -1 )
+      m_fanProfileCombo->addItem( name );
+  }
+
+  // Mirror into profile page combo if present
+  if ( m_profileFanProfileCombo )
+  {
+    m_profileFanProfileCombo->blockSignals(true);
+    m_profileFanProfileCombo->clear();
+    for ( int i = 0; i < m_fanProfileCombo->count(); ++i )
+      m_profileFanProfileCombo->addItem( m_fanProfileCombo->itemText(i) );
+    m_profileFanProfileCombo->blockSignals(false);
+  }
+
+  // Restore selection or pick first
+  if ( !prev.isEmpty() && m_fanProfileCombo->findText(prev) != -1 )
+    m_fanProfileCombo->setCurrentText(prev);
+  else if ( m_fanProfileCombo->count() > 0 )
+    m_fanProfileCombo->setCurrentIndex(0);
+
+  // Trigger change handler to update editors/buttons
+  if ( m_fanProfileCombo && m_fanProfileCombo->count() > 0 )
+    onFanProfileChanged( m_fanProfileCombo->currentText() );
+  else
+    updateButtonStates();
+}
+
+void MainWindow::onUccdConnectionChanged( bool connected )
+{
+  qDebug() << "Uccd connection status changed:" << connected;
+  if ( connected )
+    reloadFanProfiles();
 }
 
 void MainWindow::onGpuFanPointsChanged(const QVector<FanCurveEditorWidget::Point>& points)
@@ -2408,7 +2631,98 @@ void MainWindow::saveFanPoints()
     return;
   }
 
+  // Save into selected custom profile
   m_profileManager->setFanProfile( current, json );
+}
+
+void MainWindow::onKeyboardBrightnessChanged( int value )
+{
+  if ( m_keyboardBrightnessValueLabel )
+  {
+    m_keyboardBrightnessValueLabel->setText( QString::number( value ) );
+  }
+
+  // Update visualizer if it exists
+  if ( m_keyboardVisualizer )
+  {
+    m_keyboardVisualizer->setGlobalBrightness( value );
+  }
+  else
+  {
+    // Fallback for single zone keyboards
+    QJsonArray statesArray;
+    QJsonObject state;
+    state["mode"] = 0; // Static
+    state["brightness"] = value;
+    state["red"] = 255;
+    state["green"] = 255;
+    state["blue"] = 255;
+    statesArray.append( state );
+
+    QJsonDocument doc( statesArray );
+    QString json = doc.toJson( QJsonDocument::Compact );
+
+    if ( !m_UccdClient->setKeyboardBacklight( json.toStdString() ) )
+    {
+      statusBar()->showMessage( "Failed to set keyboard backlight", 3000 );
+    }
+  }
+}
+
+void MainWindow::onKeyboardColorClicked()
+{
+  // Open color dialog
+  QColor color = QColorDialog::getColor( Qt::white, this, "Choose Keyboard Color" );
+  if ( color.isValid() )
+  {
+    QString style = QString( "background-color: %1;" ).arg( color.name() );
+    m_keyboardColorButton->setStyleSheet( style );
+
+    // Update visualizer if it exists
+    if ( m_keyboardVisualizer )
+    {
+      m_keyboardVisualizer->setGlobalColor( color );
+    }
+    else
+    {
+      // Fallback for single zone keyboards
+      int brightness = m_keyboardBrightnessSlider ? m_keyboardBrightnessSlider->value() : 128;
+
+      QJsonArray statesArray;
+      QJsonObject state;
+      state["mode"] = 0; // Static
+      state["brightness"] = brightness;
+      state["red"] = color.red();
+      state["green"] = color.green();
+      state["blue"] = color.blue();
+      statesArray.append( state );
+
+      QJsonDocument doc( statesArray );
+      QString json = doc.toJson( QJsonDocument::Compact );
+
+      if ( !m_UccdClient->setKeyboardBacklight( json.toStdString() ) )
+      {
+        statusBar()->showMessage( "Failed to set keyboard backlight", 3000 );
+      }
+    }
+  }
+}
+
+void MainWindow::onKeyboardVisualizerColorsChanged()
+{
+  if ( !m_keyboardVisualizer )
+    return;
+
+  // Get the current state from the visualizer
+  QJsonArray states = m_keyboardVisualizer->getJSONState();
+  QJsonDocument doc( states );
+  QString json = doc.toJson( QJsonDocument::Compact );
+
+  // Send to daemon
+  if ( !m_UccdClient->setKeyboardBacklight( json.toStdString() ) )
+  {
+    statusBar()->showMessage( "Failed to set keyboard backlight", 3000 );
+  }
 }
 
 } // namespace ucc

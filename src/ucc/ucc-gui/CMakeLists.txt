@@ -32,6 +32,8 @@ add_executable( ucc-gui
   SystemMonitor.cpp
   FanCurveEditorWidget.cpp
   FanCurveEditorWidget.hpp
+  KeyboardVisualizerWidget.cpp
+  KeyboardVisualizerWidget.hpp
 )
 
 target_include_directories( ucc-gui PRIVATE

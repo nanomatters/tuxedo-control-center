@@ -19,6 +19,7 @@ find_package( Qt6 REQUIRED COMPONENTS
   Core
   Gui
   Widgets
+  DBus
 )
 
 # Application sources
@@ -28,15 +29,45 @@ add_executable( ucc-tray
 
 target_include_directories( ucc-tray PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_SOURCE_DIR}/libucc-dbus
+  ${CMAKE_CURRENT_SOURCE_DIR}/../libucc-dbus
 )
+
+# Allow building the tray standalone: if the lib source is present and the
+# target doesn't already exist, add the libucc-dbus subproject so the
+# ucc-dbus target becomes available here.
+if(NOT TARGET ucc-dbus AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../libucc-dbus/CMakeLists.txt)
+  message(STATUS "Configuring local libucc-dbus subproject for standalone tray build.")
+  add_subdirectory( ${CMAKE_CURRENT_SOURCE_DIR}/../libucc-dbus
+                    ${CMAKE_CURRENT_BINARY_DIR}/libucc-dbus )
+endif()
 
 target_link_libraries( ucc-tray PRIVATE
   Qt6::Core
   Qt6::Gui
   Qt6::Widgets
-  ucc-dbus
+  Qt6::DBus
 )
+
+# Link libucc-dbus if available as a target, otherwise try to find an installed/shared library
+if(TARGET ucc-dbus)
+  # ensure runpath points to the built library directory
+  target_link_options( ucc-tray PRIVATE "-Wl,-rpath,$<TARGET_FILE_DIR:ucc-dbus>" )
+  target_link_libraries( ucc-tray PRIVATE $<TARGET_FILE:ucc-dbus> )
+else()
+  find_library( UCC_DBUS_LIB NAMES ucc-dbus
+    PATHS
+      ${CMAKE_CURRENT_SOURCE_DIR}/../build/lib
+      ${CMAKE_INSTALL_PREFIX}/lib
+      /usr/lib
+      /usr/lib64
+    NO_DEFAULT_PATH
+  )
+  if(UCC_DBUS_LIB)
+    target_link_libraries( ucc-tray PRIVATE ${UCC_DBUS_LIB} )
+  else()
+    message(WARNING "Could not find libucc-dbus. Build may fail unless libucc-dbus is available or parent project is used to configure.")
+  endif()
+endif()
 
 target_compile_options( ucc-tray PRIVATE
   -Wall
@@ -44,6 +75,11 @@ target_compile_options( ucc-tray PRIVATE
   -Wpedantic
   -Werror
 )
+
+# Ensure the DBus library is built before the tray so the linker finds it reliably
+if(TARGET ucc-dbus)
+  add_dependencies( ucc-tray ucc-dbus )
+endif()
 
 # Installation
 install( TARGETS ucc-tray

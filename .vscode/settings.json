@@ -50,7 +50,10 @@
         "/^files=\"\\.vscode/settings\\.json Profile_Management_Implementation\\.md TESTING_WIDGET\\.md show-real-data\\.sh src/service-app/classes/TccDBusService\\.ts src/service-app/classes/UccDBusService\\.ts src/ucc/PROJECT_STATUS\\.md src/ucc/test-widget\\.sh src/ucc/ucc-widgets/profile-switcher/package/contents/ui/main\\.qml src/ucc/ucc-widgets/system-monitor/package/contents/ui/SystemMetricsProvider\\.qml src/ucc/ucc-widgets/system-monitor/package/contents/ui/main\\.qml test-dbus\\.sh test-display-refresh\\.sh test-prime-worker\\.sh test-widget\\.sh\"; for f in \\$files; do perl -0777 -pe 's/com\\\\\\.tuxedocomputers\\\\\\.tccd/com\\.uniwill\\.uccd/g; s/\\\\/com\\\\/tuxedocomputers\\\\/tccd/\\\\/com\\\\/uniwill\\\\/uccd/g;' -i \"\\$f\"; done && git add -A && git commit -m \"chore\\(dbus\\): update remaining DBus references in tests, QML and docs to com\\.uniwill\\.uccd\" \\|\\| true$/": {
             "approve": true,
             "matchCommandLine": true
-        }
+        },
+        "/opt/devel/git/tuxedo/tuxedo-control-center/src/ucc/build/ucc-tray/ucc-tray": true,
+        "./run-ucc-gui.sh": true,
+        "/opt/devel/git/tuxedo/tuxedo-control-center/src/ucc/run-ucc-gui.sh": true
     },
     "editor.fontFamily": "'Source Code Pro', Menlo, Monaco, 'Courier New', monospace",
     "editor.fontSize": 14,

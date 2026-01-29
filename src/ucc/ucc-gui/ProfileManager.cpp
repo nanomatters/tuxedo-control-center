@@ -711,35 +711,41 @@ QString ProfileManager::getFanProfile( const QString &name )
       {
         QString jsonStr = o.value( "json" ).toString();
 
-        // Diagnostic: inspect temperatures and spacing
-        QJsonDocument doc = QJsonDocument::fromJson( jsonStr.toUtf8() );
-        if ( doc.isObject() ) {
-          QJsonObject obj = doc.object();
-          if ( obj.contains("tableCPU") && obj["tableCPU"].isArray() ) {
-            QJsonArray arr = obj["tableCPU"].toArray();
-            QStringList temps;
-            for ( int i = 0; i < arr.size() && i < 8; ++i ) {
-              if ( arr[i].isObject() ) temps << QString::number( arr[i].toObject()["temp"].toInt() );
-            }
-            qDebug() << "[ProfileManager] Returning CUSTOM fan profile" << name << "CPU points:" << arr.size() << "sample temps:" << temps;
+        // If the stored custom entry is empty, fall back to built-in instead of returning empty.
+        if ( jsonStr.trimmed().isEmpty() ) {
+          qWarning() << "[ProfileManager] CUSTOM fan profile" << name << "has empty JSON — falling back to built-in";
+          // Do not return here; allow fallback to daemon-provided built-in profile
+        } else {
+          // Diagnostic: inspect temperatures and spacing
+          QJsonDocument doc = QJsonDocument::fromJson( jsonStr.toUtf8() );
+          if ( doc.isObject() ) {
+            QJsonObject obj = doc.object();
+            if ( obj.contains("tableCPU") && obj["tableCPU"].isArray() ) {
+              QJsonArray arr = obj["tableCPU"].toArray();
+              QStringList temps;
+              for ( int i = 0; i < arr.size() && i < 8; ++i ) {
+                if ( arr[i].isObject() ) temps << QString::number( arr[i].toObject()["temp"].toInt() );
+              }
+              qDebug() << "[ProfileManager] Returning CUSTOM fan profile" << name << "CPU points:" << arr.size() << "sample temps:" << temps;
 
-            // check spacing
-            if ( arr.size() > 1 ) {
-              int prev = arr[0].toObject()["temp"].toInt();
-              for ( int i = 1; i < arr.size(); ++i ) {
-                int t = arr[i].toObject()["temp"].toInt();
-                int diff = t - prev;
-                if ( diff % 5 != 0 || t < 20 || t > 100 ) {
-                  qWarning() << "[ProfileManager] CUSTOM fan profile" << name << "has non-5°C spacing or out-of-range temp:" << t << "(diff" << diff << ")";
-                  break;
+              // check spacing
+              if ( arr.size() > 1 ) {
+                int prev = arr[0].toObject()["temp"].toInt();
+                for ( int i = 1; i < arr.size(); ++i ) {
+                  int t = arr[i].toObject()["temp"].toInt();
+                  int diff = t - prev;
+                  if ( diff % 5 != 0 || t < 20 || t > 100 ) {
+                    qWarning() << "[ProfileManager] CUSTOM fan profile" << name << "has non-5°C spacing or out-of-range temp:" << t << "(diff" << diff << ")";
+                    break;
+                  }
+                  prev = t;
                 }
-                prev = t;
               }
             }
           }
-        }
 
-        return jsonStr;
+          return jsonStr;
+        }
       }
     }
   }

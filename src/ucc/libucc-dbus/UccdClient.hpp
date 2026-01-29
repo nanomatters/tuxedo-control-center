@@ -103,6 +103,7 @@ public:
   // Keyboard Control
   bool setKeyboardBacklight( const std::string &config );
   std::optional< std::string > getKeyboardBacklightInfo();
+  std::optional< std::string > getKeyboardBacklightStates();
   bool setFnLock( bool enabled );
   std::optional< bool > getFnLock();
 

@@ -573,13 +573,41 @@ std::optional< std::string > UccdClient::getPrimeProfile()
   return std::nullopt;
 }
 
-bool UccdClient::setKeyboardBacklight( [[maybe_unused]] const std::string &config )
+bool UccdClient::setKeyboardBacklight( const std::string &config )
 {
+  if ( hasMethod( m_interface.get(), "SetKeyboardBacklightStatesJSON" ) )
+  {
+    return callMethod< bool, QString >( "SetKeyboardBacklightStatesJSON", QString::fromStdString( config ) ).value_or( false );
+  }
+
   return false;
 }
 
 std::optional< std::string > UccdClient::getKeyboardBacklightInfo()
 {
+  if ( hasMethod( m_interface.get(), "GetKeyboardBacklightCapabilitiesJSON" ) )
+  {
+    auto caps = callMethod< QString >( "GetKeyboardBacklightCapabilitiesJSON" );
+    if ( caps )
+    {
+      return caps->toStdString();
+    }
+  }
+
+  return std::nullopt;
+}
+
+std::optional< std::string > UccdClient::getKeyboardBacklightStates()
+{
+  if ( hasMethod( m_interface.get(), "GetKeyboardBacklightStatesJSON" ) )
+  {
+    auto states = callMethod< QString >( "GetKeyboardBacklightStatesJSON" );
+    if ( states )
+    {
+      return states->toStdString();
+    }
+  }
+
   return std::nullopt;
 }
 
