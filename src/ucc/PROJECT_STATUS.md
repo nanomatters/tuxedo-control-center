@@ -8,7 +8,7 @@
 
 ## Project Overview
 
-UCC is a native Qt6/KDE application suite designed to replace the Electron-based GUI in TUXEDO Control Center while communicating with the existing tccd-ng daemon via DBus. The project prioritizes native performance, lower resource usage, and seamless KDE Plasma integration.
+UCC is a native Qt6/KDE application suite designed to replace the Electron-based GUI in TUXEDO Control Center while communicating with the existing uccd daemon via DBus. The project prioritizes native performance, lower resource usage, and seamless KDE Plasma integration.
 
 ### Technology Stack
 - **C++ Standard:** C++20
@@ -32,7 +32,7 @@ The project consists of 4 independent components:
 
 ### 1. libucc-dbus (Shared Library)
 **Location:** `src/ucc/libucc-dbus/`  
-**Purpose:** Qt-native DBus client library for tccd-ng communication
+**Purpose:** Qt-native DBus client library for uccd communication
 
 **Key Files:**
 - `TccdClient.hpp` - QObject-based client with Qt signals
@@ -103,7 +103,7 @@ The project consists of 4 independent components:
 
 ---
 
-## Coding Style Rules (tccd-ng Convention)
+## Coding Style Rules (uccd Convention)
 
 **CRITICAL:** All code must follow these formatting rules exactly.
 
@@ -558,7 +558,7 @@ dbus-monitor --system "sender='com.tuxedocomputers.tccd'"
 
 ### Parent Project
 TUXEDO Control Center (TCC)  
-Daemon: `tccd-ng` (C++ DBus service)
+Daemon: `uccd` (C++ DBus service)
 
 ### Style Reference
 See `tccd-ng/src/TccDBusService.{hpp,cpp}` for formatting examples

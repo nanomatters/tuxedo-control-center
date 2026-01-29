@@ -4,7 +4,7 @@ cmake_minimum_required( VERSION 3.20 )
 
 project( libucc-dbus
   VERSION 0.1.0
-  DESCRIPTION "DBus client library for tccd-ng daemon"
+  DESCRIPTION "DBus client library for uccd daemon"
   LANGUAGES CXX
 )
 

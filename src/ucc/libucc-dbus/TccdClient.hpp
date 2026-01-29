@@ -30,9 +30,9 @@ namespace ucc
 {
 
 /**
- * @brief DBus client for communicating with tccd-ng daemon
+ * @brief DBus client for communicating with uccd daemon
  *
- * Provides a Qt6-native interface to all tccd-ng DBus methods.
+ * Provides a Qt6-native interface to all uccd DBus methods.
  */
 class TccdClient : public QObject
 {

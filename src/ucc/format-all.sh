@@ -1,7 +1,7 @@
 #!/bin/bash
-# Auto-format all UCC C++ files to match tccd-ng coding style
+# Auto-format all UCC C++ files to match uccd coding style
 
-echo "Reformatting UCC files to match tccd-ng coding style..."
+echo "Reformatting UCC files to match uccd coding style..."
 
 # Use clang-format with custom style
 find . -name "*.cpp" -o -name "*.hpp" | while read file; do

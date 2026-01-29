@@ -34,7 +34,7 @@ async function testConnection() {
         console.log('✓ GetDisplayModesJSON returned:', displayModes);
         
         console.log('\n✅ All tests passed! DBus connection works correctly.');
-        console.log('The GUI hang is likely NOT related to tccd-ng DBus service.');
+        console.log('The GUI hang is likely NOT related to uccd DBus service.');
         process.exit(0);
     } catch (err) {
         console.error('\n❌ Test failed:', err.message);

@@ -37,7 +37,7 @@ cd ucc
 src/ucc/
 ├── build-local.sh          # Build script with ~/tmp/ucc install prefix
 ├── run-ucc-gui.sh          # Run script with proper environment setup
-├── libucc-dbus/            # DBus client library for tccd-ng
+├── libucc-dbus/            # DBus client library for uccd
 │   ├── TccdClient.hpp
 │   └── TccdClient.cpp
 ├── ucc-gui/                # Main Qt/QML GUI application
@@ -59,7 +59,7 @@ UCC is a Qt6/KDE-based application suite that communicates with the tccd-ng daem
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   ucc-gui   │────▶│ libucc-dbus │────▶│   tccd-ng   │
+│   ucc-gui   │────▶│ libucc-dbus │────▶│   uccd   │
 └─────────────┘     └─────────────┘     └─────────────┘
                             ▲
                             │
@@ -75,7 +75,7 @@ UCC is a Qt6/KDE-based application suite that communicates with the tccd-ng daem
 ## Components
 
 ### libucc-dbus
-Shared Qt-native DBus client library for communicating with tccd-ng daemon.
+Shared Qt-native DBus client library for communicating with uccd daemon.
 
 **Features:**
 - Type-safe method calls with templates
@@ -118,7 +118,7 @@ KDE Plasma desktop widgets.
 - KDE Frameworks 6 (for widgets)
 
 **Runtime Requirements:**
-- tccd-ng daemon (must be running)
+- uccd daemon (must be running)
 - Qt6 runtime libraries
 
 ## Installation Paths

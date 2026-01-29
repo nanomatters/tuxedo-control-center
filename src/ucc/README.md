@@ -4,7 +4,7 @@ Modern Qt6/KDE C++20 application suite for Uniwill laptop control.
 
 ## Components
 
-- **libucc-dbus**: Shared library for communicating with tccd-ng daemon via DBus
+- **libucc-dbus**: Shared library for communicating with uccd daemon via DBus
 - **ucc-gui**: Main GUI application with QML interface
 - **ucc-tray**: System tray applet for quick access
 - **ucc-widgets**: Plasma desktop widgets (system monitor, profile switcher)
@@ -17,7 +17,7 @@ Modern Qt6/KDE C++20 application suite for Uniwill laptop control.
 - Webcam toggle
 - Fn Lock control
 - Power management
-- Hardware control through tccd-ng daemon
+- Hardware control through uccd daemon
 
 ## Dependencies
 
@@ -29,7 +29,7 @@ Modern Qt6/KDE C++20 application suite for Uniwill laptop control.
 - sdbus-c++ >= 2.0
 
 ### Runtime Requirements
-- tccd-ng daemon (from parent project)
+- uccd daemon (from parent project)
 - Qt6 runtime libraries
 - KDE Plasma (for widgets)
 

@@ -67,9 +67,9 @@ ProfileManager::ProfileManager( QObject *parent )
     // Load custom profiles from local storage
     loadCustomProfilesFromSettings();
     
-    // No need to send profiles to tccd-ng; UCC handles profile application
+    // No need to send profiles to uccd; UCC handles profile application
     
-    // No need to set stateMap in tccd-ng; UCC handles power state changes
+    // No need to set stateMap in uccd; UCC handles power state changes
     
     // DO NOT load profiles here - defer to after signals are connected
     fprintf( log, "NOT calling updateProfiles() in constructor - will be called later\n" );

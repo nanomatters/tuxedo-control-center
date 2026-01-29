@@ -1,10 +1,10 @@
-# tccd-ng - TUXEDO Control Center Daemon (Next Generation)
+# uccd - TUXEDO Control Center Daemon (Next Generation)
 
 A modern, pure C++20 implementation of the TUXEDO Control Center daemon (`tccd`).
 
 ## Overview
 
-`tccd-ng` is the next-generation system daemon for TUXEDO Control Center, written entirely in modern C++20 to replace the TypeScript-based `tccd`. It provides:
+`uccd` is the next-generation system daemon for TUXEDO Control Center, written entirely in modern C++20 to replace the TypeScript-based `tccd`. It provides:
 
 - Hardware monitoring and control
 - Fan speed management
@@ -52,7 +52,7 @@ sudo cmake --install .
 
 ### Project Structure
 ```
-tccd-ng/
+uccd/
 ├── main.cpp           # Application entry point and daemon initialization
 ├── CMakeLists.txt     # CMake build configuration
 └── README.md          # This file
@@ -60,10 +60,10 @@ tccd-ng/
 
 ### Adding New Modules
 
-Create new header/source files in the tccd-ng directory and add them to CMakeLists.txt:
+Create new header/source files in the uccd directory and add them to CMakeLists.txt:
 
 ```cmake
-add_executable(tccd-ng
+add_executable(uccd
   main.cpp
   new_module.cpp
 )
@@ -73,12 +73,12 @@ add_executable(tccd-ng
 
 ### Run as daemon
 ```bash
-sudo tccd-ng --start
+sudo uccd --start
 ```
 
 ### Debug mode
 ```bash
-tccd-ng --debug
+uccd --debug
 ```
 
 ### Show version

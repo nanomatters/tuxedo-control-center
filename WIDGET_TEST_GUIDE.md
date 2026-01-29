@@ -16,7 +16,7 @@ cd /opt/devel/git/tuxedo/tuxedo-control-center/ucc/build
 
 **What it tests:**
 - C++ SystemMonitor class integration
-- DBus calls to tccd-ng (will fail gracefully with "Unknown method" until tccd-ng implements them)
+- DBus calls to uccd (will fail gracefully with "Unknown method" until uccd implements them)
 - GUI rendering with Plasma components
 - Signal/slot connections
 
@@ -27,7 +27,7 @@ DBus call failed: "GetCpuFrequency" - "Unknown method GetCpuFrequency..."
 ...
 ```
 
-This is expected and normal - once tccd-ng implements these methods, real values will appear.
+This is expected and normal - once uccd implements these methods, real values will appear.
 
 ## Option 2: Test Plasma Widget
 To test the Plasma widget directly:
@@ -52,12 +52,12 @@ sudo cmake --install .
 
 ## Option 3: Test DBus Interface Directly
 ```bash
-# Check if tccd-ng service is running
+# Check if uccd service is running
 dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd \
     /com/tuxedocomputers/tccd \
     org.freedesktop.DBus.Introspectable.Introspect
 
-# Try calling a method (will fail until implemented in tccd-ng)
+# Try calling a method (will fail until implemented in uccd)
 dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd \
     /com/tuxedocomputers/tccd \
     com.tuxedocomputers.tccd.GetCpuTemperature
@@ -70,7 +70,7 @@ dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd \
 | Backend Library | `ucc/libucc-dbus/TccdClient.cpp` | ✅ Implemented |
 | GUI Integration | `ucc/ucc-gui/SystemMonitor.cpp` | ✅ Implemented |
 | Plasma Widget | `ucc/ucc-widgets/system-monitor/package/contents/ui/main.qml` | ✅ Implemented |
-| tccd-ng Methods | `tccd-ng` daemon | ⏳ Pending implementation |
+| uccd Methods | `uccd` daemon | ⏳ Pending implementation |
 
 ## Expected Behavior
 

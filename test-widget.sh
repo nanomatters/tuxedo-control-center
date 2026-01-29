@@ -54,9 +54,9 @@ echo "✓ Test 3: DBus Interface"
 if dbus-send --system --print-reply --dest=com.tuxedocomputers.tccd \
     /com/tuxedocomputers/tccd \
     org.freedesktop.DBus.Introspectable.Introspect > /dev/null 2>&1; then
-    echo "  ✅ tccd-ng DBus service is accessible"
+    echo "  ✅ uccd DBus service is accessible"
 else
-    echo "  ❌ tccd-ng DBus service not accessible"
+    echo "  ❌ uccd DBus service not accessible"
     exit 1
 fi
 
@@ -119,9 +119,9 @@ done
 
 echo ""
 
-# Test 7: Test DBus method calls (expected to fail - not implemented in tccd-ng yet)
+# Test 7: Test DBus method calls (expected to fail - not implemented in uccd yet)
 echo "✓ Test 7: DBus Method Availability"
-echo "  Testing method calls (expected to fail - methods not yet implemented in tccd-ng)"
+echo "  Testing method calls (expected to fail - methods not yet implemented in uccd)"
 echo ""
 
 for method_name in "GetCpuTemperature" "GetGpuTemperature" "GetFanSpeed"; do
@@ -156,11 +156,11 @@ echo "║ ✅ All implementation files present and correct                ║"
 echo "║ ✅ DBus interface definitions complete                        ║"
 echo "║ ✅ QML widget with all metrics implemented                    ║"
 echo "║ ✅ C++ SystemMonitor bindings in place                        ║"
-echo "║ ⏳ Awaiting tccd-ng implementation of DBus methods            ║"
+echo "║ ⏳ Awaiting uccd implementation of DBus methods            ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
 echo ""
 echo "Next Steps:"
-echo "  1. Implement GetCpuTemperature, GetGpuTemperature, etc. in tccd-ng"
+echo "  1. Implement GetCpuTemperature, GetGpuTemperature, etc. in uccd"
 echo "  2. Once implemented, widget will display real system metrics"
 echo "  3. Install widget: sudo cmake --install . (in build directory)"
 echo "  4. Add widget to Plasma desktop for live monitoring"

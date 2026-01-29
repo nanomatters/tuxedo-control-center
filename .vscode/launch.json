@@ -38,10 +38,10 @@
             "internalConsoleOptions": "openOnSessionStart"
         },
         {
-            "name": "tccd-ng (C++)",
+            "name": "uccd (C++)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/build/tccd-ng",
+            "program": "${workspaceRoot}/build/uccd",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}/build",
@@ -55,7 +55,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "build-tccd-ng",
+            "preLaunchTask": "build-uccd",
             "sourceLanguages": ["cpp"]
         }
     ]

@@ -121,7 +121,7 @@ TccdClient::TccdClient( QObject *parent )
   }
   else
   {
-    qWarning() << "Failed to connect to tccd-ng DBus service:"
+    qWarning() << "Failed to connect to uccd DBus service:"
                << m_interface->lastError().message();
   }
 
@@ -436,7 +436,7 @@ std::optional< bool > TccdClient::getFnLock()
 }
 
 // Stub implementations for remaining methods
-// TODO: Implement these based on actual tccd-ng DBus interface
+// TODO: Implement these based on actual uccd DBus interface
 
 bool TccdClient::setYCbCr420Workaround( [[maybe_unused]] bool enabled )
 {
@@ -796,7 +796,7 @@ std::optional< int > TccdClient::getGpuFanSpeedRPM()
   return std::nullopt;
 }
 
-// Return raw fan speed percentage (0-100) as reported by tccd-ng
+// Return raw fan speed percentage (0-100) as reported by uccd
 std::optional< int > TccdClient::getFanSpeedPercent()
 {
   return readFanDataValue( m_interface.get(), "GetFanDataCPU", "speed" );

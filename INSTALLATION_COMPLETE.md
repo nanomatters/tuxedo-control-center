@@ -9,7 +9,7 @@ cat << 'EOF'
 ═══════════════════════════════════════════════════════════════════════════════
 
 Implemented a real-time system monitoring widget for Plasma Desktop that fetches
-live CPU/GPU metrics from tccd-ng daemon and displays them as simple text.
+live CPU/GPU metrics from uccd daemon and displays them as simple text.
 
 ═══════════════════════════════════════════════════════════════════════════════
 📊 METRICS DISPLAYED
@@ -34,7 +34,7 @@ live CPU/GPU metrics from tccd-ng daemon and displays them as simple text.
 ═══════════════════════════════════════════════════════════════════════════════
 
 Layer 1: System Daemon
-   └─ tccd-ng (DBus service: com.tuxedocomputers.tccd)
+   └─ uccd (DBus service: com.tuxedocomputers.tccd)
       ├─ GetFanDataCPU()          → {temp, speed, timestamp}
       ├─ GetIGpuInfoValuesJSON()  → JSON(temp, coreFrequency, powerDraw)
       └─ GetCpuPowerValuesJSON()  → JSON(powerDraw)

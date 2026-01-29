@@ -9,9 +9,9 @@
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
     "editor.detectIndentation": false,
-    "cmake.sourceDirectory": "/opt/devel/git/tuxedo/tuxedo-control-center/src/tccd-ng",
+    "cmake.sourceDirectory": "/opt/devel/git/tuxedo/tuxedo-control-center/src/uccd",
     "chat.tools.terminal.autoApprove": {
-        "./tccd-ng": true,
+        "./uccd": true,
         "gdb": true,
         "timeout": true,
         "dbus-send": true,
@@ -34,6 +34,11 @@
         "y": true,
         "ninja": true,
         "env": true,
-        "coredumpctl": true
-    }
+        "coredumpctl": true,
+        "git mv": true
+    },
+    "editor.fontFamily": "'Source Code Pro', Menlo, Monaco, 'Courier New', monospace",
+    "editor.fontSize": 14,
+    "terminal.integrated.fontFamily": "Source Code Pro",
+    "terminal.integrated.fontSize": 14
 }

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(tccd-ng)
+project(uccd)
 
 # Set default build type to RelWithDebInfo if not specified
 if(NOT CMAKE_BUILD_TYPE)
@@ -13,8 +13,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
 # Main executable
-add_executable(tccd-ng
-  tccd-ng.cpp
+add_executable(uccd
+  uccd.cpp
   TccDBusService.cpp
   workers/WebcamWorker.cpp
   profiles/FanProfiles.cpp
@@ -23,7 +23,7 @@ add_executable(tccd-ng
 )
 
 # Include directories for tuxedo_io_lib
-target_include_directories(tccd-ng PRIVATE
+target_include_directories(uccd PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../native-lib
 )
 
@@ -32,13 +32,13 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(SDBUS REQUIRED IMPORTED_TARGET sdbus-c++)
 
 # Link system libraries
-target_link_libraries(tccd-ng PRIVATE
+target_link_libraries(uccd PRIVATE
   udev
   PkgConfig::SDBUS
 )
 
 # Add compile options for stricter checking
-target_compile_options(tccd-ng PRIVATE
+target_compile_options(uccd PRIVATE
   -Wall
   -Wextra
   -Wpedantic
@@ -55,6 +55,6 @@ target_compile_options(tccd-ng PRIVATE
 )
 
 # Installation target
-install(TARGETS tccd-ng
+install(TARGETS uccd
   RUNTIME DESTINATION bin
 )
