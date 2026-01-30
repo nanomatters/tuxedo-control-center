@@ -30,16 +30,7 @@ KeyboardVisualizerWidget::KeyboardVisualizerWidget( int zones, QWidget *parent )
   : QWidget( parent )
   , m_zones( zones )
 {
-  setupKeyboardLayout();
-
-  // Initialize color dialog
-  m_colorDialog = new QColorDialog( this );
-  m_colorDialog->setOption( QColorDialog::ShowAlphaChannel, false );
-  m_colorDialog->setOption( QColorDialog::DontUseNativeDialog, false );
-
-  connect( m_colorDialog, &QColorDialog::colorSelected, this, &KeyboardVisualizerWidget::onColorChanged );
-
-  // Record known mappings
+  // Record known mappings FIRST
   recordZoneMapping( 0, "Left Ctrl" );
   recordZoneMapping( 1, "Unused/Unknown" );
   recordZoneMapping( 2, "Fn" );
@@ -64,13 +55,13 @@ KeyboardVisualizerWidget::KeyboardVisualizerWidget( int zones, QWidget *parent )
   recordZoneMapping( 21, "Unused/Unknown" );
   recordZoneMapping( 22, "Left Shift" );
   recordZoneMapping( 23, "<" );
-  recordZoneMapping( 24, "y" );
-  recordZoneMapping( 25, "x" );
-  recordZoneMapping( 26, "c" );
-  recordZoneMapping( 27, "v" );
-  recordZoneMapping( 28, "b" );
-  recordZoneMapping( 29, "n" );
-  recordZoneMapping( 30, "m" );
+  recordZoneMapping( 24, "Y" );
+  recordZoneMapping( 25, "X" );
+  recordZoneMapping( 26, "C" );
+  recordZoneMapping( 27, "V" );
+  recordZoneMapping( 28, "B" );
+  recordZoneMapping( 29, "N" );
+  recordZoneMapping( 30, "M" );
   recordZoneMapping( 31, "," );
   recordZoneMapping( 32, "." );
   recordZoneMapping( 33, "-" );
@@ -84,17 +75,17 @@ KeyboardVisualizerWidget::KeyboardVisualizerWidget( int zones, QWidget *parent )
   recordZoneMapping( 41, "Unused/Unknown" );
   recordZoneMapping( 42, "Caps Lock" );
   recordZoneMapping( 43, "Unused/Unknown" );
-  recordZoneMapping( 44, "a" );
-  recordZoneMapping( 45, "s" );
-  recordZoneMapping( 46, "d" );
-  recordZoneMapping( 47, "f" );
-  recordZoneMapping( 48, "g" );
-  recordZoneMapping( 49, "h" );
-  recordZoneMapping( 50, "j" );
-  recordZoneMapping( 51, "k" );
-  recordZoneMapping( 52, "l" );
-  recordZoneMapping( 53, "ö" );
-  recordZoneMapping( 54, "ä" );
+  recordZoneMapping( 44, "A" );
+  recordZoneMapping( 45, "S" );
+  recordZoneMapping( 46, "D" );
+  recordZoneMapping( 47, "F" );
+  recordZoneMapping( 48, "G" );
+  recordZoneMapping( 49, "H" );
+  recordZoneMapping( 50, "J" );
+  recordZoneMapping( 51, "K" );
+  recordZoneMapping( 52, "L" );
+  recordZoneMapping( 53, "Ö" );
+  recordZoneMapping( 54, "Ä" );
   recordZoneMapping( 55, "#" );
   recordZoneMapping( 56, "Unused/Unknown" );
   recordZoneMapping( 57, "Numpad 4" );
@@ -105,17 +96,17 @@ KeyboardVisualizerWidget::KeyboardVisualizerWidget( int zones, QWidget *parent )
   recordZoneMapping( 62, "Unused/Unknown" );
   recordZoneMapping( 63, "Tab" );
   recordZoneMapping( 64, "Unused/Unknown" );
-  recordZoneMapping( 65, "q" );
-  recordZoneMapping( 66, "w" );
-  recordZoneMapping( 67, "e" );
-  recordZoneMapping( 68, "r" );
-  recordZoneMapping( 69, "t" );
-  recordZoneMapping( 70, "z" );
-  recordZoneMapping( 71, "u" );
-  recordZoneMapping( 72, "i" );
-  recordZoneMapping( 73, "o" );
-  recordZoneMapping( 74, "p" );
-  recordZoneMapping( 75, "ü" );
+  recordZoneMapping( 65, "Q" );
+  recordZoneMapping( 66, "W" );
+  recordZoneMapping( 67, "E" );
+  recordZoneMapping( 68, "R" );
+  recordZoneMapping( 69, "T" );
+  recordZoneMapping( 70, "Z" );
+  recordZoneMapping( 71, "U" );
+  recordZoneMapping( 72, "I" );
+  recordZoneMapping( 73, "O" );
+  recordZoneMapping( 74, "P" );
+  recordZoneMapping( 75, "Ü" );
   recordZoneMapping( 76, "+" );
   recordZoneMapping( 77, "Enter" );
   recordZoneMapping( 78, "Numpad 7" );
@@ -166,6 +157,25 @@ KeyboardVisualizerWidget::KeyboardVisualizerWidget( int zones, QWidget *parent )
   recordZoneMapping( 123, "Page Up" );
   recordZoneMapping( 124, "Page Down" );
   recordZoneMapping( 125, "Unused/Unknown" );
+
+  // Initialize m_keys with default entries for all zones
+  m_keys.resize( m_zones );
+  for ( int i = 0; i < m_zones; ++i )
+  {
+    m_keys[i].zoneId = i;
+    m_keys[i].label = QString( "Zone %1" ).arg( i );
+    m_keys[i].color = Qt::white;
+    m_keys[i].brightness = 255;
+  }
+
+  setupKeyboardLayout();
+
+  // Initialize color dialog
+  m_colorDialog = new QColorDialog( this );
+  m_colorDialog->setOption( QColorDialog::ShowAlphaChannel, false );
+  m_colorDialog->setOption( QColorDialog::DontUseNativeDialog, false );
+
+  connect( m_colorDialog, &QColorDialog::colorSelected, this, &KeyboardVisualizerWidget::onColorChanged );
 }
 
 void KeyboardVisualizerWidget::setupKeyboardLayout()
@@ -181,94 +191,117 @@ void KeyboardVisualizerWidget::setupKeyboardLayout()
 
   m_keyboardWidget = new QWidget();
   m_layout = new QGridLayout( m_keyboardWidget );
-  m_layout->setSpacing( 1 );
-  m_layout->setContentsMargins( 5, 5, 5, 5 );
+  m_layout->setSpacing( 2 );
+  m_layout->setContentsMargins( 10, 10, 10, 10 );
 
-  // For 126 zones, show zone numbers to identify correct hardware mapping
-  // TEMP: Display zone numbers instead of key labels to map hardware zones to physical keys
-  int currentZone = 0;
-
-  // Row 0: Esc + F1-F12 (13 keys)
-  int zoneId = currentZone++;
-  createKeyButton( zoneId, QString::number(zoneId), 0, 0 );
-  for ( int i = 1; i <= 12; ++i )
+  // Create a realistic German QWERTZ keyboard layout
+  // Row 0: Esc + F1-F12 + PrintScreen + Insert + Delete
+  createKeyButton( 105, getKeyLabel(105), 0, 0 );  // Esc
+  for ( int i = 0; i < 12; ++i )
   {
-    zoneId = currentZone++;
-    createKeyButton( zoneId, QString::number(zoneId), 0, i );
+    createKeyButton( 106 + i, getKeyLabel(106 + i), 0, i + 1 );  // F1-F12
   }
+  createKeyButton( 118, getKeyLabel(118), 0, 13 );  // Print Screen
+  createKeyButton( 119, getKeyLabel(119), 0, 14 );  // Insert
+  createKeyButton( 120, getKeyLabel(120), 0, 15 );  // Delete
 
-  // Row 1: Number row `1234567890-= + Backspace (14 keys)
-  QString numberRow = "`1234567890-=";
-  for ( int i = 0; i < numberRow.length(); ++i )
+  // Row 1: ^ 1 2 3 4 5 6 7 8 9 0 ß ' + Backspace
+  createKeyButton( 84, getKeyLabel(84), 1, 0 );   // ^
+  for ( int i = 0; i < 11; ++i )
   {
-    zoneId = currentZone++;
-    createKeyButton( zoneId, QString::number(zoneId), 1, i );
+    createKeyButton( 85 + i, getKeyLabel(85 + i), 1, i + 1 );  // 1-0 ß '
   }
-  zoneId = currentZone++;
-  createKeyButton( zoneId, QString::number(zoneId), 1, 13, 2, 1 );  // Backspace (wider)
+  createKeyButton( 98, getKeyLabel(98), 1, 12, 2, 1 );  // Backspace (wider)
 
-  // Row 2: Tab + QWERTYUIOP[]\ (14 keys)
-  zoneId = currentZone++;
-  createKeyButton( zoneId, QString::number(zoneId), 2, 0, 2, 1 );  // Tab (wider)
-  QString qwertyRow = "qwertyuiop[]";
-  for ( int i = 0; i < qwertyRow.length(); ++i )
-  {
-    zoneId = currentZone++;
-    createKeyButton( zoneId, QString::number(zoneId), 2, i + 2 );
-  }
-  zoneId = currentZone++;
-  createKeyButton( zoneId, QString::number(zoneId), 2, 14 );  // Backslash
+  // Row 2: Tab + q w e r t z u i o p ü +
+  createKeyButton( 63, getKeyLabel(63), 2, 0, 2, 1 );  // Tab (wider)
+  createKeyButton( 65, getKeyLabel(65), 2, 2 );  // q
+  createKeyButton( 66, getKeyLabel(66), 2, 3 );  // w
+  createKeyButton( 67, getKeyLabel(67), 2, 4 );  // e
+  createKeyButton( 68, getKeyLabel(68), 2, 5 );  // r
+  createKeyButton( 69, getKeyLabel(69), 2, 6 );  // t
+  createKeyButton( 70, getKeyLabel(70), 2, 7 );  // z
+  createKeyButton( 71, getKeyLabel(71), 2, 8 );  // u
+  createKeyButton( 72, getKeyLabel(72), 2, 9 );  // i
+  createKeyButton( 73, getKeyLabel(73), 2, 10 ); // o
+  createKeyButton( 74, getKeyLabel(74), 2, 11 ); // p
+  createKeyButton( 75, getKeyLabel(75), 2, 12 ); // ü
+  createKeyButton( 76, getKeyLabel(76), 2, 13 ); // +
 
-  // Row 3: Caps + ASDFGHJKL;' + Enter (14 keys)
-  zoneId = currentZone++;
-  createKeyButton( zoneId, QString::number(zoneId), 3, 0, 2, 1 );  // Caps lock (wider)
-  QString asdfRow = "asdfghjkl;'";
-  for ( int i = 0; i < asdfRow.length(); ++i )
-  {
-    zoneId = currentZone++;
-    createKeyButton( zoneId, QString::number(zoneId), 3, i + 2 );
-  }
-  zoneId = currentZone++;
-  createKeyButton( zoneId, QString::number(zoneId), 3, 14, 1, 2 );  // Enter (taller)
+  // Row 3: Caps + a s d f g h j k l ö ä # + Enter
+  createKeyButton( 42, getKeyLabel(42), 3, 0, 2, 1 );  // Caps Lock (wider)
+  createKeyButton( 44, getKeyLabel(44), 3, 2 );  // a
+  createKeyButton( 45, getKeyLabel(45), 3, 3 );  // s
+  createKeyButton( 46, getKeyLabel(46), 3, 4 );  // d
+  createKeyButton( 47, getKeyLabel(47), 3, 5 );  // f
+  createKeyButton( 48, getKeyLabel(48), 3, 6 );  // g
+  createKeyButton( 49, getKeyLabel(49), 3, 7 );  // h
+  createKeyButton( 50, getKeyLabel(50), 3, 8 );  // j
+  createKeyButton( 51, getKeyLabel(51), 3, 9 );  // k
+  createKeyButton( 52, getKeyLabel(52), 3, 10 ); // l
+  createKeyButton( 53, getKeyLabel(53), 3, 11 ); // ö
+  createKeyButton( 54, getKeyLabel(54), 3, 12 ); // ä
+  createKeyButton( 55, getKeyLabel(55), 3, 13 ); // #
+  createKeyButton( 77, getKeyLabel(77), 3, 14, 1, 2 );  // Enter (taller)
 
-  // Row 4: Left Shift + ZXCVBNM,./ + Right Shift (13 keys)
-  zoneId = currentZone++;
-  createKeyButton( zoneId, QString::number(zoneId), 4, 0, 2, 1 );  // Left shift (wider)
-  QString zxcvRow = "zxcvbnm,./";
-  for ( int i = 0; i < zxcvRow.length(); ++i )
-  {
-    zoneId = currentZone++;
-    createKeyButton( zoneId, QString::number(zoneId), 4, i + 2 );
-  }
-  zoneId = currentZone++;
-  createKeyButton( zoneId, QString::number(zoneId), 4, 12, 2, 1 );  // Right shift (wider)
+  // Row 4: Left Shift + < y x c v b n m , . - + Right Shift
+  createKeyButton( 22, getKeyLabel(22), 4, 0, 2, 1 );  // Left Shift (wider)
+  createKeyButton( 23, getKeyLabel(23), 4, 2 );  // <
+  createKeyButton( 24, getKeyLabel(24), 4, 3 );  // y
+  createKeyButton( 25, getKeyLabel(25), 4, 4 );  // x
+  createKeyButton( 26, getKeyLabel(26), 4, 5 );  // c
+  createKeyButton( 27, getKeyLabel(27), 4, 6 );  // v
+  createKeyButton( 28, getKeyLabel(28), 4, 7 );  // b
+  createKeyButton( 29, getKeyLabel(29), 4, 8 );  // n
+  createKeyButton( 30, getKeyLabel(30), 4, 9 );  // m
+  createKeyButton( 31, getKeyLabel(31), 4, 10 ); // ,
+  createKeyButton( 32, getKeyLabel(32), 4, 11 ); // .
+  createKeyButton( 33, getKeyLabel(33), 4, 12 ); // -
+  createKeyButton( 35, getKeyLabel(35), 4, 13, 2, 1 );  // Right Shift (wider)
 
-  // Row 5: Ctrl + Fn + Win + Alt + Space + Alt + Win + Menu + Ctrl (9 keys)
-  zoneId = currentZone++;
-  createKeyButton( zoneId, QString::number(zoneId), 5, 0 );
-  zoneId = currentZone++;
-  createKeyButton( zoneId, QString::number(zoneId), 5, 1 );
-  zoneId = currentZone++;
-  createKeyButton( zoneId, QString::number(zoneId), 5, 2 );  // Windows key
-  zoneId = currentZone++;
-  createKeyButton( zoneId, QString::number(zoneId), 5, 3 );
-  zoneId = currentZone++;
-  createKeyButton( zoneId, QString::number(zoneId), 5, 4, 5, 1 );  // Space bar (much wider)
-  zoneId = currentZone++;
-  createKeyButton( zoneId, QString::number(zoneId), 5, 9 );
-  zoneId = currentZone++;
-  createKeyButton( zoneId, QString::number(zoneId), 5, 10 );
-  zoneId = currentZone++;
-  createKeyButton( zoneId, QString::number(zoneId), 5, 11 );
-  zoneId = currentZone++;
-  createKeyButton( zoneId, QString::number(zoneId), 5, 12 );
+  // Row 5: Left Ctrl + Fn + Left Win + Left Alt + Space + Right Alt + Right Win + Menu + Right Ctrl
+  createKeyButton( 0, getKeyLabel(0), 5, 0 );    // Left Ctrl
+  createKeyButton( 2, getKeyLabel(2), 5, 1 );    // Fn
+  createKeyButton( 3, getKeyLabel(3), 5, 2 );    // Left Windows
+  createKeyButton( 4, getKeyLabel(4), 5, 3 );    // Left Alt
+  createKeyButton( 7, getKeyLabel(7), 5, 4, 5, 1 );  // Space bar (much wider)
+  createKeyButton( 10, getKeyLabel(10), 5, 9 );   // Right Alt
+  createKeyButton( 11, "⊞", 5, 10 );  // Right Windows (estimated zone)
+  createKeyButton( 12, getKeyLabel(12), 5, 11 );  // Right Ctrl
 
-  // Fill remaining zones with placeholder buttons (if any)
-  while ( currentZone < 126 )
-  {
-    zoneId = currentZone++;
-    createKeyButton( zoneId, QString::number(zoneId), 6 + ( currentZone - 70 ) / 15, ( currentZone - 70 ) % 15 );
-  }
+  // Numpad (right side)
+  createKeyButton( 99, getKeyLabel(99), 1, 17 );  // Num Lock
+  createKeyButton( 100, getKeyLabel(100), 1, 18 ); // Numpad /
+  createKeyButton( 101, getKeyLabel(101), 1, 19 ); // Numpad *
+  createKeyButton( 102, getKeyLabel(102), 1, 20 ); // Numpad -
+
+  createKeyButton( 78, getKeyLabel(78), 2, 17 );  // Numpad 7
+  createKeyButton( 79, getKeyLabel(79), 2, 18 );  // Numpad 8
+  createKeyButton( 80, getKeyLabel(80), 2, 19 );  // Numpad 9
+  createKeyButton( 81, getKeyLabel(81), 3, 20, 1, 2 ); // Numpad + (taller)
+
+  createKeyButton( 57, getKeyLabel(57), 3, 17 );  // Numpad 4
+  createKeyButton( 58, getKeyLabel(58), 3, 18 );  // Numpad 5
+  createKeyButton( 59, getKeyLabel(59), 3, 19 );  // Numpad 6
+
+  createKeyButton( 36, getKeyLabel(36), 4, 17 );  // Numpad 1
+  createKeyButton( 37, getKeyLabel(37), 4, 18 );  // Numpad 2
+  createKeyButton( 38, getKeyLabel(38), 4, 19 );  // Numpad 3
+
+  createKeyButton( 16, getKeyLabel(16), 5, 17, 2, 1 ); // Numpad 0 (wider)
+  createKeyButton( 17, getKeyLabel(17), 5, 19 );  // Numpad ,
+  createKeyButton( 39, getKeyLabel(39), 5, 20, 1, 2 ); // Numpad Enter (taller)
+
+  // Navigation keys (arrow keys area)
+  createKeyButton( 121, getKeyLabel(121), 6, 17 ); // Home
+  createKeyButton( 122, getKeyLabel(122), 6, 18 ); // End
+  createKeyButton( 123, getKeyLabel(123), 6, 19 ); // Page Up
+  createKeyButton( 124, getKeyLabel(124), 6, 20 ); // Page Down
+
+  createKeyButton( 13, getKeyLabel(13), 7, 17 );  // Left Arrow
+  createKeyButton( 18, getKeyLabel(18), 7, 18 );  // Down Arrow
+  createKeyButton( 14, getKeyLabel(14), 7, 19 );  // Up Arrow
+  createKeyButton( 15, getKeyLabel(15), 7, 20 );  // Right Arrow
 
   m_scrollArea->setWidget( m_keyboardWidget );
   mainLayout->addWidget( m_scrollArea );
@@ -312,13 +345,13 @@ void ucc::KeyboardVisualizerWidget::createKeyButton( int zoneId, const QString &
   // Default white color with full brightness
   updateKeyAppearance( button, Qt::white, 255 );
 
-  // Store key info
-  KeyboardKey key;
-  key.zoneId = zoneId;
-  key.label = label;
-  key.color = Qt::white;
-  key.brightness = 255;
-  m_keys.push_back( key );
+  // Update key info (m_keys is already initialized)
+  if ( zoneId >= 0 && zoneId < static_cast< int >( m_keys.size() ) )
+  {
+    m_keys[zoneId].label = label;
+    m_keys[zoneId].color = Qt::white;
+    m_keys[zoneId].brightness = 255;
+  }
 
   connect( button, &QPushButton::clicked, this, &KeyboardVisualizerWidget::onKeyClicked );
 
@@ -517,7 +550,10 @@ void KeyboardVisualizerWidget::startZoneMapping()
 
   // Enable the test button
   m_testNextZoneButton->setEnabled( true );
-  m_mappingStatusLabel->setText( "Mapping mode active. Click 'Test Next Zone' to set zones to blue one by one." );
+  if ( m_mappingStatusLabel )
+  {
+    m_mappingStatusLabel->setText( "Mapping mode active. Click 'Test Next Zone' to set zones to blue one by one." );
+  }
 
   emit colorsChanged();
 }
@@ -577,16 +613,32 @@ void KeyboardVisualizerWidget::onTestNextZone()
   int zoneToTest = getNextTestZone();
   testZone( zoneToTest );
 
-  m_mappingStatusLabel->setText( QString( "Testing zone %1. Which key turned blue? Tell me and I'll record the mapping." ).arg( zoneToTest ) );
+  if ( m_mappingStatusLabel )
+  {
+    m_mappingStatusLabel->setText( QString( "Testing zone %1. Which key turned blue? Tell me and I'll record the mapping." ).arg( zoneToTest ) );
+  }
 }
 
 void KeyboardVisualizerWidget::recordZoneMapping( int zoneId, const QString &keyName )
 {
   m_zoneMappings[zoneId] = keyName;
-  m_mappingStatusLabel->setText( QString( "Recorded: Zone %1 = %2. %3 mappings recorded so far." )
-                                .arg( zoneId )
-                                .arg( keyName )
-                                .arg( m_zoneMappings.size() ) );
+  if ( m_mappingStatusLabel )
+  {
+    m_mappingStatusLabel->setText( QString( "Recorded: Zone %1 = %2. %3 mappings recorded so far." )
+                                  .arg( zoneId )
+                                  .arg( keyName )
+                                  .arg( m_zoneMappings.size() ) );
+  }
+}
+
+QString KeyboardVisualizerWidget::getKeyLabel( int zoneId ) const
+{
+  auto it = m_zoneMappings.find( zoneId );
+  if ( it != m_zoneMappings.end() )
+  {
+    return it->second;
+  }
+  return QString( "Zone %1" ).arg( zoneId );
 }
 
 QString KeyboardVisualizerWidget::getZoneMappings() const

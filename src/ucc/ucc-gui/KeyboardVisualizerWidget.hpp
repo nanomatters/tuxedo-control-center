@@ -99,6 +99,11 @@ public:
   void recordZoneMapping( int zoneId, const QString &keyName );
 
   /**
+   * @brief Get the key label for a zone ID
+   */
+  QString getKeyLabel( int zoneId ) const;
+
+  /**
    * @brief Get the current zone mappings as a string
    */
   QString getZoneMappings() const;
