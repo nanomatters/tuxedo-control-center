@@ -6,7 +6,7 @@
         "new": "cpp"
     },
     "xliffSync.baseFile": "lang.xlf",
-    "editor.tabSize": 4,
+    "editor.tabSize": 2,
     "editor.insertSpaces": true,
     "editor.detectIndentation": false,
     "cmake.sourceDirectory": "/opt/devel/git/tuxedo/tuxedo-control-center/src/uccd",

@@ -1047,42 +1047,7 @@ void MainWindow::connectSignals()
              this, &MainWindow::onKeyboardVisualizerColorsChanged );
   }
 
-  // Keyboard profile connections
-  if ( m_keyboardProfileCombo )
-  {
-    connect( m_keyboardProfileCombo, &QComboBox::currentTextChanged,
-             this, &MainWindow::onKeyboardProfileChanged );
-  }
-  
-  if ( m_addKeyboardProfileButton )
-  {
-    connect( m_addKeyboardProfileButton, &QPushButton::clicked,
-             this, &MainWindow::onAddKeyboardProfileClicked );
-  }
-  
-  if ( m_copyKeyboardProfileButton )
-  {
-    connect( m_copyKeyboardProfileButton, &QPushButton::clicked,
-             this, &MainWindow::onCopyKeyboardProfileClicked );
-  }
-  
-  if ( m_saveKeyboardProfileButton )
-  {
-    connect( m_saveKeyboardProfileButton, &QPushButton::clicked,
-             this, &MainWindow::onSaveKeyboardProfileClicked );
-  }
-  
-  if ( m_removeKeyboardProfileButton )
-  {
-    connect( m_removeKeyboardProfileButton, &QPushButton::clicked,
-             this, &MainWindow::onRemoveKeyboardProfileClicked );
-  }
-
-  if ( m_keyboardColorModeGroup )
-  {
-    connect( m_keyboardColorModeGroup, QOverload<int>::of(&QButtonGroup::idClicked),
-             this, &MainWindow::onKeyboardColorModeChanged );
-  }
+  connectKeyboardBacklightPageWidgets();
 
   // Initial load of fan profiles (may be empty if service not yet available)
   reloadFanProfiles();

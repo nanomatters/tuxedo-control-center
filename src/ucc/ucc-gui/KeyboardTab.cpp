@@ -33,6 +33,27 @@
 namespace ucc
 {
 
+void MainWindow::connectKeyboardBacklightPageWidgets()
+{
+  connect( m_keyboardProfileCombo, &QComboBox::currentTextChanged,
+           this, &MainWindow::onKeyboardProfileChanged );
+
+  connect( m_addKeyboardProfileButton, &QPushButton::clicked,
+           this, &MainWindow::onAddKeyboardProfileClicked );
+
+  connect( m_copyKeyboardProfileButton, &QPushButton::clicked,
+           this, &MainWindow::onCopyKeyboardProfileClicked );
+
+  connect( m_saveKeyboardProfileButton, &QPushButton::clicked,
+           this, &MainWindow::onSaveKeyboardProfileClicked );
+
+  connect( m_removeKeyboardProfileButton, &QPushButton::clicked,
+           this, &MainWindow::onRemoveKeyboardProfileClicked );
+
+  connect( m_keyboardColorModeGroup, QOverload<int>::of(&QButtonGroup::idClicked),
+           this, &MainWindow::onKeyboardColorModeChanged );
+}
+
 void MainWindow::setupKeyboardBacklightPage()
 {
   QWidget *keyboardWidget = new QWidget();

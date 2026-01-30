@@ -120,6 +120,7 @@ namespace ucc
     void setupProfilesPage();
     void setupHardwarePage();
     void setupKeyboardBacklightPage();
+    void connectKeyboardBacklightPageWidgets();
     void loadFanPoints();
     void saveFanPoints();
     void connectSignals();
