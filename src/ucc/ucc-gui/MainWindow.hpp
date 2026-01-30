@@ -97,6 +97,7 @@ namespace ucc
     void onTabChanged( int index );
     void onSameSpeedToggled( bool checked );
     void onKeyboardBrightnessChanged( int value );
+    void onKeyboardModeChanged( int index );
     void onKeyboardColorClicked();
     void onKeyboardVisualizerColorsChanged();
     void onKeyboardProfileChanged(const QString& profileName);

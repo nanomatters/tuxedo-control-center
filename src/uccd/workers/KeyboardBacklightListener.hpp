@@ -30,20 +30,10 @@ using namespace std::chrono_literals;
 namespace fs = std::filesystem;
 
 /**
- * @brief Keyboard backlight color modes
- */
-enum class KeyboardBacklightColorMode
-{
-  Static = 0,
-  Breathing = 1
-};
-
-/**
  * @brief Keyboard backlight capabilities
  */
 struct KeyboardBacklightCapabilities
 {
-  std::vector< KeyboardBacklightColorMode > modes;
   int zones = 0;
   int maxBrightness = 0;
   int maxRed = 0;
@@ -56,7 +46,6 @@ struct KeyboardBacklightCapabilities
  */
 struct KeyboardBacklightState
 {
-  KeyboardBacklightColorMode mode = KeyboardBacklightColorMode::Static;
   int brightness = 0;
   int red = 0;
   int green = 0;
@@ -108,7 +97,6 @@ public:
       for ( int i = 0; i < m_capabilities.zones; ++i )
       {
         KeyboardBacklightState state;
-        state.mode = KeyboardBacklightColorMode::Static;
         state.brightness = m_capabilities.maxBrightness;
         state.red = m_capabilities.maxRed > 0 ? m_capabilities.maxRed : 0;
         state.green = m_capabilities.maxGreen > 0 ? m_capabilities.maxGreen : 0;
@@ -180,7 +168,6 @@ private:
   void detectKeyboardBacklight()
   {
     m_capabilities = KeyboardBacklightCapabilities();
-    m_capabilities.modes.push_back( KeyboardBacklightColorMode::Static );
 
     // Check for white-only backlight
     if ( checkWhiteBacklight( LEDS_WHITE_ONLY ) )
@@ -372,7 +359,6 @@ private:
       if ( i > 0 )
         oss << ",";
       oss << "{"
-          << "\"mode\":" << static_cast< int >( states[i].mode ) << ","
           << "\"brightness\":" << states[i].brightness << ","
           << "\"red\":" << states[i].red << ","
           << "\"green\":" << states[i].green << ","
@@ -409,7 +395,6 @@ private:
         std::string stateObj = statesJSON.substr( pos, end - pos + 1 );
         KeyboardBacklightState kbs;
         
-        kbs.mode = static_cast< KeyboardBacklightColorMode >( extractInt( stateObj, "mode" ) );
         kbs.brightness = extractInt( stateObj, "brightness" );
         kbs.red = extractInt( stateObj, "red" );
         kbs.green = extractInt( stateObj, "green" );
