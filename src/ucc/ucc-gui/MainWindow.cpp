@@ -386,23 +386,6 @@ void MainWindow::setupDashboardPage()
   gpuGrid->addWidget( makeGauge( "dGPU - Power", "W", m_gpuPowerLabel ), 0, 3 );
   layout->addLayout( gpuGrid );
 
-  // Same-speed toggle (UCC C++ UI control) — reuse single checkbox `m_sameFanSpeedCheckBox`
-  QHBoxLayout *sameSpeedLayout = new QHBoxLayout();
-  sameSpeedLayout->setAlignment( Qt::AlignRight );
-  if ( !m_sameFanSpeedCheckBox ) {
-    m_sameFanSpeedCheckBox = new QCheckBox( "Same fan speed for all fans", dashboardWidget );
-    m_sameFanSpeedCheckBox->setToolTip( "When enabled, all fans are set to the highest decided percent" );
-
-    // Hook the checkbox to update profile settings (no DBus call)
-    connect( m_sameFanSpeedCheckBox, &QCheckBox::toggled, this, &MainWindow::onSameSpeedToggled );
-
-    // Default state; actual value will be set when a profile is loaded
-    m_sameFanSpeedCheckBox->setChecked( true );
-  }
-
-  sameSpeedLayout->addWidget( m_sameFanSpeedCheckBox );
-  layout->addLayout( sameSpeedLayout );
-
   layout->addStretch();
 
   m_tabs->addTab( dashboardWidget, "Dashboard" );
@@ -2717,14 +2700,6 @@ void MainWindow::onApplyFanProfilesClicked()
 void MainWindow::onRevertFanProfilesClicked()
 {
   loadFanPoints();
-}
-
-void MainWindow::onSameSpeedToggled( bool checked )
-{
-  // Do not auto-apply or auto-copy on click — only mark the profile as changed so the user can Save.
-  Q_UNUSED( checked );
-  markChanged();
-  statusBar()->showMessage( QString( "Same-speed set to %1 (unsaved)" ).arg( m_sameFanSpeedCheckBox->isChecked() ? "ON" : "OFF" ), 1500 );
 }
 
 void MainWindow::loadFanPoints()
