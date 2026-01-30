@@ -21,6 +21,8 @@
 #include <QLabel>
 #include <QSlider>
 #include <QCheckBox>
+#include <QRadioButton>
+#include <QButtonGroup>
 #include <QTabWidget>
 #include <QPushButton>
 #include <QTextEdit>
@@ -98,6 +100,7 @@ namespace ucc
     void onKeyboardBrightnessChanged( int value );
     void onKeyboardColorClicked();
     void onKeyboardVisualizerColorsChanged();
+    void onKeyboardColorModeChanged( int id );
     void onKeyboardProfileChanged(const QString& profileName);
     void onAddKeyboardProfileClicked();
     void onCopyKeyboardProfileClicked();
@@ -243,6 +246,13 @@ namespace ucc
     QPushButton *m_copyKeyboardProfileButton = nullptr;
     QPushButton *m_saveKeyboardProfileButton = nullptr;
     QPushButton *m_removeKeyboardProfileButton = nullptr;
+    
+    // Keyboard color mode widgets
+    QButtonGroup *m_keyboardColorModeGroup = nullptr;
+    QRadioButton *m_keyboardGlobalColorRadio = nullptr;
+    QRadioButton *m_keyboardPerKeyColorRadio = nullptr;
+    QLabel *m_keyboardColorLabel = nullptr;
+    QLabel *m_keyboardVisualizerLabel = nullptr;
     
     // Change tracking
     bool m_profileChanged = false;

@@ -878,9 +878,9 @@ void MainWindow::setupKeyboardBacklightPage()
 
       if ( zones > 0 )
       {
-        // Global brightness control
-        QGroupBox *brightnessGroup = new QGroupBox( "Global Brightness" );
-        QHBoxLayout *brightnessLayout = new QHBoxLayout( brightnessGroup );
+        QHBoxLayout *brightnessLayout = new QHBoxLayout();
+        brightnessLayout->setContentsMargins( 20, 20, 20, 20 );
+        brightnessLayout->setSpacing( 15 );
 
         QLabel *brightnessLabel = new QLabel( "Brightness:" );
         m_keyboardBrightnessSlider = new QSlider( Qt::Horizontal );
@@ -894,31 +894,59 @@ void MainWindow::setupKeyboardBacklightPage()
         brightnessLayout->addWidget( m_keyboardBrightnessSlider );
         brightnessLayout->addWidget( m_keyboardBrightnessValueLabel );
 
-        mainLayout->addWidget( brightnessGroup );
+        mainLayout->addLayout( brightnessLayout );
+
+        // Color mode selection for multi-zone keyboards
+        if ( zones > 1 )
+        {
+          QHBoxLayout *modeLayout = new QHBoxLayout();
+          modeLayout->setContentsMargins( 20, 10, 20, 10 );
+
+          QLabel *modeLabel = new QLabel( "Color Mode:" );
+          m_keyboardGlobalColorRadio = new QRadioButton( "Global" );
+          m_keyboardPerKeyColorRadio = new QRadioButton( "Per-Key" );
+          m_keyboardColorModeGroup = new QButtonGroup( this );
+          m_keyboardColorModeGroup->addButton( m_keyboardGlobalColorRadio, 0 );
+          m_keyboardColorModeGroup->addButton( m_keyboardPerKeyColorRadio, 1 );
+          m_keyboardGlobalColorRadio->setChecked( true );  // Default to global
+
+          modeLayout->addWidget( modeLabel );
+          modeLayout->addWidget( m_keyboardGlobalColorRadio );
+          modeLayout->addWidget( m_keyboardPerKeyColorRadio );
+          modeLayout->addStretch();
+
+          mainLayout->addLayout( modeLayout );
+        }
 
         // Global color controls for RGB keyboards
         if ( maxRed > 0 && maxGreen > 0 && maxBlue > 0 )
         {
-          QGroupBox *colorGroup = new QGroupBox( "Global Color" );
-          QHBoxLayout *colorLayout = new QHBoxLayout( colorGroup );
+          QHBoxLayout *colorLayout = new QHBoxLayout();
 
-          QLabel *colorLabel = new QLabel( "Color:" );
+          m_keyboardColorLabel = new QLabel( "Color:" );
           m_keyboardColorButton = new QPushButton( "Choose Color" );
           m_keyboardColorButton->setStyleSheet( "background-color: #ffffff;" );
 
-          colorLayout->addWidget( colorLabel );
+          colorLayout->addWidget( m_keyboardColorLabel );
           colorLayout->addWidget( m_keyboardColorButton );
           colorLayout->addStretch();
 
-          mainLayout->addWidget( colorGroup );
+          mainLayout->addLayout( colorLayout );
+
+          // Hide if per-key is selected (for multi-zone)
+          if ( zones > 1 && m_keyboardPerKeyColorRadio && m_keyboardPerKeyColorRadio->isChecked() )
+          {
+            m_keyboardColorLabel->setVisible( false );
+            m_keyboardColorButton->setVisible( false );
+          }
         }
 
         // Keyboard visualizer
         if ( zones > 1 )
         {
-          QLabel *visualizerLabel = new QLabel( "Per-Key Control:" );
-          visualizerLabel->setStyleSheet( "font-weight: bold; margin-top: 10px;" );
-          mainLayout->addWidget( visualizerLabel );
+          m_keyboardVisualizerLabel = new QLabel( "Per-Key Control:" );
+          m_keyboardVisualizerLabel->setStyleSheet( "font-weight: bold; margin-top: 10px;" );
+          mainLayout->addWidget( m_keyboardVisualizerLabel );
 
           m_keyboardVisualizer = new KeyboardVisualizerWidget( zones, keyboardWidget );
           mainLayout->addWidget( m_keyboardVisualizer );
@@ -926,6 +954,13 @@ void MainWindow::setupKeyboardBacklightPage()
           // Connect visualizer signals
           connect( m_keyboardVisualizer, &KeyboardVisualizerWidget::colorsChanged,
                    this, &MainWindow::onKeyboardVisualizerColorsChanged );
+
+          // Hide if global is selected
+          if ( m_keyboardGlobalColorRadio && m_keyboardGlobalColorRadio->isChecked() )
+          {
+            m_keyboardVisualizerLabel->setVisible( false );
+            m_keyboardVisualizer->setVisible( false );
+          }
         }
 
         // Zone info
@@ -1207,6 +1242,12 @@ void MainWindow::connectSignals()
   {
     connect( m_removeKeyboardProfileButton, &QPushButton::clicked,
              this, &MainWindow::onRemoveKeyboardProfileClicked );
+  }
+
+  if ( m_keyboardColorModeGroup )
+  {
+    connect( m_keyboardColorModeGroup, QOverload<int>::of(&QButtonGroup::idClicked),
+             this, &MainWindow::onKeyboardColorModeChanged );
   }
 
   // Initial load of fan profiles (may be empty if service not yet available)
@@ -3065,6 +3106,32 @@ void MainWindow::onRemoveKeyboardProfileClicked()
     } else {
       QMessageBox::warning(this, "Remove Failed", "Failed to remove custom keyboard profile.");
     }
+  }
+}
+
+void MainWindow::onKeyboardColorModeChanged( int id )
+{
+  if ( id == 0 )  // Global
+  {
+    if ( m_keyboardColorLabel )
+      m_keyboardColorLabel->setVisible( true );
+    if ( m_keyboardColorButton )
+      m_keyboardColorButton->setVisible( true );
+    if ( m_keyboardVisualizerLabel )
+      m_keyboardVisualizerLabel->setVisible( false );
+    if ( m_keyboardVisualizer )
+      m_keyboardVisualizer->setVisible( false );
+  }
+  else if ( id == 1 )  // Per-Key
+  {
+    if ( m_keyboardColorLabel )
+      m_keyboardColorLabel->setVisible( false );
+    if ( m_keyboardColorButton )
+      m_keyboardColorButton->setVisible( false );
+    if ( m_keyboardVisualizerLabel )
+      m_keyboardVisualizerLabel->setVisible( true );
+    if ( m_keyboardVisualizer )
+      m_keyboardVisualizer->setVisible( true );
   }
 }
 

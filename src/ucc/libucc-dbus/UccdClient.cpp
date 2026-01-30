@@ -342,24 +342,10 @@ std::optional< std::vector< std::string > > UccdClient::getFanProfileNames()
 }
 
 std::optional< bool > UccdClient::setFanProfile( const std::string &name, const std::string &json )
-{
-  if ( auto result = callMethod< bool >( "SetFanProfile", QString::fromStdString( name ), QString::fromStdString( json ) ) )
-  {
-    return result.value();
-  }
-  return std::nullopt;
-}
+{ return callMethod< bool >( "SetFanProfile", QString::fromStdString( name ), QString::fromStdString( json ) ); }
 
-// Display Control
 bool UccdClient::setDisplayBrightness( int brightness )
-{
-  if ( hasMethod( m_interface.get(), "SetDisplayBrightness" ) )
-  {
-    return callVoidMethod( "SetDisplayBrightness", brightness );
-  }
-
-  return false;
-}
+{ return callVoidMethod( "SetDisplayBrightness", brightness ); }
 
 std::optional< int > UccdClient::getDisplayBrightness()
 {
@@ -371,7 +357,6 @@ std::optional< int > UccdClient::getDisplayBrightness()
   return std::nullopt;
 }
 
-// Webcam Control
 bool UccdClient::setWebcamEnabled( bool enabled )
 {
   if ( hasMethod( m_interface.get(), "SetWebcam" ) )
