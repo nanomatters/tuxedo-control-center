@@ -314,7 +314,8 @@ void KeyboardVisualizerWidget::setupKeyboardLayout()
 void ucc::KeyboardVisualizerWidget::createKeyButton( int zoneId, const QString &label, int row, int col, int width, int height )
 {
   QPushButton *button = new QPushButton( label );
-  button->setFixedSize( 25 * width, 25 * height );  // Smaller keys: 25x25 instead of 40x40
+  button->setMinimumSize( 25 * width, 25 * height );  // Smaller keys: 25x25 instead of 40x40
+  button->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
   button->setProperty( "zoneId", zoneId );
 
   // Default white color with full brightness
