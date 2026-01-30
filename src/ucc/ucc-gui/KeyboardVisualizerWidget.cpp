@@ -204,10 +204,10 @@ void KeyboardVisualizerWidget::setupKeyboardLayout()
   createKeyButton( 118, getKeyLabel(118), 0, 13 ); // PrintScreen
   createKeyButton( 119, getKeyLabel(119), 0, 14 ); // Insert
   createKeyButton( 120, getKeyLabel(120), 0, 15 ); // Delete
-  createKeyButton( 121, getKeyLabel(121), 0, 17 ); // Home
-  createKeyButton( 122, getKeyLabel(122), 0, 19 ); // End
-  createKeyButton( 123, getKeyLabel(123), 0, 16 ); // Page Up
-  createKeyButton( 124, getKeyLabel(124), 0, 18 ); // Page Down
+  createKeyButton( 121, getKeyLabel(121), 0, 16 ); // Home
+  createKeyButton( 122, getKeyLabel(122), 0, 17 ); // End
+  createKeyButton( 123, getKeyLabel(123), 0, 18 ); // Page Up
+  createKeyButton( 124, getKeyLabel(124), 0, 19 ); // Page Down
 
   // Row 1: ^ 1 2 3 4 5 6 7 8 9 0 ß ' + Backspace
   createKeyButton( 84, getKeyLabel(84), 1, 0 );   // ^
@@ -292,7 +292,7 @@ void KeyboardVisualizerWidget::setupKeyboardLayout()
   createKeyButton( 38, getKeyLabel(38), 4, 18 );  // Numpad 3
   createKeyButton( 39, getKeyLabel(39), 4, 19, 1, 2 ); // Numpad Enter (taller)
 
-  createKeyButton( 16, getKeyLabel(16), 5, 20, 2, 1 ); // Numpad 0 (wider)
+  createKeyButton( 16, getKeyLabel(16), 5, 16, 2, 1 ); // Numpad 0 (wider)
   createKeyButton( 17, getKeyLabel(17), 5, 18 );  // Numpad ,
 
   // Navigation keys (arrow keys under right shift)
@@ -305,7 +305,7 @@ void KeyboardVisualizerWidget::setupKeyboardLayout()
   mainLayout->addWidget( m_scrollArea );
 
   // Instructions label
-  QLabel *instructions = new QLabel( "Click on keys to select and change their color. Use global controls for all keys." );
+  QLabel *instructions = new QLabel( "Click on keys to select and change their color. Hold Ctrl to select multiple keys. Use global controls for all keys." );
   instructions->setStyleSheet( "font-size: 11px; color: #888; margin-top: 5px;" );
   instructions->setWordWrap( true );
   mainLayout->addWidget( instructions );
@@ -342,48 +342,83 @@ void ucc::KeyboardVisualizerWidget::onKeyClicked()
 
   int zoneId = button->property( "zoneId" ).toInt();
 
-  // Clear previous selection
-  if ( m_selectedButton )
+  // Check if Ctrl is pressed for multi-select
+  bool isMultiSelect = QApplication::keyboardModifiers() & Qt::ControlModifier;
+
+  if ( !isMultiSelect )
   {
-    QString style = m_selectedButton->styleSheet();
-    style.replace( "border: 3px solid #ff0000;", "border: 1px solid #666;" );
-    m_selectedButton->setStyleSheet( style );
+    // Clear previous selections
+    for ( QPushButton *selectedBtn : m_selectedButtons )
+    {
+      QString style = selectedBtn->styleSheet();
+      style.replace( "border: 3px solid #ff0000;", "border: 1px solid #666;" );
+      selectedBtn->setStyleSheet( style );
+    }
+    m_selectedZoneIds.clear();
+    m_selectedButtons.clear();
   }
 
-  // Select new key
-  m_selectedZoneId = zoneId;
-  m_selectedButton = button;
-
-  // Highlight selected key
-  QString currentStyle = button->styleSheet();
-  if ( !currentStyle.contains( "border:" ) )
+  // Toggle selection for this key
+  if ( m_selectedButtons.contains( button ) )
   {
-    currentStyle += "border: 3px solid #ff0000;";
+    // Deselect
+    m_selectedZoneIds.remove( zoneId );
+    m_selectedButtons.remove( button );
+    QString style = button->styleSheet();
+    style.replace( "border: 3px solid #ff0000;", "border: 1px solid #666;" );
+    button->setStyleSheet( style );
   }
   else
   {
-    currentStyle.replace( QRegularExpression( "border: \\d+px solid #[0-9a-fA-F]+;" ), "border: 3px solid #ff0000;" );
+    // Select
+    m_selectedZoneIds.insert( zoneId );
+    m_selectedButtons.insert( button );
+    QString currentStyle = button->styleSheet();
+    if ( !currentStyle.contains( "border:" ) )
+    {
+      currentStyle += "border: 3px solid #ff0000;";
+    }
+    else
+    {
+      currentStyle.replace( QRegularExpression( "border: \\d+px solid #[0-9a-fA-F]+;" ), "border: 3px solid #ff0000;" );
+    }
+    button->setStyleSheet( currentStyle );
   }
-  button->setStyleSheet( currentStyle );
 
   emit keySelected( zoneId );
 
-  // Show color dialog for selected key
-  if ( zoneId >= 0 && zoneId < static_cast< int >( m_keys.size() ) )
+  // Show color dialog for selected keys
+  if ( !m_selectedZoneIds.isEmpty() )
   {
-    m_colorDialog->setCurrentColor( m_keys[zoneId].color );
-    m_colorDialog->show();
+    // Use the color of the first selected key as initial color
+    int firstZoneId = *m_selectedZoneIds.begin();
+    if ( firstZoneId >= 0 && firstZoneId < static_cast< int >( m_keys.size() ) )
+    {
+      m_colorDialog->setCurrentColor( m_keys[firstZoneId].color );
+      m_colorDialog->show();
+    }
   }
 }
 
 void ucc::KeyboardVisualizerWidget::onColorChanged( const QColor &color )
 {
-  if ( m_selectedZoneId >= 0 && m_selectedZoneId < static_cast< int >( m_keys.size() ) )
+  for ( int zoneId : m_selectedZoneIds )
   {
-    m_keys[m_selectedZoneId].color = color;
-    updateKeyAppearance( m_selectedButton, color, m_keys[m_selectedZoneId].brightness );
-    emit colorsChanged();
+    if ( zoneId >= 0 && zoneId < static_cast< int >( m_keys.size() ) )
+    {
+      m_keys[zoneId].color = color;
+      // Find the button for this zone
+      for ( QPushButton *button : m_selectedButtons )
+      {
+        if ( button->property( "zoneId" ).toInt() == zoneId )
+        {
+          updateKeyAppearance( button, color, m_keys[zoneId].brightness );
+          break;
+        }
+      }
+    }
   }
+  emit colorsChanged();
 }
 
 void ucc::KeyboardVisualizerWidget::updateKeyAppearance( QPushButton *button, const QColor &color, int brightness )

@@ -25,6 +25,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <QSet>
 #include <vector>
 #include <map>
 
@@ -116,8 +117,8 @@ private:
   QWidget *m_keyboardWidget = nullptr;
 
   // Selected key tracking
-  int m_selectedZoneId = -1;
-  QPushButton *m_selectedButton = nullptr;
+  QSet<int> m_selectedZoneIds;
+  QSet<QPushButton*> m_selectedButtons;
 
   // Color picker dialog
   QColorDialog *m_colorDialog = nullptr;
