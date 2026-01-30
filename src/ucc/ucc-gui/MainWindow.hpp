@@ -98,6 +98,13 @@ namespace ucc
     void onKeyboardBrightnessChanged( int value );
     void onKeyboardColorClicked();
     void onKeyboardVisualizerColorsChanged();
+    void onKeyboardProfileChanged(const QString& profileName);
+    void onAddKeyboardProfileClicked();
+    void onCopyKeyboardProfileClicked();
+    void onSaveKeyboardProfileClicked();
+    void onRemoveKeyboardProfileClicked();
+    void reloadKeyboardProfiles();
+    void updateKeyboardProfileButtonStates();
 
   private:
     struct FanPoint {
@@ -168,6 +175,7 @@ namespace ucc
     QCheckBox *m_setBrightnessCheckBox = nullptr;
     QSlider *m_brightnessSlider = nullptr;
     QLabel *m_brightnessValueLabel = nullptr;
+    QComboBox *m_profileKeyboardProfileCombo = nullptr;
     
     // Fan control widgets
     QSlider *m_minFanSpeedSlider = nullptr;
@@ -228,6 +236,13 @@ namespace ucc
     QLabel *m_keyboardBrightnessValueLabel = nullptr;
     QPushButton *m_keyboardColorButton = nullptr;
     KeyboardVisualizerWidget *m_keyboardVisualizer = nullptr;
+    
+    // Keyboard profile widgets
+    QComboBox *m_keyboardProfileCombo = nullptr;
+    QPushButton *m_addKeyboardProfileButton = nullptr;
+    QPushButton *m_copyKeyboardProfileButton = nullptr;
+    QPushButton *m_saveKeyboardProfileButton = nullptr;
+    QPushButton *m_removeKeyboardProfileButton = nullptr;
     
     // Change tracking
     bool m_profileChanged = false;

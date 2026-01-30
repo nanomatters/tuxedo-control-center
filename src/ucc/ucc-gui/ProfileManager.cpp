@@ -855,6 +855,134 @@ bool ProfileManager::deleteFanProfile( const QString &name )
   return removed;
 }
 
+QString ProfileManager::getKeyboardProfile( const QString &name )
+{
+  // If it's a custom keyboard profile stored locally, return it
+  for ( const auto &v : m_customKeyboardProfilesData )
+  {
+    if ( v.isObject() )
+    {
+      QJsonObject o = v.toObject();
+      if ( o.value( "name" ).toString() == name )
+      {
+        QString jsonStr = o.value( "json" ).toString();
+        if ( !jsonStr.trimmed().isEmpty() )
+        {
+          qDebug() << "[ProfileManager] Returning CUSTOM keyboard profile" << name;
+          return jsonStr;
+        }
+        else
+        {
+          qWarning() << "[ProfileManager] CUSTOM keyboard profile" << name << "has empty JSON — falling back to default";
+        }
+      }
+    }
+  }
+
+  // For now, return a default empty keyboard profile
+  // In the future, this could be extended to support built-in keyboard profiles from the daemon
+  qDebug() << "[ProfileManager] Returning default empty keyboard profile for" << name;
+  return "{}";
+}
+
+bool ProfileManager::setKeyboardProfile( const QString &name, const QString &json )
+{
+  // Update existing entry or append new
+  bool found = false;
+  for ( int i = 0; i < m_customKeyboardProfilesData.size(); ++i )
+  {
+    if ( m_customKeyboardProfilesData[i].isObject() )
+    {
+      QJsonObject o = m_customKeyboardProfilesData[i].toObject();
+      if ( o.value( "name" ).toString() == name )
+      {
+        o[ "json" ] = json;
+        m_customKeyboardProfilesData[i] = o;
+        found = true;
+        break;
+      }
+    }
+  }
+
+  if ( !found )
+  {
+    QJsonObject o;
+    o[ "name" ] = name;
+    o[ "json" ] = json;
+    m_customKeyboardProfilesData.append( o );
+    m_customKeyboardProfiles.append( name );
+  }
+
+  saveCustomKeyboardProfilesToSettings();
+  return true;
+}
+
+bool ProfileManager::deleteKeyboardProfile( const QString &name )
+{
+  bool removed = false;
+  QJsonArray newArr;
+  for ( const auto &v : m_customKeyboardProfilesData )
+  {
+    if ( v.isObject() )
+    {
+      QJsonObject o = v.toObject();
+      if ( o.value( "name" ).toString() == name )
+      {
+        removed = true;
+        continue;
+      }
+    }
+    newArr.append( v );
+  }
+
+  if ( removed )
+  {
+    m_customKeyboardProfilesData = newArr;
+    m_customKeyboardProfiles.removeAll( name );
+    saveCustomKeyboardProfilesToSettings();
+  }
+
+  return removed;
+}
+
+void ProfileManager::loadCustomKeyboardProfilesFromSettings()
+{
+  m_customKeyboardProfilesData = QJsonArray();
+  m_customKeyboardProfiles.clear();
+
+  QString keyboardJson = m_settings->value("customKeyboardProfiles", "[]").toString();
+  qDebug() << "Loading custom keyboard profiles from settings, JSON:" << keyboardJson;
+  QJsonDocument doc = QJsonDocument::fromJson( keyboardJson.toUtf8() );
+
+  if ( doc.isArray() )
+  {
+    m_customKeyboardProfilesData = doc.array();
+    for ( const auto &val : m_customKeyboardProfilesData )
+    {
+      if ( val.isObject() )
+      {
+        QJsonObject o = val.toObject();
+        QString name = o.value( "name" ).toString();
+        if ( !name.isEmpty() )
+        {
+          m_customKeyboardProfiles.append( name );
+          qDebug() << "Loaded custom keyboard profile:" << name;
+        }
+      }
+    }
+  }
+}
+
+void ProfileManager::saveCustomKeyboardProfilesToSettings()
+{
+  QJsonDocument doc( m_customKeyboardProfilesData );
+  QString jsonStr = doc.toJson( QJsonDocument::Compact );
+  qDebug() << "Saving custom keyboard profiles to settings file:" << m_settings->fileName();
+  qDebug() << "JSON:" << jsonStr;
+  m_settings->setValue( "customKeyboardProfiles", jsonStr );
+  m_settings->sync();
+}
+
 QString ProfileManager::getSettingsJSON()
 {
   try {

@@ -71,6 +71,10 @@ public slots:
   bool setFanProfile( const QString &name, const QString &json );
   QStringList customFanProfiles() const { return m_customFanProfiles; }
   bool deleteFanProfile( const QString &name );
+  QString getKeyboardProfile( const QString &name );
+  bool setKeyboardProfile( const QString &name, const QString &json );
+  QStringList customKeyboardProfiles() const { return m_customKeyboardProfiles; }
+  bool deleteKeyboardProfile( const QString &name );
   QString getSettingsJSON();
 
   bool setStateMap( const QString &state, const QString &profileId );
@@ -97,6 +101,8 @@ private:
   void saveCustomProfilesToSettings();
   void loadCustomFanProfilesFromSettings();
   void saveCustomFanProfilesToSettings();
+  void loadCustomKeyboardProfilesFromSettings();
+  void saveCustomKeyboardProfilesToSettings();
 
   std::unique_ptr< UccdClient > m_client;
   std::unique_ptr< QSettings > m_settings;
@@ -104,6 +110,7 @@ private:
   QStringList m_customProfiles;
   QStringList m_allProfiles;
   QStringList m_customFanProfiles;
+  QStringList m_customKeyboardProfiles;
   QString m_activeProfile;
   QString m_powerState;
   int m_activeProfileIndex = -1;
@@ -113,6 +120,7 @@ private:
   QJsonArray m_defaultProfilesData;
   QJsonArray m_customProfilesData;
   QJsonArray m_customFanProfilesData;
+  QJsonArray m_customKeyboardProfilesData;
   QJsonObject m_stateMap;
 };
 
