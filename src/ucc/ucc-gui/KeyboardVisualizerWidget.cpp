@@ -201,9 +201,13 @@ void KeyboardVisualizerWidget::setupKeyboardLayout()
   {
     createKeyButton( 106 + i, getKeyLabel(106 + i), 0, i + 1 );  // F1-F12
   }
-  createKeyButton( 118, getKeyLabel(118), 0, 13 );  // Print Screen
-  createKeyButton( 119, getKeyLabel(119), 0, 14 );  // Insert
-  createKeyButton( 120, getKeyLabel(120), 0, 15 );  // Delete
+  createKeyButton( 118, getKeyLabel(118), 0, 13 ); // PrintScreen
+  createKeyButton( 119, getKeyLabel(119), 0, 14 ); // Insert
+  createKeyButton( 120, getKeyLabel(120), 0, 15 ); // Delete
+  createKeyButton( 121, getKeyLabel(121), 0, 17 ); // Home
+  createKeyButton( 122, getKeyLabel(122), 0, 19 ); // End
+  createKeyButton( 123, getKeyLabel(123), 0, 16 ); // Page Up
+  createKeyButton( 124, getKeyLabel(124), 0, 18 ); // Page Down
 
   // Row 1: ^ 1 2 3 4 5 6 7 8 9 0 ß ' + Backspace
   createKeyButton( 84, getKeyLabel(84), 1, 0 );   // ^
@@ -242,7 +246,7 @@ void KeyboardVisualizerWidget::setupKeyboardLayout()
   createKeyButton( 53, getKeyLabel(53), 3, 11 ); // ö
   createKeyButton( 54, getKeyLabel(54), 3, 12 ); // ä
   createKeyButton( 55, getKeyLabel(55), 3, 13 ); // #
-  createKeyButton( 77, getKeyLabel(77), 3, 14, 1, 2 );  // Enter (taller)
+  createKeyButton( 77, getKeyLabel(77), 3, 14, 2, 1 );  // Enter (wider, spans 2 rows)
 
   // Row 4: Left Shift + < y x c v b n m , . - + Right Shift
   createKeyButton( 22, getKeyLabel(22), 4, 0, 2, 1 );  // Left Shift (wider)
@@ -264,44 +268,39 @@ void KeyboardVisualizerWidget::setupKeyboardLayout()
   createKeyButton( 2, getKeyLabel(2), 5, 1 );    // Fn
   createKeyButton( 3, getKeyLabel(3), 5, 2 );    // Left Windows
   createKeyButton( 4, getKeyLabel(4), 5, 3 );    // Left Alt
-  createKeyButton( 7, getKeyLabel(7), 5, 4, 5, 1 );  // Space bar (much wider)
-  createKeyButton( 10, getKeyLabel(10), 5, 9 );   // Right Alt
-  createKeyButton( 11, "⊞", 5, 10 );  // Right Windows (estimated zone)
-  createKeyButton( 12, getKeyLabel(12), 5, 11 );  // Right Ctrl
+  createKeyButton( 7, getKeyLabel(7), 5, 4, 9, 1 );  // Space bar (much wider to fill gap)
+  createKeyButton( 10, getKeyLabel(10), 5, 13 );   // Right Alt
+  createKeyButton( 11, "⊞", 5, 14 );  // Right Windows (estimated zone)
+  createKeyButton( 12, getKeyLabel(12), 5, 15 );  // Right Ctrl
 
-  // Numpad (right side)
-  createKeyButton( 99, getKeyLabel(99), 1, 17 );  // Num Lock
-  createKeyButton( 100, getKeyLabel(100), 1, 18 ); // Numpad /
-  createKeyButton( 101, getKeyLabel(101), 1, 19 ); // Numpad *
-  createKeyButton( 102, getKeyLabel(102), 1, 20 ); // Numpad -
+  // Numpad (right side) - moved up one row
+  createKeyButton( 99, getKeyLabel(99), 0, 25 );  // Num Lock
+  createKeyButton( 100, getKeyLabel(100), 0, 26 ); // Numpad /
+  createKeyButton( 101, getKeyLabel(101), 0, 27 ); // Numpad *
+  createKeyButton( 102, getKeyLabel(102), 0, 28 ); // Numpad -
 
-  createKeyButton( 78, getKeyLabel(78), 2, 17 );  // Numpad 7
-  createKeyButton( 79, getKeyLabel(79), 2, 18 );  // Numpad 8
-  createKeyButton( 80, getKeyLabel(80), 2, 19 );  // Numpad 9
-  createKeyButton( 81, getKeyLabel(81), 3, 20, 1, 2 ); // Numpad + (taller)
+  createKeyButton( 78, getKeyLabel(78), 1, 25 );  // Numpad 7
+  createKeyButton( 79, getKeyLabel(79), 1, 26 );  // Numpad 8
+  createKeyButton( 80, getKeyLabel(80), 1, 27 );  // Numpad 9
+  createKeyButton( 81, getKeyLabel(81), 1, 28, 1, 2 ); // Numpad + (taller)
 
-  createKeyButton( 57, getKeyLabel(57), 3, 17 );  // Numpad 4
-  createKeyButton( 58, getKeyLabel(58), 3, 18 );  // Numpad 5
-  createKeyButton( 59, getKeyLabel(59), 3, 19 );  // Numpad 6
+  createKeyButton( 57, getKeyLabel(57), 2, 25 );  // Numpad 4
+  createKeyButton( 58, getKeyLabel(58), 2, 26 );  // Numpad 5
+  createKeyButton( 59, getKeyLabel(59), 2, 27 );  // Numpad 6
 
-  createKeyButton( 36, getKeyLabel(36), 4, 17 );  // Numpad 1
-  createKeyButton( 37, getKeyLabel(37), 4, 18 );  // Numpad 2
-  createKeyButton( 38, getKeyLabel(38), 4, 19 );  // Numpad 3
+  createKeyButton( 36, getKeyLabel(36), 3, 25 );  // Numpad 1
+  createKeyButton( 37, getKeyLabel(37), 3, 26 );  // Numpad 2
+  createKeyButton( 38, getKeyLabel(38), 3, 27 );  // Numpad 3
+  createKeyButton( 39, getKeyLabel(39), 3, 28, 1, 2 ); // Numpad Enter (taller)
 
-  createKeyButton( 16, getKeyLabel(16), 5, 17, 2, 1 ); // Numpad 0 (wider)
-  createKeyButton( 17, getKeyLabel(17), 5, 19 );  // Numpad ,
-  createKeyButton( 39, getKeyLabel(39), 5, 20, 1, 2 ); // Numpad Enter (taller)
+  createKeyButton( 16, getKeyLabel(16), 4, 25, 2, 1 ); // Numpad 0 (wider)
+  createKeyButton( 17, getKeyLabel(17), 4, 27 );  // Numpad ,
 
-  // Navigation keys (arrow keys area)
-  createKeyButton( 121, getKeyLabel(121), 6, 17 ); // Home
-  createKeyButton( 122, getKeyLabel(122), 6, 18 ); // End
-  createKeyButton( 123, getKeyLabel(123), 6, 19 ); // Page Up
-  createKeyButton( 124, getKeyLabel(124), 6, 20 ); // Page Down
-
-  createKeyButton( 13, getKeyLabel(13), 7, 17 );  // Left Arrow
-  createKeyButton( 18, getKeyLabel(18), 7, 18 );  // Down Arrow
-  createKeyButton( 14, getKeyLabel(14), 7, 19 );  // Up Arrow
-  createKeyButton( 15, getKeyLabel(15), 7, 20 );  // Right Arrow
+  // Navigation keys (arrow keys under right shift)
+  createKeyButton( 14, getKeyLabel(14), 5, 15 );  // Up Arrow
+  createKeyButton( 13, getKeyLabel(13), 6, 14 );  // Left Arrow
+  createKeyButton( 18, getKeyLabel(18), 6, 15 );  // Down Arrow
+  createKeyButton( 15, getKeyLabel(15), 6, 16 );  // Right Arrow
 
   m_scrollArea->setWidget( m_keyboardWidget );
   mainLayout->addWidget( m_scrollArea );

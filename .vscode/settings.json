@@ -53,7 +53,15 @@
         },
         "/opt/devel/git/tuxedo/tuxedo-control-center/src/ucc/build/ucc-tray/ucc-tray": true,
         "./run-ucc-gui.sh": true,
-        "/opt/devel/git/tuxedo/tuxedo-control-center/src/ucc/run-ucc-gui.sh": true
+        "/opt/devel/git/tuxedo/tuxedo-control-center/src/ucc/run-ucc-gui.sh": true,
+        "/^cd /opt/devel/git/tuxedo/tuxedo-control-center/src/ucc && source build/prefix\\.sh && \\./run-ucc-gui\\.sh$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^python3 keyboard_mapping_util\\.py$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     },
     "editor.fontFamily": "'Source Code Pro', Menlo, Monaco, 'Courier New', monospace",
     "editor.fontSize": 14,
