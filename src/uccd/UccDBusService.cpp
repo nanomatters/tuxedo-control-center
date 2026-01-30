@@ -454,9 +454,9 @@ bool UccDBusInterfaceAdaptor::SetDisplayRefreshRate( const std::string &display,
   // TODO: Support multiple displays in the future
   (void)display;
   
-  if ( m_displayRefreshRateWorker )
+  if ( m_service && m_service->m_displayRefreshRateWorker )
   {
-    return m_displayRefreshRateWorker->setRefreshRate( refreshRate );
+    return m_service->m_displayRefreshRateWorker->setRefreshRate( refreshRate );
   }
   
   return false;
