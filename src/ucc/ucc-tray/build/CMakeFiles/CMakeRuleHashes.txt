@@ -1,0 +1,5 @@
+# Hashes of file build rules.
+eeed24c161165bccc9346672c0e45b8f CMakeFiles/ucc-tray_autogen
+d42421d16a5d6da3963ed523ba65096d libucc-dbus/CMakeFiles/ucc-dbus_autogen
+17a4f9cc694308149f45fb405754426c libucc-dbus/ucc-dbus_autogen/timestamp
+9c2c882698e045bf7172194d54fc3f73 ucc-tray_autogen/timestamp

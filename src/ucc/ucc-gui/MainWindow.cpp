@@ -860,6 +860,7 @@ void MainWindow::setupKeyboardBacklightPage()
   
   m_saveKeyboardProfileButton = new QPushButton("Save");
   m_saveKeyboardProfileButton->setMaximumWidth(60);
+  m_saveKeyboardProfileButton->setEnabled( true ); // Always enabled - can always save current state
   
   m_removeKeyboardProfileButton = new QPushButton("Remove");
   m_removeKeyboardProfileButton->setMaximumWidth(70);
@@ -982,6 +983,9 @@ void MainWindow::connectSignals()
     loadProfileDetails( m_profileManager->activeProfile() );
     updateFanTabVisibility();
   } );
+
+  connect( m_profileManager.get(), &ProfileManager::customKeyboardProfilesChanged,
+           this, &MainWindow::onCustomKeyboardProfilesChanged );
 
   connect( m_profileCombo, QOverload< int >::of( &QComboBox::currentIndexChanged ),
            this, &MainWindow::onProfileIndexChanged );
@@ -1148,6 +1152,9 @@ void MainWindow::connectSignals()
 
   connect( m_gpuPowerSlider, &QSlider::valueChanged,
            this, [this]() { markChanged(); } );
+
+  connect( m_profileKeyboardProfileCombo, QOverload< int >::of( &QComboBox::currentIndexChanged ),
+           this, &MainWindow::markChanged );
 
   // Mains/Battery activation buttons
   connect( m_mainsButton, &QPushButton::toggled,
@@ -1475,10 +1482,45 @@ void MainWindow::onTabChanged( int index )
     
     // Reload keyboard profiles
     reloadKeyboardProfiles();
+
+    // Auto-load the keyboard profile from the active profile's settings (by name reference)
+    QString activeProfile = m_profileManager->activeProfile();
+    if ( !activeProfile.isEmpty() )
+    {
+      QString profileJson = m_profileManager->getProfileDetails( m_profileManager->getProfileIdByName( activeProfile ) );
+      if ( !profileJson.isEmpty() )
+      {
+        QJsonDocument doc = QJsonDocument::fromJson( profileJson.toUtf8() );
+        if ( doc.isObject() )
+        {
+          QJsonObject obj = doc.object();
+          if ( obj.contains( "keyboard" ) && obj["keyboard"].isObject() )
+          {
+            QJsonObject keyboardObj = obj["keyboard"].toObject();
+            QString keyboardProfile = keyboardObj["profile"].toString();
+            if ( !keyboardProfile.isEmpty() && m_keyboardProfileCombo->findText( keyboardProfile ) != -1 )
+            {
+              m_keyboardProfileCombo->setCurrentText( keyboardProfile );
+              // This triggers onKeyboardProfileChanged to load the profile data from UCC settings
+            }
+          }
+        }
+      }
+    }
   }
 }
 
 // Profile page slots
+void MainWindow::onCustomKeyboardProfilesChanged()
+{
+  // Repopulate keyboard profile combos
+  m_profileKeyboardProfileCombo->clear();
+  for ( const auto &name : m_profileManager->customKeyboardProfiles() )
+    m_profileKeyboardProfileCombo->addItem( name );
+
+  reloadKeyboardProfiles();
+}
+
 void MainWindow::onProfileIndexChanged( int index )
 {
   if ( index >= 0 )
@@ -1489,6 +1531,7 @@ void MainWindow::onProfileIndexChanged( int index )
     loadProfileDetails( profileName );
     m_removeProfileButton->setEnabled( m_profileManager->customProfiles().contains( profileName ) );
     m_copyProfileButton->setEnabled( true );
+    m_saveButton->setEnabled( true );
     statusBar()->showMessage( "Profile selected: " + profileName + " (click Apply to activate)" );
   }
 }
@@ -1702,6 +1745,7 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   m_odmPowerLimit2Slider->blockSignals( true );
   m_odmPowerLimit3Slider->blockSignals( true );
   m_gpuPowerSlider->blockSignals( true );
+  m_profileKeyboardProfileCombo->blockSignals( true );
   m_mainsButton->blockSignals( true );
   m_batteryButton->blockSignals( true );
 
@@ -1884,6 +1928,21 @@ void MainWindow::loadProfileDetails( const QString &profileName )
       m_gpuPowerSlider->setValue( gpuObj["cTGPOffset"].toInt( 175 ) + 100 ); // Offset value, adjust as needed
   }
 
+  // Load Keyboard settings (nested in keyboard object) - reference by name only
+  if ( obj.contains( "keyboard" ) && obj["keyboard"].isObject() )
+  {
+    QJsonObject keyboardObj = obj["keyboard"].toObject();
+    if ( keyboardObj.contains( "profile" ) )
+    {
+      QString keyboardProfile = keyboardObj["profile"].toString();
+      int idx = m_profileKeyboardProfileCombo->findText( keyboardProfile );
+      if ( idx >= 0 )
+      {
+        m_profileKeyboardProfileCombo->setCurrentIndex( idx );
+      }
+    }
+  }
+
   // Load power state activation settings
   QString settingsJson = m_profileManager->getSettingsJSON();
   if ( !settingsJson.isEmpty() )
@@ -1924,6 +1983,7 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   m_odmPowerLimit2Slider->blockSignals( false );
   m_odmPowerLimit3Slider->blockSignals( false );
   m_gpuPowerSlider->blockSignals( false );
+  m_profileKeyboardProfileCombo->blockSignals( false );
   m_mainsButton->blockSignals( false );
   m_batteryButton->blockSignals( false );
 
@@ -2117,7 +2177,12 @@ void MainWindow::onSaveClicked()
   QJsonObject nvidiaPowerObj;
   nvidiaPowerObj["cTGPOffset"] = gpuObj["cTGPOffset"];
   profileObj["nvidiaPowerCTRLProfile"] = nvidiaPowerObj;
-  
+
+  // Keyboard settings - save reference by name only
+  QJsonObject keyboardObj;
+  keyboardObj["profile"] = m_profileKeyboardProfileCombo->currentText();
+  profileObj["keyboard"] = keyboardObj;
+
   // Convert to JSON string and save
   QJsonDocument doc( profileObj );
   QString profileJSON = QString::fromUtf8( doc.toJson() );
@@ -2161,6 +2226,10 @@ void MainWindow::onSaveClicked()
         cpuObj["minFrequency"] = m_minFrequencySlider->value();
         cpuObj["maxFrequency"] = m_maxFrequencySlider->value();
         obj["cpu"] = cpuObj;
+
+        QJsonObject keyboardObj;
+        keyboardObj["profile"] = m_profileKeyboardProfileCombo->currentText();
+        obj["keyboard"] = keyboardObj;
 
         QJsonDocument out( obj );
         m_profileManager->saveProfile( QString::fromUtf8( out.toJson( QJsonDocument::Compact ) ) );

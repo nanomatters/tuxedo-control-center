@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC -Wl,--dependency-file=CMakeFiles/ucc-dbus.dir/link.d -shared -Wl,-soname,libucc-dbus.so.0 -o libucc-dbus.so.0.1.0 "CMakeFiles/ucc-dbus.dir/ucc-dbus_autogen/mocs_compilation.cpp.o" "CMakeFiles/ucc-dbus.dir/UccdClient.cpp.o"  /usr/lib64/libQt6DBus.so.6.10.1 /usr/lib64/libQt6Core.so.6.10.1

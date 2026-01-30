@@ -45,6 +45,9 @@ ProfileManager::ProfileManager( QObject *parent )
   // Load local custom fan profiles regardless of DBus connection
   loadCustomFanProfilesFromSettings();
 
+  // Load local custom keyboard profiles
+  loadCustomKeyboardProfilesFromSettings();
+
   if ( m_connected )
   {
     // Fetch hardware power limits immediately
@@ -914,6 +917,7 @@ bool ProfileManager::setKeyboardProfile( const QString &name, const QString &jso
   }
 
   saveCustomKeyboardProfilesToSettings();
+  emit customKeyboardProfilesChanged();
   return true;
 }
 
@@ -940,6 +944,7 @@ bool ProfileManager::deleteKeyboardProfile( const QString &name )
     m_customKeyboardProfilesData = newArr;
     m_customKeyboardProfiles.removeAll( name );
     saveCustomKeyboardProfilesToSettings();
+    emit customKeyboardProfilesChanged();
   }
 
   return removed;
@@ -977,6 +982,7 @@ void ProfileManager::saveCustomKeyboardProfilesToSettings()
 {
   QJsonDocument doc( m_customKeyboardProfilesData );
   QString jsonStr = doc.toJson( QJsonDocument::Compact );
+  jsonStr.replace(",", ", ").replace(":", ": ");  // Add spaces after commas and colons
   qDebug() << "Saving custom keyboard profiles to settings file:" << m_settings->fileName();
   qDebug() << "JSON:" << jsonStr;
   m_settings->setValue( "customKeyboardProfiles", jsonStr );

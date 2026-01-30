@@ -56,6 +56,7 @@ namespace ucc
     void onProfileIndexChanged( int index );
     void onAllProfilesChanged();
     void onActiveProfileIndexChanged();
+    void onCustomKeyboardProfilesChanged();
     void onBrightnessSliderChanged( int value );
     void onMinFanSpeedChanged( int value );
     void onMaxFanSpeedChanged( int value );

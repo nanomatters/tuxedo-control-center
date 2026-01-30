@@ -87,6 +87,7 @@ signals:
   void powerStateChanged();
   void activeProfileIndexChanged();
   void connectedChanged();
+  void customKeyboardProfilesChanged();
   void error( const QString &message );
 
 private:
