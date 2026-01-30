@@ -1028,25 +1028,6 @@ void MainWindow::connectSignals()
   connect( m_UccdClient.get(), &UccdClient::connectionStatusChanged,
            this, &MainWindow::onUccdConnectionChanged );
 
-  // Keyboard backlight connections
-  if ( m_keyboardBrightnessSlider )
-  {
-    connect( m_keyboardBrightnessSlider, &QSlider::valueChanged,
-             this, &MainWindow::onKeyboardBrightnessChanged );
-  }
-  
-  if ( m_keyboardColorButton )
-  {
-    connect( m_keyboardColorButton, &QPushButton::clicked,
-             this, &MainWindow::onKeyboardColorClicked );
-  }
-
-  if ( m_keyboardVisualizer )
-  {
-    connect( m_keyboardVisualizer, &KeyboardVisualizerWidget::colorsChanged,
-             this, &MainWindow::onKeyboardVisualizerColorsChanged );
-  }
-
   connectKeyboardBacklightPageWidgets();
 
   // Initial load of fan profiles (may be empty if service not yet available)

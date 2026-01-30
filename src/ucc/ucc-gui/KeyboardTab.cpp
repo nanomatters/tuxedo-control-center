@@ -35,6 +35,15 @@ namespace ucc
 
 void MainWindow::connectKeyboardBacklightPageWidgets()
 {
+  connect( m_keyboardBrightnessSlider, &QSlider::valueChanged,
+           this, &MainWindow::onKeyboardBrightnessChanged );
+
+  connect( m_keyboardColorButton, &QPushButton::clicked,
+           this, &MainWindow::onKeyboardColorClicked );
+
+  connect( m_keyboardVisualizer, &KeyboardVisualizerWidget::colorsChanged,
+           this, &MainWindow::onKeyboardVisualizerColorsChanged );
+
   connect( m_keyboardProfileCombo, &QComboBox::currentTextChanged,
            this, &MainWindow::onKeyboardProfileChanged );
 
