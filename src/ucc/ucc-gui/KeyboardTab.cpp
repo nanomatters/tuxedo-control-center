@@ -437,11 +437,12 @@ void MainWindow::onCopyKeyboardProfileClicked()
 void MainWindow::onSaveKeyboardProfileClicked()
 {
   QString current = m_keyboardProfileCombo->currentText();
+  QString json;
+
   if ( current.isEmpty() )
     return;
 
   // Get current keyboard state
-  QString json;
   if ( m_keyboardVisualizer )
   {
     // Get from visualizer
@@ -449,14 +450,8 @@ void MainWindow::onSaveKeyboardProfileClicked()
     QJsonDocument doc( statesArray );
     json = doc.toJson( QJsonDocument::Compact );
   }
-  else
-  {
-    // Get from hardware
-    if ( auto states = m_UccdClient->getKeyboardBacklightStates() )
-    {
-      json = QString::fromStdString( *states );
-    }
-  }
+  else if ( auto states = m_UccdClient->getKeyboardBacklightStates() )
+    json = QString::fromStdString( *states );
 
   if ( json.isEmpty() )
   {
@@ -465,13 +460,9 @@ void MainWindow::onSaveKeyboardProfileClicked()
   }
 
   if ( m_profileManager->setKeyboardProfile( current, json ) )
-  {
     statusBar()->showMessage( QString("Keyboard profile '%1' saved").arg(current) );
-  }
   else
-  {
     QMessageBox::warning( this, "Save Failed", "Failed to save keyboard profile." );
-  }
 }
 
 void MainWindow::onRemoveKeyboardProfileClicked()
@@ -485,17 +476,18 @@ void MainWindow::onRemoveKeyboardProfileClicked()
     QMessageBox::Yes | QMessageBox::No
   );
   
-  if (reply == QMessageBox::Yes) {
+  if ( reply == QMessageBox::Yes )
+  {
     // Remove from persistent storage and UI
-    if ( m_profileManager->deleteKeyboardProfile( currentProfile ) ) {
-      int idx = m_keyboardProfileCombo->currentIndex();
-      if ( idx >= 0 ) m_keyboardProfileCombo->removeItem( idx );
-      statusBar()->showMessage( QString("Keyboard profile '%1' removed").arg(currentProfile) );
-      
-      // Update button states
-      updateKeyboardProfileButtonStates();
-    } else {
+    if ( not m_profileManager->deleteKeyboardProfile( currentProfile ) )
       QMessageBox::warning(this, "Remove Failed", "Failed to remove custom keyboard profile.");
+    else
+    {
+      if ( int idx = m_keyboardProfileCombo->currentIndex(); idx >= 0 )
+        m_keyboardProfileCombo->removeItem( idx );
+
+      statusBar()->showMessage( QString("Keyboard profile '%1' removed").arg(currentProfile) );
+      updateKeyboardProfileButtonStates();
     }
   }
 }

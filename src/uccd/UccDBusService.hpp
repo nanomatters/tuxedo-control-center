@@ -237,6 +237,7 @@ public:
   bool WebcamSWAvailable();
   bool GetWebcamSWStatus();
   bool GetForceYUV420OutputSwitchAvailable();
+  bool SetDisplayRefreshRate( const std::string &display, int refreshRate );
 
   // gpu information methods
   std::string GetDGpuInfoValuesJSON();

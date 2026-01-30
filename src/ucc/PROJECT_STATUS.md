@@ -483,9 +483,10 @@ build/                   # CMake build directory
 - getDefaultProfilesJSON, getCustomProfilesJSON, getActiveProfileJSON
 - setActiveProfile, saveCustomProfile, deleteCustomProfile
 
-**Display Control (4/4):** ✅
+**Display Control (5/5):** ✅
 - setDisplayBrightness, getDisplayBrightness
-- setYCbCr420Workaround, getYCbCr420Workaround
+- setDisplayRefreshRate (any display)
+- setYCbCr420Workaround, getYCbCr420Workaround (settings-based, no DBus methods)
 
 **Fan Control (3/3):** ✅
 - setFanProfile, getCurrentFanSpeed, getFanTemperatures

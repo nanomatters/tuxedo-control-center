@@ -121,6 +121,25 @@ public:
     return m_displayInfo.activeMode;
   }
 
+  /**
+   * @brief Set refresh rate for the active display
+   * @param refreshRate The refresh rate to set (in Hz)
+   * @return true if successful, false otherwise
+   */
+  bool setRefreshRate( int refreshRate ) noexcept
+  {
+    if ( not m_displayInfoFound )
+      updateDisplayData();
+
+    if ( m_displayInfo.displayName.empty() or m_displayInfo.activeMode.xResolution == 0 )
+      return false;
+
+    setDisplayMode( m_displayInfo.activeMode.xResolution,
+                    m_displayInfo.activeMode.yResolution,
+                    refreshRate );
+    return true;
+  }
+
 private:
   std::function< bool() > m_getIsX11;
   std::function< void( const std::string & ) > m_setDisplayModes;

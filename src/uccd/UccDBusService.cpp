@@ -270,6 +270,7 @@ void UccDBusInterfaceAdaptor::registerAdaptor()
     registerMethod("WebcamSWAvailable").implementedAs([this](){ return this->WebcamSWAvailable(); }),
     registerMethod("GetWebcamSWStatus").implementedAs([this](){ return this->GetWebcamSWStatus(); }),
     registerMethod("GetForceYUV420OutputSwitchAvailable").implementedAs([this](){ return this->GetForceYUV420OutputSwitchAvailable(); }),
+    registerMethod("SetDisplayRefreshRate").implementedAs([this](const std::string &display, int refreshRate){ return this->SetDisplayRefreshRate(display, refreshRate); }),
     registerMethod("GetDGpuInfoValuesJSON").implementedAs([this](){ return this->GetDGpuInfoValuesJSON(); }),
     registerMethod("GetIGpuInfoValuesJSON").implementedAs([this](){ return this->GetIGpuInfoValuesJSON(); }),
     registerMethod("GetCpuPowerValuesJSON").implementedAs([this](){ return this->GetCpuPowerValuesJSON(); }),
@@ -445,6 +446,20 @@ bool UccDBusInterfaceAdaptor::GetForceYUV420OutputSwitchAvailable()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.forceYUV420OutputSwitchAvailable;
+}
+
+bool UccDBusInterfaceAdaptor::SetDisplayRefreshRate( const std::string &display, int refreshRate )
+{
+  // Note: display parameter is currently ignored - only works with primary display
+  // TODO: Support multiple displays in the future
+  (void)display;
+  
+  if ( m_displayRefreshRateWorker )
+  {
+    return m_displayRefreshRateWorker->setRefreshRate( refreshRate );
+  }
+  
+  return false;
 }
 
 // gpu information methods

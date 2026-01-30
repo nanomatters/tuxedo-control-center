@@ -434,9 +434,10 @@ std::optional< bool > UccdClient::getYCbCr420Workaround()
   return std::nullopt;
 }
 
-bool UccdClient::setDisplayRefreshRate( [[maybe_unused]] const std::string &display, [[maybe_unused]] int refreshRate )
+bool UccdClient::setDisplayRefreshRate( const std::string &display, int refreshRate )
 {
-  return false;
+  const QString qDisplay = QString::fromStdString( display );
+  return callVoidMethod( "SetDisplayRefreshRate", qDisplay, refreshRate );
 }
 
 bool UccdClient::setCpuScalingGovernor( [[maybe_unused]] const std::string &governor )
@@ -734,9 +735,7 @@ std::optional< int > UccdClient::getCpuTemperature()
 std::optional< int > UccdClient::getGpuTemperature()
 {
   if ( auto temp = readJsonInt( m_interface.get(), "GetDGpuInfoValuesJSON", "temp" ) )
-  {
     return temp;
-  }
 
   return readJsonInt( m_interface.get(), "GetIGpuInfoValuesJSON", "temp" );
 }
