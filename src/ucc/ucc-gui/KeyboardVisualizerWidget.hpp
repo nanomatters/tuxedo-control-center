@@ -80,20 +80,6 @@ public:
   void setGlobalColor( const QColor &color );
 
   /**
-   * @brief Start zone mapping mode - set all to min brightness
-   */
-  void startZoneMapping();
-
-  /**
-   * @brief Test a specific zone by setting it to max brightness
-   */
-  void testZone( int zoneId );
-
-  /**
-   * @brief Get next zone to test
-   */
-  int getNextTestZone();
-  /**
    * @brief Record a zone-to-key mapping
    */
   void recordZoneMapping( int zoneId, const QString &keyName );
@@ -102,11 +88,6 @@ public:
    * @brief Get the key label for a zone ID
    */
   QString getKeyLabel( int zoneId ) const;
-
-  /**
-   * @brief Get the current zone mappings as a string
-   */
-  QString getZoneMappings() const;
 signals:
   /**
    * @brief Emitted when a key is selected
@@ -121,7 +102,6 @@ signals:
 private slots:
   void onKeyClicked();
   void onColorChanged( const QColor &color );
-  void onTestNextZone();
 
 private:
   void setupKeyboardLayout();
@@ -142,12 +122,7 @@ private:
   // Color picker dialog
   QColorDialog *m_colorDialog = nullptr;
 
-  // Zone mapping controls
-  QPushButton *m_startMappingButton = nullptr;
-  QPushButton *m_testNextZoneButton = nullptr;
-  QLabel *m_mappingStatusLabel = nullptr;
-  int m_currentTestZone = 0;
-  bool m_mappingMode = false;
+  // Zone mappings
   std::map<int, QString> m_zoneMappings;
 };
 

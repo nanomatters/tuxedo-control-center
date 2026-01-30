@@ -211,11 +211,11 @@ void KeyboardVisualizerWidget::setupKeyboardLayout()
 
   // Row 1: ^ 1 2 3 4 5 6 7 8 9 0 ß ' + Backspace
   createKeyButton( 84, getKeyLabel(84), 1, 0 );   // ^
-  for ( int i = 0; i < 11; ++i )
+  for ( int i = 0; i < 12; ++i )
   {
     createKeyButton( 85 + i, getKeyLabel(85 + i), 1, i + 1 );  // 1-0 ß '
   }
-  createKeyButton( 98, getKeyLabel(98), 1, 12, 2, 1 );  // Backspace (wider)
+  createKeyButton( 98, getKeyLabel(98), 1, 13, 2, 1 );  // Backspace (wider)
 
   // Row 2: Tab + q w e r t z u i o p ü +
   createKeyButton( 63, getKeyLabel(63), 2, 0, 2, 1 );  // Tab (wider)
@@ -246,87 +246,63 @@ void KeyboardVisualizerWidget::setupKeyboardLayout()
   createKeyButton( 53, getKeyLabel(53), 3, 11 ); // ö
   createKeyButton( 54, getKeyLabel(54), 3, 12 ); // ä
   createKeyButton( 55, getKeyLabel(55), 3, 13 ); // #
-  createKeyButton( 77, getKeyLabel(77), 3, 14, 2, 1 );  // Enter (wider, spans 2 rows)
+  createKeyButton( 77, getKeyLabel(77), 2, 14, 1, 2 );  // Enter (taller, spans 2 cols)
 
   // Row 4: Left Shift + < y x c v b n m , . - + Right Shift
-  createKeyButton( 22, getKeyLabel(22), 4, 0, 2, 1 );  // Left Shift (wider)
-  createKeyButton( 23, getKeyLabel(23), 4, 2 );  // <
-  createKeyButton( 24, getKeyLabel(24), 4, 3 );  // y
-  createKeyButton( 25, getKeyLabel(25), 4, 4 );  // x
-  createKeyButton( 26, getKeyLabel(26), 4, 5 );  // c
-  createKeyButton( 27, getKeyLabel(27), 4, 6 );  // v
-  createKeyButton( 28, getKeyLabel(28), 4, 7 );  // b
-  createKeyButton( 29, getKeyLabel(29), 4, 8 );  // n
-  createKeyButton( 30, getKeyLabel(30), 4, 9 );  // m
-  createKeyButton( 31, getKeyLabel(31), 4, 10 ); // ,
-  createKeyButton( 32, getKeyLabel(32), 4, 11 ); // .
-  createKeyButton( 33, getKeyLabel(33), 4, 12 ); // -
-  createKeyButton( 35, getKeyLabel(35), 4, 13, 2, 1 );  // Right Shift (wider)
+  createKeyButton( 22, getKeyLabel(22), 4, 0, 1, 1 );  // Left Shift
+  createKeyButton( 23, getKeyLabel(23), 4, 1 );  // <
+  createKeyButton( 24, getKeyLabel(24), 4, 2 );  // y
+  createKeyButton( 25, getKeyLabel(25), 4, 3 );  // x
+  createKeyButton( 26, getKeyLabel(26), 4, 4 );  // c
+  createKeyButton( 27, getKeyLabel(27), 4, 5 );  // v
+  createKeyButton( 28, getKeyLabel(28), 4, 6 );  // b
+  createKeyButton( 29, getKeyLabel(29), 4, 7 );  // n
+  createKeyButton( 30, getKeyLabel(30), 4, 8 );  // m
+  createKeyButton( 31, getKeyLabel(31), 4, 9 ); // ,
+  createKeyButton( 32, getKeyLabel(32), 4, 10 ); // .
+  createKeyButton( 33, getKeyLabel(33), 4, 11 ); // -
+  createKeyButton( 35, getKeyLabel(35), 4, 12, 3, 1 );  // Right Shift (wider)
 
   // Row 5: Left Ctrl + Fn + Left Win + Left Alt + Space + Right Alt + Right Win + Menu + Right Ctrl
   createKeyButton( 0, getKeyLabel(0), 5, 0 );    // Left Ctrl
   createKeyButton( 2, getKeyLabel(2), 5, 1 );    // Fn
   createKeyButton( 3, getKeyLabel(3), 5, 2 );    // Left Windows
   createKeyButton( 4, getKeyLabel(4), 5, 3 );    // Left Alt
-  createKeyButton( 7, getKeyLabel(7), 5, 4, 9, 1 );  // Space bar (much wider to fill gap)
-  createKeyButton( 10, getKeyLabel(10), 5, 13 );   // Right Alt
-  createKeyButton( 11, "⊞", 5, 14 );  // Right Windows (estimated zone)
-  createKeyButton( 12, getKeyLabel(12), 5, 15 );  // Right Ctrl
+  createKeyButton( 7, getKeyLabel(7), 5, 4, 5, 1 );  // Space bar (much wider to fill gap)
+  createKeyButton( 10, getKeyLabel(10), 5, 9 );   // Right Alt
+  createKeyButton( 12, getKeyLabel(12), 5, 10 );  // Right Ctrl
 
   // Numpad (right side) - moved up one row
-  createKeyButton( 99, getKeyLabel(99), 0, 25 );  // Num Lock
-  createKeyButton( 100, getKeyLabel(100), 0, 26 ); // Numpad /
-  createKeyButton( 101, getKeyLabel(101), 0, 27 ); // Numpad *
-  createKeyButton( 102, getKeyLabel(102), 0, 28 ); // Numpad -
+  createKeyButton( 99, getKeyLabel(99), 1, 16 );  // Num Lock
+  createKeyButton( 100, getKeyLabel(100), 1, 17 ); // Numpad /
+  createKeyButton( 101, getKeyLabel(101), 1, 18 ); // Numpad *
+  createKeyButton( 102, getKeyLabel(102), 1, 19 ); // Numpad -
 
-  createKeyButton( 78, getKeyLabel(78), 1, 25 );  // Numpad 7
-  createKeyButton( 79, getKeyLabel(79), 1, 26 );  // Numpad 8
-  createKeyButton( 80, getKeyLabel(80), 1, 27 );  // Numpad 9
-  createKeyButton( 81, getKeyLabel(81), 1, 28, 1, 2 ); // Numpad + (taller)
+  createKeyButton( 78, getKeyLabel(78), 2, 16 );  // Numpad 7
+  createKeyButton( 79, getKeyLabel(79), 2, 17 );  // Numpad 8
+  createKeyButton( 80, getKeyLabel(80), 2, 18 );  // Numpad 9
+  createKeyButton( 81, getKeyLabel(81), 2, 19, 1, 2 ); // Numpad + (taller)
 
-  createKeyButton( 57, getKeyLabel(57), 2, 25 );  // Numpad 4
-  createKeyButton( 58, getKeyLabel(58), 2, 26 );  // Numpad 5
-  createKeyButton( 59, getKeyLabel(59), 2, 27 );  // Numpad 6
+  createKeyButton( 57, getKeyLabel(57), 3, 16 );  // Numpad 4
+  createKeyButton( 58, getKeyLabel(58), 3, 17 );  // Numpad 5
+  createKeyButton( 59, getKeyLabel(59), 3, 18 );  // Numpad 6
 
-  createKeyButton( 36, getKeyLabel(36), 3, 25 );  // Numpad 1
-  createKeyButton( 37, getKeyLabel(37), 3, 26 );  // Numpad 2
-  createKeyButton( 38, getKeyLabel(38), 3, 27 );  // Numpad 3
-  createKeyButton( 39, getKeyLabel(39), 3, 28, 1, 2 ); // Numpad Enter (taller)
+  createKeyButton( 36, getKeyLabel(36), 4, 16 );  // Numpad 1
+  createKeyButton( 37, getKeyLabel(37), 4, 17 );  // Numpad 2
+  createKeyButton( 38, getKeyLabel(38), 4, 18 );  // Numpad 3
+  createKeyButton( 39, getKeyLabel(39), 4, 19, 1, 2 ); // Numpad Enter (taller)
 
-  createKeyButton( 16, getKeyLabel(16), 4, 25, 2, 1 ); // Numpad 0 (wider)
-  createKeyButton( 17, getKeyLabel(17), 4, 27 );  // Numpad ,
+  createKeyButton( 16, getKeyLabel(16), 5, 20, 2, 1 ); // Numpad 0 (wider)
+  createKeyButton( 17, getKeyLabel(17), 5, 18 );  // Numpad ,
 
   // Navigation keys (arrow keys under right shift)
-  createKeyButton( 14, getKeyLabel(14), 5, 15 );  // Up Arrow
-  createKeyButton( 13, getKeyLabel(13), 6, 14 );  // Left Arrow
-  createKeyButton( 18, getKeyLabel(18), 6, 15 );  // Down Arrow
-  createKeyButton( 15, getKeyLabel(15), 6, 16 );  // Right Arrow
+  createKeyButton( 14, getKeyLabel(14), 5, 13 );  // Up Arrow
+  createKeyButton( 13, getKeyLabel(13), 6, 12 );  // Left Arrow
+  createKeyButton( 18, getKeyLabel(18), 6, 13 );  // Down Arrow
+  createKeyButton( 15, getKeyLabel(15), 6, 14 );  // Right Arrow
 
   m_scrollArea->setWidget( m_keyboardWidget );
   mainLayout->addWidget( m_scrollArea );
-
-  // Add mapping controls
-  QHBoxLayout *mappingLayout = new QHBoxLayout();
-  mappingLayout->setContentsMargins( 5, 5, 5, 5 );
-
-  m_startMappingButton = new QPushButton( "Start Zone Mapping" );
-  m_startMappingButton->setToolTip( "Set all zones to maximum brightness for mapping" );
-  connect( m_startMappingButton, &QPushButton::clicked, this, &KeyboardVisualizerWidget::startZoneMapping );
-
-  m_testNextZoneButton = new QPushButton( "Test Next Zone" );
-  m_testNextZoneButton->setToolTip( "Set the next zone to blue color to identify which key it corresponds to" );
-  m_testNextZoneButton->setEnabled( false );
-  connect( m_testNextZoneButton, &QPushButton::clicked, this, &KeyboardVisualizerWidget::onTestNextZone );
-
-  m_mappingStatusLabel = new QLabel( "Click 'Start Zone Mapping' to begin mapping zones to keys" );
-  m_mappingStatusLabel->setStyleSheet( "font-size: 11px; color: #666;" );
-
-  mappingLayout->addWidget( m_startMappingButton );
-  mappingLayout->addWidget( m_testNextZoneButton );
-  mappingLayout->addWidget( m_mappingStatusLabel );
-  mappingLayout->addStretch();
-
-  mainLayout->addLayout( mappingLayout );
 
   // Instructions label
   QLabel *instructions = new QLabel( "Click on keys to select and change their color. Use global controls for all keys." );
@@ -539,95 +515,9 @@ void ucc::KeyboardVisualizerWidget::setGlobalColor( const QColor &color )
   emit colorsChanged();
 }
 
-void KeyboardVisualizerWidget::startZoneMapping()
-{
-  m_mappingMode = true;
-  m_currentTestZone = 0;
-
-  // Set all zones to maximum brightness (255) for mapping
-  setGlobalBrightness( 255 );
-
-  // Enable the test button
-  m_testNextZoneButton->setEnabled( true );
-  if ( m_mappingStatusLabel )
-  {
-    m_mappingStatusLabel->setText( "Mapping mode active. Click 'Test Next Zone' to set zones to blue one by one." );
-  }
-
-  emit colorsChanged();
-}
-
-void KeyboardVisualizerWidget::testZone( int zoneId )
-{
-  if ( zoneId < 0 || zoneId >= m_zones )
-    return;
-
-  // Set all zones to maximum brightness with white color
-  for ( auto &key : m_keys )
-  {
-    key.brightness = 255;
-    key.color = Qt::white;
-  }
-
-  // Set the specific zone to maximum brightness with blue color
-  if ( zoneId < static_cast< int >( m_keys.size() ) )
-  {
-    m_keys[zoneId].brightness = 255;
-    m_keys[zoneId].color = Qt::blue;
-  }
-
-  // Update all button appearances
-  for ( int i = 0; i < m_layout->count(); ++i )
-  {
-    QLayoutItem *item = m_layout->itemAt( i );
-    if ( item && item->widget() )
-    {
-      QPushButton *button = qobject_cast< QPushButton * >( item->widget() );
-      if ( button )
-      {
-        int buttonZoneId = button->property( "zoneId" ).toInt();
-        if ( buttonZoneId >= 0 && buttonZoneId < static_cast< int >( m_keys.size() ) )
-        {
-          updateKeyAppearance( button, m_keys[buttonZoneId].color, m_keys[buttonZoneId].brightness );
-        }
-      }
-    }
-  }
-
-  emit colorsChanged();
-}
-
-int KeyboardVisualizerWidget::getNextTestZone()
-{
-  int nextZone = m_currentTestZone;
-  m_currentTestZone = ( m_currentTestZone + 1 ) % m_zones;
-  return nextZone;
-}
-
-void KeyboardVisualizerWidget::onTestNextZone()
-{
-  if ( !m_mappingMode )
-    return;
-
-  int zoneToTest = getNextTestZone();
-  testZone( zoneToTest );
-
-  if ( m_mappingStatusLabel )
-  {
-    m_mappingStatusLabel->setText( QString( "Testing zone %1. Which key turned blue? Tell me and I'll record the mapping." ).arg( zoneToTest ) );
-  }
-}
-
 void KeyboardVisualizerWidget::recordZoneMapping( int zoneId, const QString &keyName )
 {
   m_zoneMappings[zoneId] = keyName;
-  if ( m_mappingStatusLabel )
-  {
-    m_mappingStatusLabel->setText( QString( "Recorded: Zone %1 = %2. %3 mappings recorded so far." )
-                                  .arg( zoneId )
-                                  .arg( keyName )
-                                  .arg( m_zoneMappings.size() ) );
-  }
 }
 
 QString KeyboardVisualizerWidget::getKeyLabel( int zoneId ) const
@@ -638,16 +528,6 @@ QString KeyboardVisualizerWidget::getKeyLabel( int zoneId ) const
     return it->second;
   }
   return QString( "Zone %1" ).arg( zoneId );
-}
-
-QString KeyboardVisualizerWidget::getZoneMappings() const
-{
-  QString result = "Zone Mappings:\n";
-  for ( const auto &mapping : m_zoneMappings )
-  {
-    result += QString( "Zone %1: %2\n" ).arg( mapping.first ).arg( mapping.second );
-  }
-  return result;
 }
 
 } // namespace ucc
