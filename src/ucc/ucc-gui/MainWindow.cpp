@@ -601,11 +601,12 @@ void MainWindow::setupProfilesPage()
   detailsLayout->addLayout( coresLayout, row, 1 );
   row++;
 
-  QLabel *maxPerfLabel = new QLabel( "Maximum performance" );
-  m_maxPerformanceCheckBox = new QCheckBox();
-  m_maxPerformanceCheckBox->setChecked( true );
+  QLabel *maxPerfLabel = new QLabel( "CPU Governor" );
+  m_governorCombo = new QComboBox();
+  m_governorCombo->addItem( "powersave", "powersave" );
+  m_governorCombo->addItem( "performance", "performance" );
   detailsLayout->addWidget( maxPerfLabel, row, 0 );
-  detailsLayout->addWidget( m_maxPerformanceCheckBox, row, 1, Qt::AlignLeft );
+  detailsLayout->addWidget( m_governorCombo, row, 1, Qt::AlignLeft );
   row++;
 
   QLabel *minFreqLabel = new QLabel( "Minimum frequency" );
@@ -861,7 +862,7 @@ void MainWindow::connectSignals()
   connect( m_cpuCoresSlider, &QSlider::valueChanged,
            this, [this]() { markChanged(); } );
 
-  connect( m_maxPerformanceCheckBox, &QCheckBox::toggled,
+  connect( m_governorCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
            this, &MainWindow::markChanged );
 
   connect( m_minFrequencySlider, &QSlider::valueChanged,
@@ -909,6 +910,23 @@ void MainWindow::connectSignals()
 
   // Initial load of fan profiles (may be empty if service not yet available)
   reloadFanProfiles();
+
+  // Populate governor combo
+  populateGovernorCombo();
+}
+
+void MainWindow::populateGovernorCombo()
+{
+  if ( !m_governorCombo )
+    return;
+
+  m_governorCombo->clear();
+
+  if ( auto governors = m_UccdClient->getAvailableCpuGovernors(); governors && !governors->empty() )
+  {
+    for ( const auto &gov : *governors )
+      m_governorCombo->addItem( QString::fromStdString( gov ), QString::fromStdString( gov ) );
+  }
 }
 
 void MainWindow::onDisplayBrightnessSliderChanged( int value )
@@ -1206,7 +1224,7 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   m_maxFanSpeedSlider->blockSignals( true );
   m_offsetFanSpeedSlider->blockSignals( true );
   m_cpuCoresSlider->blockSignals( true );
-  m_maxPerformanceCheckBox->blockSignals( true );
+  m_governorCombo->blockSignals( true );
   m_minFrequencySlider->blockSignals( true );
   m_maxFrequencySlider->blockSignals( true );
   m_odmPowerLimit1Slider->blockSignals( true );
@@ -1295,8 +1313,26 @@ void MainWindow::loadProfileDetails( const QString &profileName )
     if ( cpuObj.contains( "onlineCores" ) )
       m_cpuCoresSlider->setValue( cpuObj["onlineCores"].toInt( 32 ) );
 
-    if ( cpuObj.contains( "useMaxPerfGov" ) )
-      m_maxPerformanceCheckBox->setChecked( cpuObj["useMaxPerfGov"].toBool( true ) );
+    if ( cpuObj.contains( "governor" ) )
+    {
+      QString governor = cpuObj["governor"].toString();
+      int index = m_governorCombo->findData( governor );
+      if ( index >= 0 )
+        m_governorCombo->setCurrentIndex( index );
+      else
+        m_governorCombo->setCurrentIndex( 0 ); // default to first
+    }
+    else if ( cpuObj.contains( "useMaxPerfGov" ) )
+    {
+      // backward compatibility
+      bool useMaxPerf = cpuObj["useMaxPerfGov"].toBool( true );
+      QString governor = useMaxPerf ? "performance" : "powersave";
+      int index = m_governorCombo->findData( governor );
+      if ( index >= 0 )
+        m_governorCombo->setCurrentIndex( index );
+      else
+        m_governorCombo->setCurrentIndex( 0 );
+    }
 
     if ( cpuObj.contains( "scalingMinFrequency" ) )
       m_minFrequencySlider->setValue( cpuObj["scalingMinFrequency"].toInt( 500 ) );
@@ -1452,7 +1488,7 @@ void MainWindow::loadProfileDetails( const QString &profileName )
   m_maxFanSpeedSlider->blockSignals( false );
   m_offsetFanSpeedSlider->blockSignals( false );
   m_cpuCoresSlider->blockSignals( false );
-  m_maxPerformanceCheckBox->blockSignals( false );
+  m_governorCombo->blockSignals( false );
   m_minFrequencySlider->blockSignals( false );
   m_maxFrequencySlider->blockSignals( false );
   m_odmPowerLimit1Slider->blockSignals( false );
@@ -1528,7 +1564,7 @@ void MainWindow::updateProfileEditingWidgets( bool isCustom )
   
   // CPU controls
   if ( m_cpuCoresSlider ) m_cpuCoresSlider->setEnabled( isCustom );
-  if ( m_maxPerformanceCheckBox ) m_maxPerformanceCheckBox->setEnabled( isCustom );
+  if ( m_governorCombo ) m_governorCombo->setEnabled( isCustom );
   if ( m_minFrequencySlider ) m_minFrequencySlider->setEnabled( isCustom );
   if ( m_maxFrequencySlider ) m_maxFrequencySlider->setEnabled( isCustom );
   
@@ -1633,7 +1669,7 @@ void MainWindow::onSaveClicked()
     // CPU settings
     QJsonObject cpuObj;
     cpuObj["cores"] = m_cpuCoresSlider->value();
-    cpuObj["useMaxPerfGov"] = m_maxPerformanceCheckBox->isChecked();
+    cpuObj["governor"] = m_governorCombo->currentData().toString();
     cpuObj["minFrequency"] = m_minFrequencySlider->value();
     cpuObj["maxFrequency"] = m_maxFrequencySlider->value();
     profileObj["cpu"] = cpuObj;
@@ -1698,7 +1734,7 @@ void MainWindow::onSaveClicked()
 
         QJsonObject cpuObj;
         cpuObj["cores"] = m_cpuCoresSlider->value();
-        cpuObj["useMaxPerfGov"] = m_maxPerformanceCheckBox->isChecked();
+        cpuObj["governor"] = m_governorCombo->currentData().toString();
         cpuObj["minFrequency"] = m_minFrequencySlider->value();
         cpuObj["maxFrequency"] = m_maxFrequencySlider->value();
         obj["cpu"] = cpuObj;

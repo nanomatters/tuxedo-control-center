@@ -320,6 +320,7 @@ public:
   int32_t GetNVIDIAPowerCTRLDefaultPowerLimit();
   int32_t GetNVIDIAPowerCTRLMaxPowerLimit();
   bool GetNVIDIAPowerCTRLAvailable();
+  std::string GetAvailableGovernors();
 
   // signal emitters
   void emitModeReapplyPendingChanged( bool pending );
@@ -370,6 +371,15 @@ public:
   UccDBusInterfaceAdaptor *getAdaptor() noexcept
   {
     return m_adaptor.get();
+  }
+
+  /**
+   * @brief Get the CPU worker
+   * @return Pointer to CPU worker or nullptr if not initialized
+   */
+  CpuWorker *getCpuWorker() noexcept
+  {
+    return m_cpuWorker.get();
   }
 
   /**

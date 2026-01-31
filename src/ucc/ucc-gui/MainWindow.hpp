@@ -116,6 +116,7 @@ namespace ucc
     void loadFanPoints();
     void saveFanPoints();
     void connectSignals();
+    void populateGovernorCombo();
 
     // Update fan profile combo from daemon and custom store
     void reloadFanProfiles();
@@ -200,7 +201,7 @@ namespace ucc
     // CPU frequency control widgets
     QSlider *m_cpuCoresSlider = nullptr;
     QLabel *m_cpuCoresValue = nullptr;
-    QCheckBox *m_maxPerformanceCheckBox = nullptr;
+    QComboBox *m_governorCombo = nullptr;
     QSlider *m_minFrequencySlider = nullptr;
     QLabel *m_minFrequencyValue = nullptr;
     QSlider *m_maxFrequencySlider = nullptr;

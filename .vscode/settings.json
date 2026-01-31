@@ -64,7 +64,9 @@
       },
       "qdbus6": true,
       "setxkbmap": true,
-      "localectl": true
+      "localectl": true,
+      "lscpu": true,
+      "rpm": true
     },
     "editor.fontFamily": "'Source Code Pro', Menlo, Monaco, 'Courier New', monospace",
     "editor.fontSize": 14,

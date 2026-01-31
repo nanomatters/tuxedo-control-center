@@ -86,6 +86,19 @@ public:
     }
   }
 
+  /**
+   * @brief Get available CPU governors
+   * 
+   * @return Vector of available governor names, or nullopt if unavailable
+   */
+  std::optional< std::vector< std::string > > getAvailableGovernors()
+  {
+    if ( m_cpuCtrl->cores.empty() )
+      return std::nullopt;
+
+    return m_cpuCtrl->cores[ 0 ].scalingAvailableGovernors.read();
+  }
+
 private:
   std::function< UccProfile() > m_getActiveProfile;
   std::function< bool() > m_getCpuSettingsEnabled;
@@ -195,36 +208,25 @@ private:
     // reset everything to default before applying new settings
     setCpuDefaultConfig();
 
-    if ( not profile.cpu.useMaxPerfGov )
+    // Set the governor from profile
+    if ( !profile.cpu.governor.empty() )
     {
-      // normal mode: use profile settings
-      auto governor = findDefaultGovernor();
-
-      m_cpuCtrl->setGovernor( governor );
-
-      if ( not m_noEPPWriteQuirk )
-      {
-        m_cpuCtrl->setEnergyPerformancePreference( profile.cpu.energyPerformancePreference );
-      }
-
-      m_cpuCtrl->setGovernorScalingMinFrequency( profile.cpu.scalingMinFrequency );
-      m_cpuCtrl->setGovernorScalingMaxFrequency( profile.cpu.scalingMaxFrequency );
+      m_cpuCtrl->setGovernor( profile.cpu.governor );
     }
     else
     {
-      // performance mode: max everything
-      auto governor = findPerformanceGovernor();
-
+      // fallback to default
+      auto governor = findDefaultGovernor();
       m_cpuCtrl->setGovernor( governor );
-
-      if ( not m_noEPPWriteQuirk )
-      {
-        m_cpuCtrl->setEnergyPerformancePreference( "performance" );
-      }
-
-      m_cpuCtrl->setGovernorScalingMinFrequency( -2 ); // -2 means set to max
-      m_cpuCtrl->setGovernorScalingMaxFrequency( std::nullopt );
     }
+
+    if ( not m_noEPPWriteQuirk )
+    {
+      m_cpuCtrl->setEnergyPerformancePreference( profile.cpu.energyPerformancePreference );
+    }
+
+    m_cpuCtrl->setGovernorScalingMinFrequency( profile.cpu.scalingMinFrequency );
+    m_cpuCtrl->setGovernorScalingMaxFrequency( profile.cpu.scalingMaxFrequency );
 
     // set number of online cores
     m_cpuCtrl->useCores( profile.cpu.onlineCores );

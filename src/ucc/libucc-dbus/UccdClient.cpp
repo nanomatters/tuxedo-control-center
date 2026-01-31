@@ -452,7 +452,24 @@ std::optional< std::string > UccdClient::getCpuScalingGovernor()
 
 std::optional< std::vector< std::string > > UccdClient::getAvailableCpuGovernors()
 {
-  return std::nullopt;
+  auto jsonStr = callMethod< QString >( "GetAvailableGovernors" );
+  if ( !jsonStr )
+    return std::nullopt;
+
+  QJsonDocument doc = QJsonDocument::fromJson( jsonStr->toUtf8() );
+  if ( !doc.isArray() )
+    return std::nullopt;
+
+  QJsonArray array = doc.array();
+  std::vector< std::string > governors;
+  for ( const QJsonValue &value : array )
+  {
+    if ( value.isString() )
+    {
+      governors.push_back( value.toString().toStdString() );
+    }
+  }
+  return governors;
 }
 
 bool UccdClient::setCpuFrequency( [[maybe_unused]] int minFreq, [[maybe_unused]] int maxFreq )

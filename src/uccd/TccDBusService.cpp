@@ -326,6 +326,7 @@ void UccDBusInterfaceAdaptor::registerAdaptor()
     registerMethod("GetNVIDIAPowerCTRLDefaultPowerLimit").implementedAs([this](){ return this->GetNVIDIAPowerCTRLDefaultPowerLimit(); }),
     registerMethod("GetNVIDIAPowerCTRLMaxPowerLimit").implementedAs([this](){ return this->GetNVIDIAPowerCTRLMaxPowerLimit(); }),
     registerMethod("GetNVIDIAPowerCTRLAvailable").implementedAs([this](){ return this->GetNVIDIAPowerCTRLAvailable(); }),
+    registerMethod("GetAvailableGovernors").implementedAs([this](){ return this->GetAvailableGovernors(); }),
     registerSignal("ProfileChanged").withParameters<std::string>(),
     registerSignal("ModeReapplyPendingChanged").withParameters<bool>(),
     registerSignal("PowerStateChanged").withParameters<std::string>()
@@ -1046,6 +1047,26 @@ int UccDBusInterfaceAdaptor::GetNVIDIAPowerCTRLMaxPowerLimit()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.nvidiaPowerCTRLMaxPowerLimit;
+}
+
+std::string UccDBusInterfaceAdaptor::GetAvailableGovernors()
+{
+  if ( m_service && m_service->getCpuWorker() )
+  {
+    auto governors = m_service->getCpuWorker()->getAvailableGovernors();
+    if ( governors )
+    {
+      std::string json = "[";
+      for ( size_t i = 0; i < governors->size(); ++i )
+      {
+        if ( i > 0 ) json += ",";
+        json += "\"" + (*governors)[i] + "\"";
+      }
+      json += "]";
+      return json;
+    }
+  }
+  return "[]";
 }
 
 // keyboard backlight methods
