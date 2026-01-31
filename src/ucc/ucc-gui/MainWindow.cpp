@@ -21,6 +21,8 @@
 #include "FanCurveEditorWidget.hpp"
 #include "../libucc-dbus/UccdClient.hpp"
 
+#include "HardwareTab.hpp"
+
 #include <QtWidgets/QTableWidget>
 #include <QtWidgets/QHeaderView>
 #include <QUuid>
@@ -150,7 +152,9 @@ void MainWindow::setupUI()
   setupFanControlTab();
   updateFanTabVisibility(); // Set initial visibility based on current profile
   setupKeyboardBacklightPage();
-  setupHardwarePage();
+
+  m_hardwareTab = new HardwareTab( m_systemMonitor.get(), this );
+  m_tabs->addTab( m_hardwareTab, "Hardware" );
 }
 
 void MainWindow::setupFanControlTab()
@@ -675,54 +679,6 @@ void MainWindow::setupProfilesPage()
   m_tabs->addTab( profilesWidget, "Profiles" );
 }
 
-void MainWindow::setupHardwarePage()
-{
-  QWidget *hardwareWidget = new QWidget();
-  QVBoxLayout *layout = new QVBoxLayout( hardwareWidget );
-  layout->setContentsMargins( 20, 20, 20, 20 );
-  layout->setSpacing( 16 );
-
-  QLabel *titleLabel = new QLabel( "Hardware & Controls" );
-  titleLabel->setStyleSheet( "font-size: 24px; font-weight: bold;" );
-  layout->addWidget( titleLabel );
-
-  // Display Controls Group
-  QGroupBox *displayGroup = new QGroupBox( "Display" );
-  QVBoxLayout *displayLayout = new QVBoxLayout( displayGroup );
-
-  QHBoxLayout *brightnessLayout = new QHBoxLayout();
-  QLabel *brightnessLabel = new QLabel( "Brightness:" );
-  brightnessLabel->setStyleSheet( "font-weight: bold;" );
-  m_displayBrightnessSlider = new QSlider( Qt::Horizontal );
-  m_displayBrightnessSlider->setMinimum( 0 );
-  m_displayBrightnessSlider->setMaximum( 100 );
-  m_displayBrightnessSlider->setValue( 50 );
-  m_displayBrightnessValueLabel = new QLabel( "50%" );
-  m_displayBrightnessValueLabel->setMinimumWidth( 40 );
-  brightnessLayout->addWidget( brightnessLabel );
-  brightnessLayout->addWidget( m_displayBrightnessSlider );
-  brightnessLayout->addWidget( m_displayBrightnessValueLabel );
-  displayLayout->addLayout( brightnessLayout );
-
-  layout->addWidget( displayGroup );
-
-  // Quick Controls Group
-  QGroupBox *controlsGroup = new QGroupBox( "Quick Controls" );
-  QVBoxLayout *controlsLayout = new QVBoxLayout( controlsGroup );
-
-  m_webcamCheckBox = new QCheckBox( "Webcam Enabled" );
-  m_fnLockCheckBox = new QCheckBox( "Fn Lock Enabled" );
-  controlsLayout->addWidget( m_webcamCheckBox );
-  controlsLayout->addWidget( m_fnLockCheckBox );
-
-  layout->addWidget( controlsGroup );
-
-  layout->addStretch();
-
-  m_tabs->addTab( hardwareWidget, "Hardware" );
-}
-
-
 void MainWindow::connectSignals()
 {
   // Profile page connections
@@ -791,23 +747,6 @@ void MainWindow::connectSignals()
 
   connect( m_gpuPowerSlider, &QSlider::valueChanged,
            this, &MainWindow::onGpuPowerChanged );
-
-  connect( m_displayBrightnessSlider, &QSlider::sliderMoved,
-           this, &MainWindow::onDisplayBrightnessSliderChanged );
-
-  connect( m_displayBrightnessSlider, &QSlider::valueChanged,
-           this, [this]( int value ) {
-    if ( m_displayBrightnessValueLabel )
-    {
-      m_displayBrightnessValueLabel->setText( QString::number( value ) + "%" );
-    }
-  } );
-
-  connect( m_webcamCheckBox, &QCheckBox::toggled,
-           this, &MainWindow::onWebcamToggled );
-
-  connect( m_fnLockCheckBox, &QCheckBox::toggled,
-           this, &MainWindow::onFnLockToggled );
 
   // Apply and Save buttons
 
@@ -927,24 +866,6 @@ void MainWindow::populateGovernorCombo()
     for ( const auto &gov : *governors )
       m_governorCombo->addItem( QString::fromStdString( gov ), QString::fromStdString( gov ) );
   }
-}
-
-void MainWindow::onDisplayBrightnessSliderChanged( int value )
-{
-  m_systemMonitor->setDisplayBrightness( value );
-  statusBar()->showMessage( "Brightness set to " + QString::number( value ) + "%" );
-}
-
-void MainWindow::onWebcamToggled( bool checked )
-{
-  m_systemMonitor->setWebcamEnabled( checked );
-  statusBar()->showMessage( "Webcam " + QString( checked ? "enabled" : "disabled" ) );
-}
-
-void MainWindow::onFnLockToggled( bool checked )
-{
-  m_systemMonitor->setFnLock( checked );
-  statusBar()->showMessage( "Fn Lock " + QString( checked ? "enabled" : "disabled" ) );
 }
 
 void MainWindow::onTabChanged( int index )

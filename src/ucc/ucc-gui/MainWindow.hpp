@@ -40,6 +40,7 @@
 #include "FanCurveEditorWidget.hpp"
 #include "KeyboardVisualizerWidget.hpp"
 #include "DashboardTab.hpp"
+#include "HardwareTab.hpp"
 
 namespace ucc
 {
@@ -86,9 +87,6 @@ namespace ucc
     void onCopyFanProfileClicked();
 
     // Dashboard page slots
-    void onDisplayBrightnessSliderChanged( int value );
-    void onWebcamToggled( bool checked );
-    void onFnLockToggled( bool checked );
     void onTabChanged( int index );
     void onKeyboardBrightnessChanged( int value );
     void onKeyboardColorClicked();
@@ -139,10 +137,9 @@ namespace ucc
 
     // Dashboard tab
     DashboardTab *m_dashboardTab = nullptr;
-    QSlider *m_displayBrightnessSlider = nullptr;
-    QLabel *m_displayBrightnessValueLabel = nullptr;
-    QCheckBox *m_webcamCheckBox = nullptr;
-    QCheckBox *m_fnLockCheckBox = nullptr;
+
+    // Hardware tab
+    HardwareTab *m_hardwareTab = nullptr;
 
     // Profiles widgets
     QComboBox *m_profileCombo = nullptr;

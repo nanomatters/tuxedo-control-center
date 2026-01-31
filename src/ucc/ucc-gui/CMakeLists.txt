@@ -29,11 +29,13 @@ add_executable( ucc-gui
   main.cpp
   MainWindow.cpp
   DashboardTab.cpp
+  HardwareTab.cpp
   KeyboardTab.cpp
   ProfileManager.cpp
   SystemMonitor.cpp
   FanCurveEditorWidget.cpp
   FanCurveEditorWidget.hpp
+  HardwareTab.hpp
   KeyboardVisualizerWidget.cpp
   KeyboardVisualizerWidget.hpp
   DetectLayout.cpp
