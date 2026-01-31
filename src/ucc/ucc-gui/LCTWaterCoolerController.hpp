@@ -26,6 +26,7 @@ namespace ucc
 {
 
 enum class LCTDeviceModel {
+    Unknown = -1,
     LCT21001 = 0,
     LCT22002 = 1
 };
@@ -49,6 +50,7 @@ struct DeviceInfo {
     QString uuid;
     QString name;
     int rssi;
+    QBluetoothDeviceInfo deviceInfo;
 };
 
 class LCTWaterCoolerController : public QObject

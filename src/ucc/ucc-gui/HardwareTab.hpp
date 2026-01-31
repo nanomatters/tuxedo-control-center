@@ -23,6 +23,8 @@
 #include <QHBoxLayout>
 #include <QGroupBox>
 #include <QPushButton>
+#include <QMainWindow>
+#include <QStatusBar>
 #include <QComboBox>
 #include <QListWidget>
 #include <QProgressBar>
@@ -54,7 +56,6 @@ private slots:
 
     // Water cooler slots
     void onScanDevicesClicked();
-    void onConnectDeviceClicked();
     void onDisconnectDeviceClicked();
     void onDeviceDiscovered(const DeviceInfo &device);
     void onDiscoveryFinished();
@@ -84,9 +85,7 @@ private:
     QCheckBox *m_fnLockCheckBox = nullptr;
 
     // Water cooler controls
-    QListWidget *m_deviceListWidget = nullptr;
     QPushButton *m_scanButton = nullptr;
-    QPushButton *m_connectButton = nullptr;
     QPushButton *m_disconnectButton = nullptr;
     QLabel *m_connectionStatusLabel = nullptr;
     QProgressBar *m_scanProgressBar = nullptr;

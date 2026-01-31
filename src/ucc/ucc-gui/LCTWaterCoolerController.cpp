@@ -108,7 +108,7 @@ bool LCTWaterCoolerController::connectToDevice(const QString &deviceUuid)
     for (const auto &device : m_discoveredDevices) {
         std::cout << "[DEBUG] Checking device: " << device.uuid.toStdString() << " name: " << device.name.toStdString() << std::endl;
         if (device.uuid == deviceUuid) {
-            deviceInfo = QBluetoothDeviceInfo(QBluetoothAddress(deviceUuid), device.name, device.rssi);
+            deviceInfo = device.deviceInfo;
             found = true;
             std::cout << "[DEBUG] Found matching device: " << device.name.toStdString() << std::endl;
             break;
@@ -290,7 +290,7 @@ void LCTWaterCoolerController::onDeviceDiscovered(const QBluetoothDeviceInfo &de
     LCTDeviceModel model = deviceModelFromName(deviceName);
     std::cout << "[DEBUG] Device model detected: " << static_cast<int>(model) << std::endl;
 
-    if (model != LCTDeviceModel::LCT21001 && model != LCTDeviceModel::LCT22002) {
+    if (model == LCTDeviceModel::Unknown) {
         std::cout << "[DEBUG] Not an LCT device, ignoring" << std::endl;
         return;  // Not an LCT device
     }
@@ -299,6 +299,7 @@ void LCTWaterCoolerController::onDeviceDiscovered(const QBluetoothDeviceInfo &de
     info.uuid = device.address().toString();
     info.name = deviceName;
     info.rssi = device.rssi();
+    info.deviceInfo = device;
 
     std::cout << "[DEBUG] Adding LCT device to discovered list: " << deviceName.toStdString() 
               << " UUID: " << info.uuid.toStdString() << std::endl;
@@ -499,7 +500,7 @@ LCTDeviceModel LCTWaterCoolerController::deviceModelFromName(const QString &name
     } else if (lowerName.contains("lct21001")) {
         return LCTDeviceModel::LCT21001;
     }
-    return LCTDeviceModel::LCT21001;  // Default
+    return LCTDeviceModel::Unknown;  // Not an LCT device
 }
 
 bool LCTWaterCoolerController::writeCommand(const QByteArray &data)

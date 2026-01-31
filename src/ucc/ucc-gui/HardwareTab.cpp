@@ -98,23 +98,12 @@ void HardwareTab::setupUI()
   discoveryLayout->addWidget( m_scanProgressBar );
   waterCoolerLayout->addLayout( discoveryLayout );
 
-  // Device list
-  QLabel *deviceListLabel = new QLabel( "Available Devices:" );
-  deviceListLabel->setStyleSheet( "font-weight: bold;" );
-  waterCoolerLayout->addWidget( deviceListLabel );
-
-  m_deviceListWidget = new QListWidget();
-  m_deviceListWidget->setMaximumHeight( 100 );
-  waterCoolerLayout->addWidget( m_deviceListWidget );
-
-  // Connection controls
+  // Connection status
   QHBoxLayout *connectionLayout = new QHBoxLayout();
-  m_connectButton = new QPushButton( "Connect" );
   m_disconnectButton = new QPushButton( "Disconnect" );
   m_connectionStatusLabel = new QLabel( "Not connected" );
   m_connectionStatusLabel->setStyleSheet( "color: red;" );
 
-  connectionLayout->addWidget( m_connectButton );
   connectionLayout->addWidget( m_disconnectButton );
   connectionLayout->addStretch();
   connectionLayout->addWidget( m_connectionStatusLabel );
@@ -225,8 +214,6 @@ void HardwareTab::connectSignals()
   // Water cooler connections
   connect( m_scanButton, &QPushButton::clicked,
            this, &HardwareTab::onScanDevicesClicked );
-  connect( m_connectButton, &QPushButton::clicked,
-           this, &HardwareTab::onConnectDeviceClicked );
   connect( m_disconnectButton, &QPushButton::clicked,
            this, &HardwareTab::onDisconnectDeviceClicked );
 
@@ -285,26 +272,15 @@ void HardwareTab::onFnLockToggled( bool checked )
 
 void HardwareTab::onScanDevicesClicked()
 {
-  m_deviceListWidget->clear();
   m_scanProgressBar->setVisible( true );
   m_scanProgressBar->setRange( 0, 0 ); // Indeterminate progress
   m_scanButton->setEnabled( false );
   m_waterCoolerController->startDiscovery();
-}
-
-void HardwareTab::onConnectDeviceClicked()
-{
-  auto currentItem = m_deviceListWidget->currentItem();
-  if ( !currentItem ) {
-    QMessageBox::warning( this, tr( "No Device Selected" ),
-                         tr( "Please select a water cooler device to connect to." ) );
-    return;
+  
+  // Show scanning status in status bar
+  if ( auto *mainWindow = qobject_cast<QMainWindow*>(window()) ) {
+    mainWindow->statusBar()->showMessage( tr( "Scanning" ) );
   }
-
-  QString deviceAddress = currentItem->data( Qt::UserRole ).toString();
-  m_waterCoolerController->connectToDevice( deviceAddress );
-  m_connectButton->setEnabled( false );
-  m_disconnectButton->setEnabled( true );
 }
 
 void HardwareTab::onDisconnectDeviceClicked()
@@ -314,29 +290,46 @@ void HardwareTab::onDisconnectDeviceClicked()
 
 void HardwareTab::onDeviceDiscovered( const DeviceInfo& device )
 {
-  // Filter for known water cooler models
-  if ( device.name.contains( "LCT", Qt::CaseInsensitive ) ||
-       device.name.contains( "22001", Qt::CaseInsensitive ) ||
-       device.name.contains( "22002", Qt::CaseInsensitive ) ) {
-    auto item = new QListWidgetItem( device.name + " (" + device.uuid + ")" );
-    item->setData( Qt::UserRole, device.uuid );
-    m_deviceListWidget->addItem( item );
+  // Immediately connect to the first compatible device found
+  qDebug() << "Compatible device found:" << device.name << "UUID:" << device.uuid << "RSSI:" << device.rssi;
+  qDebug() << "Connecting immediately to device:" << device.name;
+  
+  // Show connecting status in status bar
+  if ( auto *mainWindow = qobject_cast<QMainWindow*>(window()) ) {
+    mainWindow->statusBar()->showMessage( tr( "Connecting" ) );
   }
+  
+  // Stop discovery since we found a compatible device
+  m_waterCoolerController->stopDiscovery();
+  
+  // Connect to the device
+  m_waterCoolerController->connectToDevice(device.uuid);
 }
 
 void HardwareTab::onDiscoveryFinished()
 {
   m_scanProgressBar->setVisible( false );
   m_scanButton->setEnabled( true );
-  if ( m_deviceListWidget->count() == 0 ) {
+  
+  auto devices = m_waterCoolerController->getDeviceList();
+  if (devices.isEmpty()) {
     QMessageBox::information( this, tr( "No Devices Found" ),
                              tr( "No compatible water cooler devices were found. Make sure Bluetooth is enabled and the device is in pairing mode." ) );
+    
+    // Clear scanning status from status bar
+    if ( auto *mainWindow = qobject_cast<QMainWindow*>(window()) ) {
+      mainWindow->statusBar()->clearMessage();
+    }
+    return;
   }
+  
+  // If we reach here, devices were found but we haven't connected yet
+  // This shouldn't happen with the new immediate connection logic, but keep as fallback
+  qDebug() << "Discovery finished with" << devices.size() << "devices found, but no immediate connection was made";
 }
 
 void HardwareTab::onConnected()
 {
-  m_connectButton->setEnabled( false );
   m_disconnectButton->setEnabled( true );
   m_fanSpeedSlider->setEnabled( true );
   m_fanOffButton->setEnabled( true );
@@ -345,13 +338,14 @@ void HardwareTab::onConnected()
   m_colorPickerButton->setEnabled( true );
   m_ledModeCombo->setEnabled( true );
 
-  QMessageBox::information( this, tr( "Connected" ),
-                           tr( "Successfully connected to water cooler device." ) );
+  // Show success status in status bar
+  if ( auto *mainWindow = qobject_cast<QMainWindow*>(window()) ) {
+    mainWindow->statusBar()->showMessage( tr( "Connection to water cooler successful" ) );
+  }
 }
 
 void HardwareTab::onDisconnected()
 {
-  m_connectButton->setEnabled( true );
   m_disconnectButton->setEnabled( false );
   m_fanSpeedSlider->setEnabled( false );
   m_fanOffButton->setEnabled( false );
@@ -360,20 +354,32 @@ void HardwareTab::onDisconnected()
   m_colorPickerButton->setEnabled( false );
   m_ledModeCombo->setEnabled( false );
 
-  QMessageBox::information( this, tr( "Disconnected" ),
-                           tr( "Disconnected from water cooler device." ) );
+  // Clear status bar message
+  if ( auto *mainWindow = qobject_cast<QMainWindow*>(window()) ) {
+    mainWindow->statusBar()->clearMessage();
+  }
 }
 
 void HardwareTab::onConnectionError( const QString& error )
 {
-  m_connectButton->setEnabled( true );
   m_disconnectButton->setEnabled( false );
-  QMessageBox::critical( this, tr( "Connection Error" ), error );
+  
+  // Show failure status in status bar
+  if ( auto *mainWindow = qobject_cast<QMainWindow*>(window()) ) {
+    mainWindow->statusBar()->showMessage( tr( "Connection to water cooler failed" ) );
+  }
+  
+  qDebug() << "Connection error:" << error;
 }
 
 void HardwareTab::onControlError( const QString& error )
 {
-  QMessageBox::warning( this, tr( "Control Error" ), error );
+  // Show control error in status bar for 5 seconds
+  if ( auto *mainWindow = qobject_cast<QMainWindow*>(window()) ) {
+    mainWindow->statusBar()->showMessage( tr( "Control Error: %1" ).arg( error ), 5000 );
+  }
+  
+  qDebug() << "Control error:" << error;
 }
 
 void HardwareTab::onFanSpeedChanged( int value )
