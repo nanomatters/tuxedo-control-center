@@ -93,7 +93,6 @@ namespace ucc
     void onKeyboardBrightnessChanged( int value );
     void onKeyboardColorClicked();
     void onKeyboardVisualizerColorsChanged();
-    void onKeyboardColorModeChanged( int id );
     void onKeyboardProfileChanged(const QString& profileName);
     void onAddKeyboardProfileClicked();
     void onCopyKeyboardProfileClicked();
@@ -232,10 +231,7 @@ namespace ucc
     QPushButton *m_saveKeyboardProfileButton = nullptr;
     QPushButton *m_removeKeyboardProfileButton = nullptr;
     
-    // Keyboard color mode widgets
-    QButtonGroup *m_keyboardColorModeGroup = nullptr;
-    QRadioButton *m_keyboardGlobalColorRadio = nullptr;
-    QRadioButton *m_keyboardPerKeyColorRadio = nullptr;
+    // Keyboard color widgets
     QLabel *m_keyboardColorLabel = nullptr;
     QLabel *m_keyboardVisualizerLabel = nullptr;
     
