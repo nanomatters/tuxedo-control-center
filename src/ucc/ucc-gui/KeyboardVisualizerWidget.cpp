@@ -20,8 +20,12 @@
 #include <QLabel>
 #include <QColorDialog>
 #include <QApplication>
-#include <QStyle>
-#include <algorithm>
+#include <QProcess>
+#include <QDBusInterface>
+#include <QDBusReply>
+#include <QDBusArgument>
+#include "DetectLayout.hpp"
+#include "AssignKeyZones.hpp"
 
 namespace ucc
 {
@@ -30,133 +34,11 @@ KeyboardVisualizerWidget::KeyboardVisualizerWidget( int zones, QWidget *parent )
   : QWidget( parent )
   , m_zones( zones )
 {
-  // Record known mappings FIRST
-  recordZoneMapping( 0, "Ctrl" );
-  recordZoneMapping( 1, "Unused/Unknown" );
-  recordZoneMapping( 2, "Fn" );
-  recordZoneMapping( 3, "⊞" );
-  recordZoneMapping( 4, "Alt" );
-  recordZoneMapping( 5, "Unused/Unknown" );
-  recordZoneMapping( 6, "Unused/Unknown" );
-  recordZoneMapping( 7, "Space" );
-  recordZoneMapping( 8, "Unused/Unknown" );
-  recordZoneMapping( 9, "Unused/Unknown" );
-  recordZoneMapping( 10, "Alt" );
-  recordZoneMapping( 11, "Unused/Unknown" );
-  recordZoneMapping( 12, "Ctrl" );
-  recordZoneMapping( 13, "←" );
-  recordZoneMapping( 14, "↑" );
-  recordZoneMapping( 15, "→" );
-  recordZoneMapping( 16, "0" );
-  recordZoneMapping( 17, "," );
-  recordZoneMapping( 18, "↓" );
-  recordZoneMapping( 19, "Unused/Unknown" );
-  recordZoneMapping( 20, "Unused/Unknown" );
-  recordZoneMapping( 21, "Unused/Unknown" );
-  recordZoneMapping( 22, "⇧" );
-  recordZoneMapping( 23, "<" );
-  recordZoneMapping( 24, "Y" );
-  recordZoneMapping( 25, "X" );
-  recordZoneMapping( 26, "C" );
-  recordZoneMapping( 27, "V" );
-  recordZoneMapping( 28, "B" );
-  recordZoneMapping( 29, "N" );
-  recordZoneMapping( 30, "M" );
-  recordZoneMapping( 31, "," );
-  recordZoneMapping( 32, "." );
-  recordZoneMapping( 33, "-" );
-  recordZoneMapping( 34, "Unused/Unknown" );
-  recordZoneMapping( 35, "⇧" );
-  recordZoneMapping( 36, "1" );
-  recordZoneMapping( 37, "2" );
-  recordZoneMapping( 38, "3" );
-  recordZoneMapping( 39, "↵" );
-  recordZoneMapping( 40, "Unused/Unknown" );
-  recordZoneMapping( 41, "Unused/Unknown" );
-  recordZoneMapping( 42, "Caps" );
-  recordZoneMapping( 43, "Unused/Unknown" );
-  recordZoneMapping( 44, "A" );
-  recordZoneMapping( 45, "S" );
-  recordZoneMapping( 46, "D" );
-  recordZoneMapping( 47, "F" );
-  recordZoneMapping( 48, "G" );
-  recordZoneMapping( 49, "H" );
-  recordZoneMapping( 50, "J" );
-  recordZoneMapping( 51, "K" );
-  recordZoneMapping( 52, "L" );
-  recordZoneMapping( 53, "Ö" );
-  recordZoneMapping( 54, "Ä" );
-  recordZoneMapping( 55, "#" );
-  recordZoneMapping( 56, "Unused/Unknown" );
-  recordZoneMapping( 57, "4" );
-  recordZoneMapping( 58, "5" );
-  recordZoneMapping( 59, "6" );
-  recordZoneMapping( 60, "Unused/Unknown" );
-  recordZoneMapping( 61, "Unused/Unknown" );
-  recordZoneMapping( 62, "Unused/Unknown" );
-  recordZoneMapping( 63, "Tab" );
-  recordZoneMapping( 64, "Unused/Unknown" );
-  recordZoneMapping( 65, "Q" );
-  recordZoneMapping( 66, "W" );
-  recordZoneMapping( 67, "E" );
-  recordZoneMapping( 68, "R" );
-  recordZoneMapping( 69, "T" );
-  recordZoneMapping( 70, "Z" );
-  recordZoneMapping( 71, "U" );
-  recordZoneMapping( 72, "I" );
-  recordZoneMapping( 73, "O" );
-  recordZoneMapping( 74, "P" );
-  recordZoneMapping( 75, "Ü" );
-  recordZoneMapping( 76, "+" );
-  recordZoneMapping( 77, "↵" );
-  recordZoneMapping( 78, "7" );
-  recordZoneMapping( 79, "8" );
-  recordZoneMapping( 80, "9" );
-  recordZoneMapping( 81, "+" );
-  recordZoneMapping( 82, "Unused/Unknown" );
-  recordZoneMapping( 83, "Unused/Unknown" );
-  recordZoneMapping( 84, "^" );
-  recordZoneMapping( 85, "1" );
-  recordZoneMapping( 86, "2" );
-  recordZoneMapping( 87, "3" );
-  recordZoneMapping( 88, "4" );
-  recordZoneMapping( 89, "5" );
-  recordZoneMapping( 90, "6" );
-  recordZoneMapping( 91, "7" );
-  recordZoneMapping( 92, "8" );
-  recordZoneMapping( 93, "9" );
-  recordZoneMapping( 94, "0" );
-  recordZoneMapping( 95, "ß" );
-  recordZoneMapping( 96, "'" );
-  recordZoneMapping( 97, "Unused/Unknown" );
-  recordZoneMapping( 98, "⌫" );
-  recordZoneMapping( 99, "Num" );
-  recordZoneMapping( 100, "/" );
-  recordZoneMapping( 101, "*" );
-  recordZoneMapping( 102, "-" );
-  recordZoneMapping( 103, "Unused/Unknown" );
-  recordZoneMapping( 104, "Unused/Unknown" );
-  recordZoneMapping( 105, "Esc" );
-  recordZoneMapping( 106, "F1" );
-  recordZoneMapping( 107, "F2" );
-  recordZoneMapping( 108, "F3" );
-  recordZoneMapping( 109, "F4" );
-  recordZoneMapping( 110, "F5" );
-  recordZoneMapping( 111, "F6" );
-  recordZoneMapping( 112, "F7" );
-  recordZoneMapping( 113, "F8" );
-  recordZoneMapping( 114, "F9" );
-  recordZoneMapping( 115, "F10" );
-  recordZoneMapping( 116, "F11" );
-  recordZoneMapping( 117, "F12" );
-  recordZoneMapping( 118, "PrtSc" );
-  recordZoneMapping( 119, "Ins" );
-  recordZoneMapping( 120, "Del" );
-  recordZoneMapping( 121, "Home" );
-  recordZoneMapping( 122, "End" );
-  recordZoneMapping( 123, "PgUp" );
-  recordZoneMapping( 124, "PgDn" );
-  recordZoneMapping( 125, "Unused/Unknown" );
+  // Detect keyboard layout
+  QString layout = detectKeyboardLayout();
+  
+  // Load appropriate zone mappings
+  m_zoneMappings = assignKeyZones(layout);
 
   // Initialize m_keys with default entries for all zones
   m_keys.resize( m_zones );
@@ -551,19 +433,9 @@ void ucc::KeyboardVisualizerWidget::setGlobalColor( const QColor &color )
   emit colorsChanged();
 }
 
-void KeyboardVisualizerWidget::recordZoneMapping( int zoneId, const QString &keyName )
-{
-  m_zoneMappings[zoneId] = keyName;
-}
-
 QString KeyboardVisualizerWidget::getKeyLabel( int zoneId ) const
 {
-  auto it = m_zoneMappings.find( zoneId );
-  if ( it != m_zoneMappings.end() )
-  {
-    return it->second;
-  }
-  return QString( "Zone %1" ).arg( zoneId );
+  return m_zoneMappings.value( zoneId, QString( "Zone %1" ).arg( zoneId ) );
 }
 
 } // namespace ucc

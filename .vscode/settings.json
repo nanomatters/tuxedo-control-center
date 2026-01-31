@@ -11,57 +11,60 @@
     "editor.detectIndentation": false,
     "cmake.sourceDirectory": "/opt/devel/git/tuxedo/tuxedo-control-center/src/uccd",
     "chat.tools.terminal.autoApprove": {
-        "./uccd": true,
-        "gdb": true,
-        "timeout": true,
-        "dbus-send": true,
-        "g++": true,
-        "./test_powersupply": true,
-        "dpkg": true,
-        "cmake": true,
-        "true": true,
-        "journalctl": true,
-        "busctl": true,
-        "/home/erhan/tmp/src/ucc/bin/ucc-gui": true,
-        "make": true,
-        "./build-local.sh": true,
-        "nm": true,
-        "nproc": true,
-        "run": true,
-        "ldd": true,
-        "quit": true,
-        "n": true,
-        "y": true,
-        "ninja": true,
-        "env": true,
-        "coredumpctl": true,
-        "git mv": true,
-        "git add": true,
-        "git commit": true,
-        "/^for f in \\$\\(git grep -l \"com\\.tuxedocomputers\\.tccd\\\\\\|/com/uniwill/uccd\\\\\\|com\\.tuxedocomputers\\.uccd\" --null \\| tr '\\\\0' '\\\\n'\\); do perl -0777 -pe 's/com\\\\\\.tuxedocomputers\\\\\\.tccd/com\\.uniwill\\.uccd/g; s/\\\\/com\\\\/tuxedocomputers\\\\/tccd/\\\\/com\\\\/uniwill\\\\/uccd/g; s/com\\\\\\.tuxedocomputers\\\\\\.uccd/com\\.uniwill\\.uccd/g;' -i \"\\$f\"; done && git add -A && git commit -m \"chore\\(dbus\\): update DBus service/interface and object paths to com\\.uniwill\\.uccd and /com/uniwill/uccd\" \\|\\| true$/": {
-            "approve": true,
-            "matchCommandLine": true
-        },
-        "/^perl -0777 -pe \"s/com\\\\\\.tuxedocomputers\\\\\\.tccd/com\\.uniwill\\.uccd/g;\" -i src/uccd/TccDBusService\\.cpp src/uccd/UccDBusService\\.cpp && git add src/uccd/TccDBusService\\.cpp src/uccd/UccDBusService\\.cpp && git commit -m \"chore\\(dbus\\): replace remaining com\\.tuxedocomputers\\.tccd occurrences with com\\.uniwill\\.uccd\" \\|\\| true$/": {
-            "approve": true,
-            "matchCommandLine": true
-        },
-        "git rev-parse": true,
-        "/^files=\"\\.vscode/settings\\.json Profile_Management_Implementation\\.md TESTING_WIDGET\\.md show-real-data\\.sh src/service-app/classes/TccDBusService\\.ts src/service-app/classes/UccDBusService\\.ts src/ucc/PROJECT_STATUS\\.md src/ucc/test-widget\\.sh src/ucc/ucc-widgets/profile-switcher/package/contents/ui/main\\.qml src/ucc/ucc-widgets/system-monitor/package/contents/ui/SystemMetricsProvider\\.qml src/ucc/ucc-widgets/system-monitor/package/contents/ui/main\\.qml test-dbus\\.sh test-display-refresh\\.sh test-prime-worker\\.sh test-widget\\.sh\"; for f in \\$files; do perl -0777 -pe 's/com\\\\\\.tuxedocomputers\\\\\\.tccd/com\\.uniwill\\.uccd/g; s/\\\\/com\\\\/tuxedocomputers\\\\/tccd/\\\\/com\\\\/uniwill\\\\/uccd/g;' -i \"\\$f\"; done && git add -A && git commit -m \"chore\\(dbus\\): update remaining DBus references in tests, QML and docs to com\\.uniwill\\.uccd\" \\|\\| true$/": {
-            "approve": true,
-            "matchCommandLine": true
-        },
-        "/opt/devel/git/tuxedo/tuxedo-control-center/src/ucc/build/ucc-tray/ucc-tray": true,
-        "./run-ucc-gui.sh": true,
-        "/opt/devel/git/tuxedo/tuxedo-control-center/src/ucc/run-ucc-gui.sh": true,
-        "/^cd /opt/devel/git/tuxedo/tuxedo-control-center/src/ucc && source build/prefix\\.sh && \\./run-ucc-gui\\.sh$/": {
-            "approve": true,
-            "matchCommandLine": true
-        },
-        "/^python3 keyboard_mapping_util\\.py$/": {
-            "approve": true,
-            "matchCommandLine": true
-        }
+      "./uccd": true,
+      "gdb": true,
+      "timeout": true,
+      "dbus-send": true,
+      "g++": true,
+      "./test_powersupply": true,
+      "dpkg": true,
+      "cmake": true,
+      "true": true,
+      "journalctl": true,
+      "busctl": true,
+      "/home/erhan/tmp/src/ucc/bin/ucc-gui": true,
+      "make": true,
+      "./build-local.sh": true,
+      "nm": true,
+      "nproc": true,
+      "run": true,
+      "ldd": true,
+      "quit": true,
+      "n": true,
+      "y": true,
+      "ninja": true,
+      "env": true,
+      "coredumpctl": true,
+      "git mv": true,
+      "git add": true,
+      "git commit": true,
+      "/^for f in \\$\\(git grep -l \"com\\.tuxedocomputers\\.tccd\\\\\\|/com/uniwill/uccd\\\\\\|com\\.tuxedocomputers\\.uccd\" --null \\| tr '\\\\0' '\\\\n'\\); do perl -0777 -pe 's/com\\\\\\.tuxedocomputers\\\\\\.tccd/com\\.uniwill\\.uccd/g; s/\\\\/com\\\\/tuxedocomputers\\\\/tccd/\\\\/com\\\\/uniwill\\\\/uccd/g; s/com\\\\\\.tuxedocomputers\\\\\\.uccd/com\\.uniwill\\.uccd/g;' -i \"\\$f\"; done && git add -A && git commit -m \"chore\\(dbus\\): update DBus service/interface and object paths to com\\.uniwill\\.uccd and /com/uniwill/uccd\" \\|\\| true$/": {
+        "approve": true,
+        "matchCommandLine": true
+      },
+      "/^perl -0777 -pe \"s/com\\\\\\.tuxedocomputers\\\\\\.tccd/com\\.uniwill\\.uccd/g;\" -i src/uccd/TccDBusService\\.cpp src/uccd/UccDBusService\\.cpp && git add src/uccd/TccDBusService\\.cpp src/uccd/UccDBusService\\.cpp && git commit -m \"chore\\(dbus\\): replace remaining com\\.tuxedocomputers\\.tccd occurrences with com\\.uniwill\\.uccd\" \\|\\| true$/": {
+        "approve": true,
+        "matchCommandLine": true
+      },
+      "git rev-parse": true,
+      "/^files=\"\\.vscode/settings\\.json Profile_Management_Implementation\\.md TESTING_WIDGET\\.md show-real-data\\.sh src/service-app/classes/TccDBusService\\.ts src/service-app/classes/UccDBusService\\.ts src/ucc/PROJECT_STATUS\\.md src/ucc/test-widget\\.sh src/ucc/ucc-widgets/profile-switcher/package/contents/ui/main\\.qml src/ucc/ucc-widgets/system-monitor/package/contents/ui/SystemMetricsProvider\\.qml src/ucc/ucc-widgets/system-monitor/package/contents/ui/main\\.qml test-dbus\\.sh test-display-refresh\\.sh test-prime-worker\\.sh test-widget\\.sh\"; for f in \\$files; do perl -0777 -pe 's/com\\\\\\.tuxedocomputers\\\\\\.tccd/com\\.uniwill\\.uccd/g; s/\\\\/com\\\\/tuxedocomputers\\\\/tccd/\\\\/com\\\\/uniwill\\\\/uccd/g;' -i \"\\$f\"; done && git add -A && git commit -m \"chore\\(dbus\\): update remaining DBus references in tests, QML and docs to com\\.uniwill\\.uccd\" \\|\\| true$/": {
+        "approve": true,
+        "matchCommandLine": true
+      },
+      "/opt/devel/git/tuxedo/tuxedo-control-center/src/ucc/build/ucc-tray/ucc-tray": true,
+      "./run-ucc-gui.sh": true,
+      "/opt/devel/git/tuxedo/tuxedo-control-center/src/ucc/run-ucc-gui.sh": true,
+      "/^cd /opt/devel/git/tuxedo/tuxedo-control-center/src/ucc && source build/prefix\\.sh && \\./run-ucc-gui\\.sh$/": {
+        "approve": true,
+        "matchCommandLine": true
+      },
+      "/^python3 keyboard_mapping_util\\.py$/": {
+        "approve": true,
+        "matchCommandLine": true
+      },
+      "qdbus6": true,
+      "setxkbmap": true,
+      "localectl": true
     },
     "editor.fontFamily": "'Source Code Pro', Menlo, Monaco, 'Courier New', monospace",
     "editor.fontSize": 14,

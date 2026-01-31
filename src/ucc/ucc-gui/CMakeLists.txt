@@ -36,6 +36,10 @@ add_executable( ucc-gui
   FanCurveEditorWidget.hpp
   KeyboardVisualizerWidget.cpp
   KeyboardVisualizerWidget.hpp
+  DetectLayout.cpp
+  DetectLayout.hpp
+  AssignKeyZones.cpp
+  AssignKeyZones.hpp
 )
 
 target_include_directories( ucc-gui PRIVATE

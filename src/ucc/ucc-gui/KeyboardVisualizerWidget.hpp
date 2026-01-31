@@ -26,6 +26,7 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QSet>
+#include <QMap>
 #include <vector>
 #include <map>
 
@@ -106,6 +107,7 @@ private slots:
 
 private:
   void setupKeyboardLayout();
+  void loadZoneMappings( const QString &layout );
   void createKeyButton( int zoneId, const QString &label, int row, int col, int width = 1, int height = 1 );
   QColor applyBrightness( const QColor &color, int brightness ) const;
   void updateKeyAppearance( QPushButton *button, const QColor &color, int brightness );
@@ -124,7 +126,7 @@ private:
   QColorDialog *m_colorDialog = nullptr;
 
   // Zone mappings
-  std::map<int, QString> m_zoneMappings;
+  QMap<int, QString> m_zoneMappings;
 };
 
 } // namespace ucc
