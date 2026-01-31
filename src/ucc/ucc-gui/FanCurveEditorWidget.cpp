@@ -22,6 +22,10 @@ FanCurveEditorWidget::FanCurveEditorWidget(QWidget *parent)
 void FanCurveEditorWidget::setPoints(const QVector<Point>& pts) {
     m_points = pts;
     sortPoints();
+    // Enforce monotonicity on all points
+    for (int i = 0; i < m_points.size(); ++i) {
+        enforceMonotonicity(i);
+    }
     update();
     emit pointsChanged(m_points);
 }
@@ -52,6 +56,25 @@ FanCurveEditorWidget::Point FanCurveEditorWidget::fromWidget(const QPointF& pos)
 QRectF FanCurveEditorWidget::pointRect(const Point& pt) const {
     QPointF c = toWidget(pt);
     return QRectF(c.x() - 7.0, c.y() - 7.0, 14.0, 14.0);
+}
+
+void FanCurveEditorWidget::enforceMonotonicity(int modifiedIndex) {
+    if (modifiedIndex < 0 || modifiedIndex >= m_points.size()) return;
+    
+    double currentDuty = m_points[modifiedIndex].duty;
+    
+    // Check all higher temperature points (higher indices)
+    for (int i = modifiedIndex + 1; i < m_points.size(); ++i) {
+        if (m_points[i].duty < currentDuty) {
+            m_points[i].duty = currentDuty;
+        }
+    }    
+    // Check all lower temperature points (lower indices) - ensure they are <= current duty
+    for (int i = modifiedIndex - 1; i >= 0; --i) {
+        if (m_points[i].duty > currentDuty) {
+            m_points[i].duty = currentDuty;
+        }
+    }
 }
 
 void FanCurveEditorWidget::paintEvent(QPaintEvent*) {
@@ -171,6 +194,10 @@ void FanCurveEditorWidget::mouseMoveEvent(QMouseEvent* e) {
     duty = std::clamp(duty, 0.0, 100.0);
     
     m_points[m_draggedIndex] = {fixedTemp, duty};
+    
+    // Enforce monotonicity: ensure duty cycle is non-decreasing
+    enforceMonotonicity(m_draggedIndex);
+    
     // No need to sort since temperatures are fixed in order
     update();
     emit pointsChanged(m_points);
@@ -198,6 +225,19 @@ void FanCurveEditorWidget::addPoint(const Point& pt) {
     
     m_points.push_back({snappedTemp, pt.duty});
     sortPoints();
+    
+    // Find the index of the newly added point and enforce monotonicity
+    int newIndex = -1;
+    for (int i = 0; i < m_points.size(); ++i) {
+        if (std::abs(m_points[i].temp - snappedTemp) < 1.0) {
+            newIndex = i;
+            break;
+        }
+    }
+    if (newIndex >= 0) {
+        enforceMonotonicity(newIndex);
+    }
+    
     update();
     emit pointsChanged(m_points);
 }

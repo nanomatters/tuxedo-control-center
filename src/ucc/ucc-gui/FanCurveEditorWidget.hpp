@@ -41,4 +41,5 @@ private:
     void sortPoints();
     void addPoint(const Point &pt);
     void removePoint(int idx);
+    void enforceMonotonicity(int modifiedIndex);
 };
