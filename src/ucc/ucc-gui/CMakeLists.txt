@@ -22,20 +22,23 @@ find_package( Qt6 REQUIRED COMPONENTS
   Gui
   Widgets
   DBus
+  Bluetooth
 )
 
 # Application sources
-add_executable( ucc-gui
+set( UCC_GUI_SOURCES
   main.cpp
   MainWindow.cpp
   DashboardTab.cpp
   HardwareTab.cpp
+  LCTWaterCoolerController.cpp
   KeyboardTab.cpp
   ProfileManager.cpp
   SystemMonitor.cpp
   FanCurveEditorWidget.cpp
   FanCurveEditorWidget.hpp
   HardwareTab.hpp
+  LCTWaterCoolerController.hpp
   KeyboardVisualizerWidget.cpp
   KeyboardVisualizerWidget.hpp
   DetectLayout.cpp
@@ -44,17 +47,26 @@ add_executable( ucc-gui
   AssignKeyZones.hpp
 )
 
+set( UCC_GUI_LIBRARIES
+  Qt6::Core
+  Qt6::Gui
+  Qt6::Widgets
+  Qt6::DBus
+  Qt6::Bluetooth
+  ucc-dbus
+)
+
+add_executable( ucc-gui
+  ${UCC_GUI_SOURCES}
+)
+
 target_include_directories( ucc-gui PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}/libucc-dbus
 )
 
 target_link_libraries( ucc-gui PRIVATE
-  Qt6::Core
-  Qt6::Gui
-  Qt6::Widgets
-  Qt6::DBus
-  ucc-dbus
+  ${UCC_GUI_LIBRARIES}
 )
 
 target_compile_options( ucc-gui PRIVATE

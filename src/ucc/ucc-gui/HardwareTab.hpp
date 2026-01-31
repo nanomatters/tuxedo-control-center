@@ -22,13 +22,19 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGroupBox>
+#include <QPushButton>
+#include <QComboBox>
+#include <QListWidget>
+#include <QProgressBar>
+#include <QMessageBox>
+
+#include "LCTWaterCoolerController.hpp"
 
 namespace ucc
 {
 
 class SystemMonitor;
-
-class SystemMonitor;
+class LCTWaterCoolerController;
 
 /**
  * @brief Hardware tab widget for hardware controls
@@ -46,11 +52,28 @@ private slots:
     void onWebcamToggled( bool checked );
     void onFnLockToggled( bool checked );
 
+    // Water cooler slots
+    void onScanDevicesClicked();
+    void onConnectDeviceClicked();
+    void onDisconnectDeviceClicked();
+    void onDeviceDiscovered(const DeviceInfo &device);
+    void onDiscoveryFinished();
+    void onConnected();
+    void onDisconnected();
+    void onConnectionError(const QString &error);
+    void onControlError(const QString &error);
+    void onFanSpeedChanged(int value);
+    void onPumpVoltageChanged(int index);
+    void onLEDOnOffChanged(bool enabled);
+    void onLEDModeChanged(int index);
+    void onColorPickerClicked();
+
 private:
     void setupUI();
     void connectSignals();
 
     SystemMonitor *m_systemMonitor;
+    LCTWaterCoolerController *m_waterCoolerController = nullptr;
 
     // Display controls
     QSlider *m_displayBrightnessSlider = nullptr;
@@ -59,6 +82,32 @@ private:
     // Quick controls
     QCheckBox *m_webcamCheckBox = nullptr;
     QCheckBox *m_fnLockCheckBox = nullptr;
+
+    // Water cooler controls
+    QListWidget *m_deviceListWidget = nullptr;
+    QPushButton *m_scanButton = nullptr;
+    QPushButton *m_connectButton = nullptr;
+    QPushButton *m_disconnectButton = nullptr;
+    QLabel *m_connectionStatusLabel = nullptr;
+    QProgressBar *m_scanProgressBar = nullptr;
+
+    // Fan controls
+    QSlider *m_fanSpeedSlider = nullptr;
+    QLabel *m_fanSpeedValueLabel = nullptr;
+    QPushButton *m_fanOffButton = nullptr;
+
+    // Pump controls
+    QComboBox *m_pumpVoltageCombo = nullptr;
+
+    // LED controls
+    QCheckBox *m_ledOnOffCheckBox = nullptr;
+    QPushButton *m_colorPickerButton = nullptr;
+    QComboBox *m_ledModeCombo = nullptr;
+
+    // Current LED color
+    int m_currentRed = 255;
+    int m_currentGreen = 0;
+    int m_currentBlue = 0;
 };
 
 }

@@ -45,6 +45,7 @@ class SystemMonitor : public QObject
   Q_PROPERTY( bool webcamEnabled READ webcamEnabled WRITE setWebcamEnabled NOTIFY webcamEnabledChanged )
   Q_PROPERTY( bool fnLock READ fnLock WRITE setFnLock NOTIFY fnLockChanged )
   Q_PROPERTY( bool monitoringActive READ monitoringActive WRITE setMonitoringActive NOTIFY monitoringActiveChanged )
+  Q_PROPERTY( bool isACPower READ isACPower NOTIFY isACPowerChanged )
 
 public:
   explicit SystemMonitor( QObject *parent = nullptr );
@@ -63,6 +64,7 @@ public:
   bool webcamEnabled() const { return m_webcamEnabled; }
   bool fnLock() const { return m_fnLock; }
   bool monitoringActive() const { return m_monitoringActive; }
+  bool isACPower() const { return m_isACPower; }
 
 public slots:
   void setDisplayBrightness( int brightness );
@@ -85,6 +87,7 @@ signals:
   void webcamEnabledChanged();
   void fnLockChanged();
   void monitoringActiveChanged();
+  void isACPowerChanged();
 
 private slots:
   void updateMetrics();
@@ -106,6 +109,7 @@ private:
   bool m_webcamEnabled = true;
   bool m_fnLock = false;
   bool m_monitoringActive = false;
+  bool m_isACPower = false;
 };
 
 } // namespace ucc
