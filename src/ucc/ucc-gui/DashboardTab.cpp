@@ -201,142 +201,122 @@ void DashboardTab::connectSignals()
 // Dashboard slots
 void DashboardTab::onCpuTempChanged()
 {
-  if ( m_cpuTempLabel )
-  {
-    QString temp = m_systemMonitor->cpuTemp().replace( "°C", "" ).trimmed();
-    bool ok = false;
-    int tempValue = temp.toInt( &ok );
+  QString temp = m_systemMonitor->cpuTemp().replace( "°C", "" ).trimmed();
+  bool ok = false;
+  int tempValue = temp.toInt( &ok );
 
-    if ( ok && tempValue > 0 )
-    {
-      m_cpuTempLabel->setText( temp );
-    }
-    else
-    {
-      m_cpuTempLabel->setText( "---" );
-    }
+  if ( ok && tempValue > 0 )
+  {
+    m_cpuTempLabel->setText( temp );
+  }
+  else
+  {
+    m_cpuTempLabel->setText( "---" );
   }
 }
 
 void DashboardTab::onCpuFrequencyChanged()
 {
-  if ( m_cpuFrequencyLabel )
+  QString freq = m_systemMonitor->cpuFrequency();
+
+  if ( freq.endsWith( " MHz" ) )
   {
-    QString freq = m_systemMonitor->cpuFrequency();
+    bool ok = false;
+    double mhz = freq.left( freq.size() - 4 ).trimmed().toDouble( &ok );
 
-    if ( freq.endsWith( " MHz" ) )
+    if ( ok )
     {
-      bool ok = false;
-      double mhz = freq.left( freq.size() - 4 ).trimmed().toDouble( &ok );
-
-      if ( ok )
+      if ( mhz > 0.0 )
       {
-        if ( mhz > 0.0 )
-        {
-          double ghz = mhz / 1000.0;
-          m_cpuFrequencyLabel->setText( QString::number( ghz, 'f', 1 ) );
-          return;
-        }
-        m_cpuFrequencyLabel->setText( "--" );
+        double ghz = mhz / 1000.0;
+        m_cpuFrequencyLabel->setText( QString::number( ghz, 'f', 1 ) );
         return;
       }
+      m_cpuFrequencyLabel->setText( "--" );
+      return;
     }
-    m_cpuFrequencyLabel->setText( freq.isEmpty() ? "--" : freq );
   }
+  m_cpuFrequencyLabel->setText( freq.isEmpty() ? "--" : freq );
 }
 
 void DashboardTab::onCpuPowerChanged()
 {
-  if ( m_cpuPowerLabel )
-  {
-    QString power = m_systemMonitor->cpuPower();
-    QString trimmed = power.replace( " W", "" ).trimmed();
-    bool ok = false;
-    double watts = trimmed.toDouble( &ok );
+  QString power = m_systemMonitor->cpuPower();
+  QString trimmed = power.replace( " W", "" ).trimmed();
+  bool ok = false;
+  double watts = trimmed.toDouble( &ok );
 
-    if ( ok && watts > 0.0 )
-    {
-      m_cpuPowerLabel->setText( QString::number( watts, 'f', 1 ) );
-      return;
-    }
-    m_cpuPowerLabel->setText( "--" );
+  if ( ok && watts > 0.0 )
+  {
+    m_cpuPowerLabel->setText( QString::number( watts, 'f', 1 ) );
+    return;
   }
+  m_cpuPowerLabel->setText( "--" );
 }
 
 void DashboardTab::onGpuTempChanged()
 {
-  if ( m_gpuTempLabel )
-  {
-    QString temp = m_systemMonitor->gpuTemp().replace( "°C", "" ).trimmed();
-    bool ok = false;
-    int tempValue = temp.toInt( &ok );
+  QString temp = m_systemMonitor->gpuTemp().replace( "°C", "" ).trimmed();
+  bool ok = false;
+  int tempValue = temp.toInt( &ok );
 
-    if ( ok && tempValue > 0 )
-    {
-      m_gpuTempLabel->setText( temp );
-    }
-    else
-    {
-      m_gpuTempLabel->setText( "---" );
-    }
+  if ( ok && tempValue > 0 )
+  {
+    m_gpuTempLabel->setText( temp );
+  }
+  else
+  {
+    m_gpuTempLabel->setText( "---" );
   }
 }
 
 void DashboardTab::onGpuFrequencyChanged()
 {
-  if ( m_gpuFrequencyLabel )
+  QString freq = m_systemMonitor->gpuFrequency();
+
+  if ( freq.endsWith( " MHz" ) )
   {
-    QString freq = m_systemMonitor->gpuFrequency();
+    bool ok = false;
+    double mhz = freq.left( freq.size() - 4 ).trimmed().toDouble( &ok );
 
-    if ( freq.endsWith( " MHz" ) )
+    if ( ok )
     {
-      bool ok = false;
-      double mhz = freq.left( freq.size() - 4 ).trimmed().toDouble( &ok );
-
-      if ( ok )
+      if ( mhz > 0.0 )
       {
-        if ( mhz > 0.0 )
-        {
-          double ghz = mhz / 1000.0;
-          m_gpuFrequencyLabel->setText( QString::number( ghz, 'f', 1 ) );
-          return;
-        }
-        m_gpuFrequencyLabel->setText( "--" );
+        double ghz = mhz / 1000.0;
+        m_gpuFrequencyLabel->setText( QString::number( ghz, 'f', 1 ) );
         return;
       }
+      m_gpuFrequencyLabel->setText( "--" );
+      return;
     }
-    m_gpuFrequencyLabel->setText( freq.isEmpty() ? "--" : freq );
   }
+  m_gpuFrequencyLabel->setText( freq.isEmpty() ? "--" : freq );
 }
 
 void DashboardTab::onGpuPowerChanged()
 {
-  if ( m_gpuPowerLabel )
-  {
-    QString power = m_systemMonitor->gpuPower();
-    QString trimmed = power.replace( " W", "" ).trimmed();
-    bool ok = false;
-    double watts = trimmed.toDouble( &ok );
+  QString power = m_systemMonitor->gpuPower();
+  QString trimmed = power.replace( " W", "" ).trimmed();
+  bool ok = false;
+  double watts = trimmed.toDouble( &ok );
 
-    if ( ok && watts > 0.0 )
-    {
-      m_gpuPowerLabel->setText( QString::number( watts, 'f', 1 ) );
-      return;
-    }
-    m_gpuPowerLabel->setText( "--" );
+  if ( ok && watts > 0.0 )
+  {
+    m_gpuPowerLabel->setText( QString::number( watts, 'f', 1 ) );
+    return;
   }
+  m_gpuPowerLabel->setText( "--" );
 }
 
 void DashboardTab::onFanSpeedChanged()
 {
-  if ( m_fanSpeedLabel )
-    m_fanSpeedLabel->setText( formatFanSpeed( m_systemMonitor->cpuFanSpeed() ) );
+  m_fanSpeedLabel->setText( formatFanSpeed( m_systemMonitor->cpuFanSpeed() ) );
 }
 
 void DashboardTab::onGpuFanSpeedChanged()
 {
-  if ( m_gpuFanSpeedLabel )
-    m_gpuFanSpeedLabel->setText( formatFanSpeed( m_systemMonitor->gpuFanSpeed() ) );
+  m_gpuFanSpeedLabel->setText( formatFanSpeed( m_systemMonitor->gpuFanSpeed() ) );
 }
 
 }
