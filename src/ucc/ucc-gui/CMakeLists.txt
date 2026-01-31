@@ -28,6 +28,7 @@ find_package( Qt6 REQUIRED COMPONENTS
 add_executable( ucc-gui
   main.cpp
   MainWindow.cpp
+  DashboardTab.cpp
   KeyboardTab.cpp
   ProfileManager.cpp
   SystemMonitor.cpp

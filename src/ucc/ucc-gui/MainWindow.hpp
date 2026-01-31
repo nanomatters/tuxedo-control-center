@@ -39,6 +39,7 @@
 #include "../libucc-dbus/UccdClient.hpp"
 #include "FanCurveEditorWidget.hpp"
 #include "KeyboardVisualizerWidget.hpp"
+#include "DashboardTab.hpp"
 
 namespace ucc
 {
@@ -85,14 +86,6 @@ namespace ucc
     void onCopyFanProfileClicked();
 
     // Dashboard page slots
-    void onCpuTempChanged();
-    void onCpuFrequencyChanged();
-    void onCpuPowerChanged();
-    void onGpuTempChanged();
-    void onGpuFrequencyChanged();
-    void onGpuPowerDashboardChanged();
-    void onFanSpeedChanged();
-    void onGpuFanSpeedChanged();
     void onDisplayBrightnessSliderChanged( int value );
     void onWebcamToggled( bool checked );
     void onFnLockToggled( bool checked );
@@ -144,17 +137,8 @@ namespace ucc
     // Tab widget
     QTabWidget *m_tabs = nullptr;
 
-    // Dashboard widgets
-    QLabel *m_activeProfileLabel = nullptr;
-    QLabel *m_cpuTempLabel = nullptr;
-    QLabel *m_cpuFrequencyLabel = nullptr;
-    QLabel *m_gpuTempLabel = nullptr;
-    QLabel *m_gpuFrequencyLabel = nullptr;
-    QLabel *m_fanSpeedLabel = nullptr;
-    QLabel *m_gpuFanSpeedLabel = nullptr;
-
-    QLabel *m_cpuPowerLabel = nullptr;
-    QLabel *m_gpuPowerLabel = nullptr;
+    // Dashboard tab
+    DashboardTab *m_dashboardTab = nullptr;
     QSlider *m_displayBrightnessSlider = nullptr;
     QLabel *m_displayBrightnessValueLabel = nullptr;
     QCheckBox *m_webcamCheckBox = nullptr;
