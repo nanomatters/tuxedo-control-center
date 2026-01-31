@@ -39,7 +39,7 @@ class SystemMonitor : public QObject
   Q_PROPERTY( QString gpuTemp READ gpuTemp NOTIFY gpuTempChanged )
   Q_PROPERTY( QString gpuFrequency READ gpuFrequency NOTIFY gpuFrequencyChanged )
   Q_PROPERTY( QString gpuPower READ gpuPower NOTIFY gpuPowerChanged )
-  Q_PROPERTY( QString fanSpeed READ fanSpeed NOTIFY fanSpeedChanged )
+  Q_PROPERTY( QString cpuFanSpeed READ cpuFanSpeed NOTIFY fanSpeedChanged )
   Q_PROPERTY( QString gpuFanSpeed READ gpuFanSpeed NOTIFY gpuFanSpeedChanged )
   Q_PROPERTY( int displayBrightness READ displayBrightness WRITE setDisplayBrightness NOTIFY displayBrightnessChanged )
   Q_PROPERTY( bool webcamEnabled READ webcamEnabled WRITE setWebcamEnabled NOTIFY webcamEnabledChanged )
@@ -57,7 +57,7 @@ public:
   QString gpuTemp() const { return m_gpuTemp; }
   QString gpuFrequency() const { return m_gpuFrequency; }
   QString gpuPower() const { return m_gpuPower; }
-  QString fanSpeed() const { return m_fanSpeed; }
+  QString cpuFanSpeed() const { return m_fanSpeed; }
   QString gpuFanSpeed() const { return m_gpuFanSpeed; }
   int displayBrightness() const { return m_displayBrightness; }
   bool webcamEnabled() const { return m_webcamEnabled; }

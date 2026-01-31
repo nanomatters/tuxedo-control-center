@@ -24,6 +24,45 @@
 #include <QLabel>
 #include <QFrame>
 
+namespace
+{
+
+QString formatFanSpeed( const QString &fanSpeed )
+{
+  QString display = "---";
+
+  if ( fanSpeed.endsWith( " %" ) || fanSpeed.endsWith( "%" ) )
+  {
+    QString num = fanSpeed;
+    if ( fanSpeed.endsWith( " %" ) )
+      num = fanSpeed.left( fanSpeed.size() - 2 ).trimmed();
+    else
+      num = fanSpeed.left( fanSpeed.size() - 1 ).trimmed();
+
+    bool ok = false;
+    int pct = num.toInt( &ok );
+    if ( ok && pct >= 0 )
+      display = QString::number( pct );
+  }
+  else if ( fanSpeed.endsWith( " RPM" ) )
+  {
+    QString rpmStr = fanSpeed.left( fanSpeed.size() - 4 ).trimmed();
+    bool ok = false;
+    int rpm = rpmStr.toInt( &ok );
+
+    if ( ok && rpm > 0 )
+    {
+      int pct = rpm / 60;
+      display = QString::number( pct );
+    }
+  }
+
+  return display;
+}
+
+}
+
+
 namespace ucc
 {
 
@@ -290,78 +329,14 @@ void DashboardTab::onGpuPowerChanged()
 
 void DashboardTab::onFanSpeedChanged()
 {
-  QString fan = m_systemMonitor->fanSpeed();
-  QString display = "---";
-
-  // Prefer percentage ("25 %" or "25%")
-  if ( fan.endsWith( " %" ) || fan.endsWith( "%" ) )
-  {
-    QString num = fan;
-    if ( fan.endsWith( " %" ) )
-      num = fan.left( fan.size() - 2 ).trimmed();
-    else
-      num = fan.left( fan.size() - 1 ).trimmed();
-
-    bool ok = false;
-    int pct = num.toInt( &ok );
-    if ( ok && pct >= 0 )
-      display = QString::number( pct );
-  }
-  // Fallback: convert RPM to percent estimate
-  else if ( fan.endsWith( " RPM" ) )
-  {
-    QString rpmStr = fan.left( fan.size() - 4 ).trimmed();
-    bool ok = false;
-    int rpm = rpmStr.toInt( &ok );
-
-    if ( ok && rpm > 0 )
-    {
-      int pct = rpm / 60; // estimate
-      display = QString::number( pct );
-    }
-  }
-
   if ( m_fanSpeedLabel )
-  {
-    m_fanSpeedLabel->setText( display );
-  }
+    m_fanSpeedLabel->setText( formatFanSpeed( m_systemMonitor->cpuFanSpeed() ) );
 }
 
 void DashboardTab::onGpuFanSpeedChanged()
 {
-  QString fan = m_systemMonitor->gpuFanSpeed();
-  QString display = "---";
-
-  if ( fan.endsWith( " %" ) || fan.endsWith( "%" ) )
-  {
-    QString num = fan;
-    if ( fan.endsWith( " %" ) )
-      num = fan.left( fan.size() - 2 ).trimmed();
-    else
-      num = fan.left( fan.size() - 1 ).trimmed();
-
-    bool ok = false;
-    int pct = num.toInt( &ok );
-    if ( ok && pct >= 0 )
-      display = QString::number( pct );
-  }
-  else if ( fan.endsWith( " RPM" ) )
-  {
-    QString rpmStr = fan.left( fan.size() - 4 ).trimmed();
-    bool ok = false;
-    int rpm = rpmStr.toInt( &ok );
-
-    if ( ok && rpm > 0 )
-    {
-      int pct = rpm / 60;
-      display = QString::number( pct );
-    }
-  }
-
   if ( m_gpuFanSpeedLabel )
-  {
-    m_gpuFanSpeedLabel->setText( display );
-  }
+    m_gpuFanSpeedLabel->setText( formatFanSpeed( m_systemMonitor->gpuFanSpeed() ) );
 }
 
 }
