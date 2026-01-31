@@ -1296,7 +1296,7 @@ void MainWindow::loadProfileDetails( const QString &profileName )
       m_cpuCoresSlider->setValue( cpuObj["onlineCores"].toInt( 32 ) );
 
     if ( cpuObj.contains( "useMaxPerfGov" ) )
-      m_maxPerformanceCheckBox->setChecked( cpuObj["maxPerformance"].toBool( true ) );
+      m_maxPerformanceCheckBox->setChecked( cpuObj["useMaxPerfGov"].toBool( true ) );
 
     if ( cpuObj.contains( "scalingMinFrequency" ) )
       m_minFrequencySlider->setValue( cpuObj["scalingMinFrequency"].toInt( 500 ) );
@@ -1633,7 +1633,7 @@ void MainWindow::onSaveClicked()
     // CPU settings
     QJsonObject cpuObj;
     cpuObj["cores"] = m_cpuCoresSlider->value();
-    cpuObj["maxPerformance"] = m_maxPerformanceCheckBox->isChecked();
+    cpuObj["useMaxPerfGov"] = m_maxPerformanceCheckBox->isChecked();
     cpuObj["minFrequency"] = m_minFrequencySlider->value();
     cpuObj["maxFrequency"] = m_maxFrequencySlider->value();
     profileObj["cpu"] = cpuObj;
@@ -1698,7 +1698,7 @@ void MainWindow::onSaveClicked()
 
         QJsonObject cpuObj;
         cpuObj["cores"] = m_cpuCoresSlider->value();
-        cpuObj["maxPerformance"] = m_maxPerformanceCheckBox->isChecked();
+        cpuObj["useMaxPerfGov"] = m_maxPerformanceCheckBox->isChecked();
         cpuObj["minFrequency"] = m_minFrequencySlider->value();
         cpuObj["maxFrequency"] = m_maxFrequencySlider->value();
         obj["cpu"] = cpuObj;
