@@ -260,8 +260,7 @@ void MainWindow::updateKeyboardProfileButtonStates()
 
 void MainWindow::onKeyboardBrightnessChanged( int value )
 {
-  if ( m_keyboardBrightnessValueLabel )
-    m_keyboardBrightnessValueLabel->setText( QString::number( value ) );
+  m_keyboardBrightnessValueLabel->setText( QString::number( value ) );
 
   // Update visualizer if it exists
   if ( m_keyboardVisualizer )
@@ -303,7 +302,7 @@ void MainWindow::onKeyboardColorClicked()
     else
     {
       // Fallback for single zone keyboards
-      int brightness = m_keyboardBrightnessSlider ? m_keyboardBrightnessSlider->value() : 128;
+      int brightness = m_keyboardBrightnessSlider->value();
 
       QJsonArray statesArray;
       QJsonObject state;
@@ -346,7 +345,7 @@ void MainWindow::onKeyboardVisualizerColorsChanged()
 
 void MainWindow::onKeyboardProfileChanged(const QString& profileName)
 {
-  if ( profileName.isEmpty() or not m_keyboardProfileCombo )
+  if ( profileName.isEmpty() )
     return;
 
   // Get the keyboard profile data
@@ -394,25 +393,17 @@ void MainWindow::onKeyboardColorModeChanged( int id )
 {
   if ( id == 0 )  // Global
   {
-    if ( m_keyboardColorLabel )
-      m_keyboardColorLabel->setVisible( true );
-    if ( m_keyboardColorButton )
-      m_keyboardColorButton->setVisible( true );
-    if ( m_keyboardVisualizerLabel )
-      m_keyboardVisualizerLabel->setVisible( false );
-    if ( m_keyboardVisualizer )
-      m_keyboardVisualizer->setVisible( false );
+    m_keyboardColorLabel->setVisible( true );
+    m_keyboardColorButton->setVisible( true );
+    m_keyboardVisualizerLabel->setVisible( false );
+    m_keyboardVisualizer->setVisible( false );
   }
   else if ( id == 1 )  // Per-Key
   {
-    if ( m_keyboardColorLabel )
-      m_keyboardColorLabel->setVisible( false );
-    if ( m_keyboardColorButton )
-      m_keyboardColorButton->setVisible( false );
-    if ( m_keyboardVisualizerLabel )
-      m_keyboardVisualizerLabel->setVisible( true );
-    if ( m_keyboardVisualizer )
-      m_keyboardVisualizer->setVisible( true );
+    m_keyboardColorLabel->setVisible( false );
+    m_keyboardColorButton->setVisible( false );
+    m_keyboardVisualizerLabel->setVisible( true );
+    m_keyboardVisualizer->setVisible( true );
   }
 }
 
