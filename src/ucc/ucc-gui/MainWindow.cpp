@@ -534,7 +534,7 @@ void MainWindow::setupProfilesPage()
   row++;
 
   // TDP Limit 1
-  QLabel *tdp1Label = new QLabel( "" );  // Empty label for alignment
+  QLabel *tdp1Label = new QLabel( "Sustained TDP" );  // Sustained Power Limit
   QHBoxLayout *tdp1Layout = new QHBoxLayout();
   m_odmPowerLimit1Slider = new QSlider( Qt::Horizontal );
   m_odmPowerLimit1Slider->setMinimum( 0 );
@@ -549,7 +549,7 @@ void MainWindow::setupProfilesPage()
   row++;
 
   // TDP Limit 2
-  QLabel *tdp2Label = new QLabel( "" );
+  QLabel *tdp2Label = new QLabel( "Boost TDP" );
   QHBoxLayout *tdp2Layout = new QHBoxLayout();
   m_odmPowerLimit2Slider = new QSlider( Qt::Horizontal );
   m_odmPowerLimit2Slider->setMinimum( 0 );
@@ -564,7 +564,7 @@ void MainWindow::setupProfilesPage()
   row++;
 
   // TDP Limit 3
-  QLabel *tdp3Label = new QLabel( "" );
+  QLabel *tdp3Label = new QLabel( "Peak TDP" );
   QHBoxLayout *tdp3Layout = new QHBoxLayout();
   m_odmPowerLimit3Slider = new QSlider( Qt::Horizontal );
   m_odmPowerLimit3Slider->setMinimum( 0 );
@@ -654,7 +654,7 @@ void MainWindow::setupProfilesPage()
   QHBoxLayout *gpuLayout = new QHBoxLayout();
   m_gpuPowerSlider = new QSlider( Qt::Horizontal );
   m_gpuPowerSlider->setMinimum( 40 );
-  m_gpuPowerSlider->setMaximum( 200 );
+  m_gpuPowerSlider->setMaximum( 175 );
   m_gpuPowerSlider->setValue( 175 );
   m_gpuPowerValue = new QLabel( "175 W" );
   m_gpuPowerValue->setMinimumWidth( 50 );
@@ -1296,7 +1296,7 @@ void MainWindow::loadProfileDetails( const QString &profileName )
       m_cpuCoresSlider->setValue( cpuObj["onlineCores"].toInt( 32 ) );
 
     if ( cpuObj.contains( "useMaxPerfGov" ) )
-      m_maxPerformanceCheckBox->setChecked( cpuObj["useMaxPerfGov"].toBool( true ) );
+      m_maxPerformanceCheckBox->setChecked( cpuObj["maxPerformance"].toBool( true ) );
 
     if ( cpuObj.contains( "scalingMinFrequency" ) )
       m_minFrequencySlider->setValue( cpuObj["scalingMinFrequency"].toInt( 500 ) );
@@ -1334,6 +1334,14 @@ void MainWindow::loadProfileDetails( const QString &profileName )
     fprintf( log, "Set ODM Power Limit 3 max to: %d\n", hardwareLimits[2] );
   }
   fflush( log );
+  
+  // Set GPU power max from hardware
+  if ( auto gpuMax = m_profileManager->getClient()->getNVIDIAPowerCTRLMaxPowerLimit() )
+  {
+    m_gpuPowerSlider->setMaximum( *gpuMax );
+    fprintf( log, "Set GPU power max to: %d\n", *gpuMax );
+    fflush( log );
+  }
   
   // Then, set slider values from profile
 

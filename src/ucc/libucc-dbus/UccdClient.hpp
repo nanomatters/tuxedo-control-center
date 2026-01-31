@@ -96,6 +96,7 @@ public:
   // GPU Control
   bool setNVIDIAPowerOffset( int offset );
   std::optional< int > getNVIDIAPowerOffset();
+  std::optional< int > getNVIDIAPowerCTRLMaxPowerLimit();
   bool setPrimeProfile( const std::string &profile );
   std::optional< std::string > getPrimeProfile();
   std::optional< std::string > getGpuInfo();

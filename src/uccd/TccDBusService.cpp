@@ -297,6 +297,7 @@ void UccDBusInterfaceAdaptor::registerAdaptor()
     registerMethod("SetStateMap").implementedAs([this](const std::string &state, const std::string &profileId){ return this->SetStateMap(state, profileId); }),
     registerMethod("ODMProfilesAvailable").implementedAs([this](){ return this->ODMProfilesAvailable(); }),
     registerMethod("ODMPowerLimitsJSON").implementedAs([this](){ return this->ODMPowerLimitsJSON(); }),
+    registerMethod("GetNVIDIAPowerCTRLMaxPowerLimit").implementedAs([this](){ return this->GetNVIDIAPowerCTRLMaxPowerLimit(); }),
     registerMethod("GetKeyboardBacklightCapabilitiesJSON").implementedAs([this](){ return this->GetKeyboardBacklightCapabilitiesJSON(); }),
     registerMethod("GetKeyboardBacklightStatesJSON").implementedAs([this](){ return this->GetKeyboardBacklightStatesJSON(); }),
     registerMethod("SetKeyboardBacklightStatesJSON").implementedAs([this](const std::string &json){ return this->SetKeyboardBacklightStatesJSON(json); }),
@@ -1039,6 +1040,12 @@ std::string UccDBusInterfaceAdaptor::ODMPowerLimitsJSON()
 {
   std::lock_guard< std::mutex > lock( m_data.dataMutex );
   return m_data.odmPowerLimitsJSON;
+}
+
+int UccDBusInterfaceAdaptor::GetNVIDIAPowerCTRLMaxPowerLimit()
+{
+  std::lock_guard< std::mutex > lock( m_data.dataMutex );
+  return m_data.nvidiaPowerCTRLMaxPowerLimit;
 }
 
 // keyboard backlight methods

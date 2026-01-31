@@ -526,7 +526,28 @@ bool UccdClient::setODMPowerLimits( [[maybe_unused]] const std::vector< int > &l
 
 std::optional< std::vector< int > > UccdClient::getODMPowerLimits()
 {
-  return std::nullopt;
+  auto jsonStr = callMethod< QString >( "ODMPowerLimitsJSON" );
+  if ( !jsonStr )
+    return std::nullopt;
+
+  QJsonDocument doc = QJsonDocument::fromJson( jsonStr->toUtf8() );
+  if ( !doc.isArray() )
+    return std::nullopt;
+
+  QJsonArray array = doc.array();
+  std::vector< int > limits;
+  for ( const QJsonValue &value : array )
+  {
+    if ( value.isObject() )
+    {
+      QJsonObject obj = value.toObject();
+      if ( obj.contains( "max" ) && obj["max"].isDouble() )
+      {
+        limits.push_back( obj["max"].toInt() );
+      }
+    }
+  }
+  return limits;
 }
 
 bool UccdClient::setChargingProfile( [[maybe_unused]] int startThreshold, [[maybe_unused]] int endThreshold, [[maybe_unused]] int chargeType )
@@ -547,6 +568,11 @@ bool UccdClient::setNVIDIAPowerOffset( [[maybe_unused]] int offset )
 std::optional< int > UccdClient::getNVIDIAPowerOffset()
 {
   return std::nullopt;
+}
+
+std::optional< int > UccdClient::getNVIDIAPowerCTRLMaxPowerLimit()
+{
+  return callMethod< int >( "GetNVIDIAPowerCTRLMaxPowerLimit" );
 }
 
 bool UccdClient::setPrimeProfile( [[maybe_unused]] const std::string &profile )

@@ -55,6 +55,7 @@ public:
   QString powerState() const { return m_powerState; }
   int activeProfileIndex() const { return m_activeProfileIndex; }
   bool isConnected() const { return m_connected; }
+  UccdClient* getClient() const { return m_client.get(); }
 
 public slots:
   void refresh();
