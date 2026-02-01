@@ -16,6 +16,7 @@
 #include "DashboardTab.hpp"
 #include "SystemMonitor.hpp"
 #include "ProfileManager.hpp"
+#include "LCTWaterCoolerController.hpp"
 
 #include <QWidget>
 #include <QVBoxLayout>
@@ -66,16 +67,20 @@ QString formatFanSpeed( const QString &fanSpeed )
 namespace ucc
 {
 
-DashboardTab::DashboardTab( SystemMonitor *systemMonitor, ProfileManager *profileManager, QWidget *parent )
+DashboardTab::DashboardTab( SystemMonitor *systemMonitor, ProfileManager *profileManager, LCTWaterCoolerController *waterCoolerController, QWidget *parent )
   : QWidget( parent )
   , m_systemMonitor( systemMonitor )
   , m_profileManager( profileManager )
+  , m_waterCoolerController( waterCoolerController )
 {
   setupUI();
   connectSignals();
   
   // Initialize active profile label
   m_activeProfileLabel->setText( m_profileManager->activeProfile() );
+  
+  // Initialize water cooler status
+  updateWaterCoolerStatus();
 }
 
 void DashboardTab::setupUI()
@@ -91,18 +96,31 @@ void DashboardTab::setupUI()
   titleLabel->setAlignment( Qt::AlignCenter );
   layout->addWidget( titleLabel );
 
-  // Active Profile
-  QHBoxLayout *activeLayout = new QHBoxLayout();
+  // Active Profile and Water Cooler Status
+  QHBoxLayout *statusLayout = new QHBoxLayout();
+  
+  // Active Profile section
   QLabel *activeLabel = new QLabel( "Active profile:" );
   activeLabel->setStyleSheet( "font-weight: bold;" );
   m_activeProfileLabel = new QLabel( "Loading..." );
   m_activeProfileLabel->setStyleSheet( "color: #d32f2f; font-weight: bold;" );
-  activeLayout->addStretch();
-  activeLayout->addWidget( activeLabel );
-  activeLayout->addSpacing( 6 );
-  activeLayout->addWidget( m_activeProfileLabel );
-  activeLayout->addStretch();
-  layout->addLayout( activeLayout );
+  
+  // Water Cooler Status section
+  QLabel *coolerLabel = new QLabel( "Water Cooler Status:" );
+  coolerLabel->setStyleSheet( "font-weight: bold;" );
+  m_waterCoolerStatusLabel = new QLabel( "Disconnected" );
+  m_waterCoolerStatusLabel->setStyleSheet( "color: #ff9800; font-weight: bold;" );
+  
+  statusLayout->addStretch();
+  statusLayout->addWidget( activeLabel );
+  statusLayout->addSpacing( 6 );
+  statusLayout->addWidget( m_activeProfileLabel );
+  statusLayout->addSpacing( 20 );  // Space between sections
+  statusLayout->addWidget( coolerLabel );
+  statusLayout->addSpacing( 6 );
+  statusLayout->addWidget( m_waterCoolerStatusLabel );
+  statusLayout->addStretch();
+  layout->addLayout( statusLayout );
 
   auto makeGauge = [&]( const QString &caption, const QString &unit, QLabel *&valueLabel ) -> QWidget * {
     QWidget *container = new QWidget();
@@ -196,6 +214,20 @@ void DashboardTab::connectSignals()
            this, [this]() {
              m_activeProfileLabel->setText( m_profileManager->activeProfile() );
            } );
+
+  // Connect to water cooler controller for status changes
+  if ( m_waterCoolerController ) {
+    connect( m_waterCoolerController, &LCTWaterCoolerController::connected,
+             this, &DashboardTab::onWaterCoolerConnected );
+    connect( m_waterCoolerController, &LCTWaterCoolerController::disconnected,
+             this, &DashboardTab::onWaterCoolerDisconnected );
+    connect( m_waterCoolerController, &LCTWaterCoolerController::discoveryStarted,
+             this, &DashboardTab::onWaterCoolerDiscoveryStarted );
+    connect( m_waterCoolerController, &LCTWaterCoolerController::discoveryFinished,
+             this, &DashboardTab::onWaterCoolerDiscoveryFinished );
+    connect( m_waterCoolerController, &LCTWaterCoolerController::connectionError,
+             this, &DashboardTab::onWaterCoolerConnectionError );
+  }
 }
 
 // Dashboard slots
@@ -307,6 +339,68 @@ void DashboardTab::onGpuPowerChanged()
     return;
   }
   m_gpuPowerLabel->setText( "--" );
+}
+
+// Water cooler status slots
+void DashboardTab::onWaterCoolerConnected()
+{
+  updateWaterCoolerStatus( "Connected" );
+}
+
+void DashboardTab::onWaterCoolerDisconnected()
+{
+  updateWaterCoolerStatus( "Disconnected" );
+}
+
+void DashboardTab::onWaterCoolerDiscoveryStarted()
+{
+  updateWaterCoolerStatus( "Scanning" );
+}
+
+void DashboardTab::onWaterCoolerDiscoveryFinished()
+{
+  // If we get here and we're not connected, it means scanning finished without finding/connecting
+  if ( !m_waterCoolerController || !m_waterCoolerController->isConnected() ) {
+    updateWaterCoolerStatus( "Disconnected" );
+  }
+}
+
+void DashboardTab::onWaterCoolerConnectionError( const QString &error )
+{
+  Q_UNUSED( error );
+  updateWaterCoolerStatus( "Disconnected" );
+}
+
+// Helper method to update water cooler status with appropriate color
+void DashboardTab::updateWaterCoolerStatus( const QString &status )
+{
+  QString actualStatus = status;
+  
+  // If no status provided, determine current status
+  if ( actualStatus.isEmpty() ) {
+    if ( !m_waterCoolerController ) {
+      actualStatus = "Disconnected";
+    } else if ( m_waterCoolerController->isConnected() ) {
+      actualStatus = "Connected";
+    } else {
+      actualStatus = "Disconnected";
+    }
+  }
+  
+  if ( !m_waterCoolerStatusLabel ) return;
+  
+  m_waterCoolerStatusLabel->setText( actualStatus );
+  
+  // Set color based on status
+  if ( actualStatus == "Connected" ) {
+    m_waterCoolerStatusLabel->setStyleSheet( "color: #4caf50; font-weight: bold;" );  // Green
+  } else if ( actualStatus == "Connecting" ) {
+    m_waterCoolerStatusLabel->setStyleSheet( "color: #ff9800; font-weight: bold;" );  // Orange
+  } else if ( actualStatus == "Scanning" ) {
+    m_waterCoolerStatusLabel->setStyleSheet( "color: #2196f3; font-weight: bold;" );  // Blue
+  } else {  // Disconnected
+    m_waterCoolerStatusLabel->setStyleSheet( "color: #f44336; font-weight: bold;" );  // Red
+  }
 }
 
 void DashboardTab::onFanSpeedChanged()

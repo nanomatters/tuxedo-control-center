@@ -25,6 +25,7 @@ namespace ucc
 {
   class SystemMonitor;
   class ProfileManager;
+  class LCTWaterCoolerController;
 
   /**
    * @brief Dashboard tab widget for system monitoring
@@ -34,7 +35,7 @@ namespace ucc
     Q_OBJECT
 
   public:
-    explicit DashboardTab( SystemMonitor *systemMonitor, ProfileManager *profileManager, QWidget *parent = nullptr );
+    explicit DashboardTab( SystemMonitor *systemMonitor, ProfileManager *profileManager, LCTWaterCoolerController *waterCoolerController, QWidget *parent = nullptr );
     ~DashboardTab() override = default;
 
   private slots:
@@ -46,16 +47,24 @@ namespace ucc
     void onGpuPowerChanged();
     void onFanSpeedChanged();
     void onGpuFanSpeedChanged();
+    void onWaterCoolerConnected();
+    void onWaterCoolerDisconnected();
+    void onWaterCoolerDiscoveryStarted();
+    void onWaterCoolerDiscoveryFinished();
+    void onWaterCoolerConnectionError(const QString &error);
 
   private:
     void setupUI();
     void connectSignals();
+    void updateWaterCoolerStatus( const QString &status = QString() );
 
     SystemMonitor *m_systemMonitor;
     ProfileManager *m_profileManager;
+    LCTWaterCoolerController *m_waterCoolerController;
 
     // Dashboard widgets
     QLabel *m_activeProfileLabel = nullptr;
+    QLabel *m_waterCoolerStatusLabel = nullptr;
     QLabel *m_cpuTempLabel = nullptr;
     QLabel *m_cpuFrequencyLabel = nullptr;
     QLabel *m_gpuTempLabel = nullptr;

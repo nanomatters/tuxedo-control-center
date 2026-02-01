@@ -69,6 +69,7 @@ bool LCTWaterCoolerController::startDiscovery()
     m_deviceDiscoveryAgent->start(QBluetoothDeviceDiscoveryAgent::LowEnergyMethod);
     m_isDiscovering = true;
     qDebug() << "Started Bluetooth device discovery";
+    emit discoveryStarted();
     return true;
 }
 

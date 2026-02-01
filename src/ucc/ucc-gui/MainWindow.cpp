@@ -104,6 +104,8 @@ MainWindow::MainWindow( QWidget *parent )
   setGeometry( 100, 100, 900, 700 );
 
   setupUI();
+
+  // Connect signals after UI elements are created but before loading data
   connectSignals();
 
   // Initialize status bar
@@ -119,6 +121,9 @@ MainWindow::MainWindow( QWidget *parent )
 
   // Load initial data
   m_profileManager->refresh();
+  
+  // Ensure profile combo is populated after refresh
+  onAllProfilesChanged();
   
   // Initialize current fan profile to first available fan profile (if any)
   m_currentFanProfile = ( m_fanProfileCombo && m_fanProfileCombo->count() > 0 ) ? m_fanProfileCombo->currentText() : QString();
@@ -144,7 +149,12 @@ void MainWindow::setupUI()
   // Connect tab changes to control monitoring
   connect( m_tabs, &QTabWidget::currentChanged, this, &MainWindow::onTabChanged );
 
-  m_dashboardTab = new DashboardTab( m_systemMonitor.get(), m_profileManager.get(), this );
+  // Create HardwareTab first to get water cooler controller
+  m_hardwareTab = new HardwareTab( m_systemMonitor.get(), this );
+  m_tabs->addTab( m_hardwareTab, "Hardware" );
+
+  // Now create DashboardTab with water cooler controller
+  m_dashboardTab = new DashboardTab( m_systemMonitor.get(), m_profileManager.get(), m_hardwareTab->getWaterCoolerController(), this );
   m_tabs->addTab( m_dashboardTab, "Dashboard" );
   setupProfilesPage();
 
@@ -152,9 +162,6 @@ void MainWindow::setupUI()
   setupFanControlTab();
   updateFanTabVisibility(); // Set initial visibility based on current profile
   setupKeyboardBacklightPage();
-
-  m_hardwareTab = new HardwareTab( m_systemMonitor.get(), this );
-  m_tabs->addTab( m_hardwareTab, "Hardware" );
 }
 
 void MainWindow::setupFanControlTab()
@@ -321,7 +328,7 @@ void MainWindow::setupProfilesPage()
   selectLabel->setStyleSheet( "font-weight: bold;" );
 
   m_profileCombo = new QComboBox();
-  m_profileCombo->addItems( m_profileManager->allProfiles() );
+  // Don't populate here - will be done by onAllProfilesChanged signal
   m_profileCombo->setCurrentIndex( m_profileManager->activeProfileIndex() );
   m_selectedProfileIndex = m_profileManager->activeProfileIndex();
   m_applyButton = new QPushButton( "Activate" );

@@ -84,6 +84,7 @@ public:
 signals:
     void deviceDiscovered(const DeviceInfo &device);
     void discoveryFinished();
+    void discoveryStarted();
     void connected();
     void disconnected();
     void connectionError(const QString &error);

@@ -49,6 +49,8 @@ public:
     explicit HardwareTab( SystemMonitor *systemMonitor, QWidget *parent = nullptr );
     ~HardwareTab() override = default;
 
+    LCTWaterCoolerController* getWaterCoolerController() const { return m_waterCoolerController; }
+
 private slots:
     void onDisplayBrightnessSliderChanged( int value );
     void onWebcamToggled( bool checked );
